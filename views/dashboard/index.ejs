@@ -98,7 +98,7 @@ ${user.role === 'admin' ? `
                                         <tr>
                                             <td><strong>${dist.distributorName}</strong></td>
                                             <td><span class="badge bg-warning">${dist.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${dist.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td><span class="badge bg-info">${dist.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-success" onclick="bulkPayDistributor('${dist.distributorId}', '${dist.distributorName}', ${dist.unpaidCount})">
                                                     <i class="fas fa-money-bill-wave"></i>
@@ -146,7 +146,7 @@ ${user.role === 'admin' ? `
                                         <tr>
                                             <td><strong>${company.companyName}</strong></td>
                                             <td><span class="badge bg-warning">${company.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${company.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td><span class="badge bg-info">${company.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-success" onclick="bulkPayCompany('${company.companyId}', '${company.companyName}', ${company.unpaidCount})">
                                                     <i class="fas fa-money-bill-wave"></i>
@@ -223,7 +223,7 @@ ${user.role === 'admin' ? `
                                         <tr>
                                             <td><strong>${client.clientName}</strong></td>
                                             <td><span class="badge bg-warning">${client.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${client.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td><span class="badge bg-info">${client.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-success" onclick="bulkPayClient('${client.clientId}', '${client.clientName}', ${client.unpaidCount})">
                                                     <i class="fas fa-money-bill-wave"></i>
@@ -271,7 +271,7 @@ ${user.role === 'admin' ? `
                                         <td>${invoice.client.fullName}</td>
                                         <td>${invoice.file.fileName}</td>
                                         ${user.role === 'admin' ? `<td>${invoice.assignedDistributor.username}</td>` : ''}
-                                        <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} ريال</span></td>
+                                        <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
                                         <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
                                         <td>
                                             ${invoice.status === 'pending' ? '<span class="badge bg-warning">قيد الانتظار</span>' : 

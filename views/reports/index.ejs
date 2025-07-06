@@ -71,8 +71,8 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h4 class="mb-0">${profitStats.totalAmount?.toLocaleString('ar-SA')} ريال</h4>
-                            <p class="mb-0">إجمالي المبالغ</p>
+                            <h4 class="mb-0">${profitStats.totalAmount?.toLocaleString('ar-SA')} جنيه</h4>
+                            <p class="mb-0">إجمالي الفاتورة</p>
                         </div>
                         <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
                     </div>
@@ -85,7 +85,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h4 class="mb-0">${(profitStats.totalClientCommission + profitStats.totalDistributorCommission + profitStats.totalCompanyCommission)?.toLocaleString('ar-SA')} ريال</h4>
+                            <h4 class="mb-0">${(profitStats.totalClientCommission + profitStats.totalDistributorCommission + profitStats.totalCompanyCommission)?.toLocaleString('ar-SA')} جنيه</h4>
                             <p class="mb-0">إجمالي العمولات</p>
                         </div>
                         <i class="fas fa-percentage fa-2x opacity-75"></i>
@@ -99,8 +99,8 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h4 class="mb-0">${profitStats.totalNetProfit?.toLocaleString('ar-SA')} ريال</h4>
-                            <p class="mb-0">صافي الربح</p>
+                            <h4 class="mb-0">${profitStats.totalNetProfit?.toLocaleString('ar-SA')} جنيه</h4>
+                            <p class="mb-0"> الربح</p>
                         </div>
                         <i class="fas fa-chart-line fa-2x opacity-75"></i>
                     </div>
@@ -179,15 +179,15 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <div class="row">
                         <div class="col-4 text-center">
                             <h6 class="text-primary">عمولة العملاء</h6>
-                            <h5>${profitStats.totalClientCommission?.toLocaleString('ar-SA')} ريال</h5>
+                            <h5>${profitStats.totalClientCommission?.toLocaleString('ar-SA')} جنيه</h5>
                         </div>
                         <div class="col-4 text-center">
                             <h6 class="text-success">عمولة الموزعين</h6>
-                            <h5>${profitStats.totalDistributorCommission?.toLocaleString('ar-SA')} ريال</h5>
+                            <h5>${profitStats.totalDistributorCommission?.toLocaleString('ar-SA')} جنيه</h5>
                         </div>
                         <div class="col-4 text-center">
                             <h6 class="text-info">عمولة الشركات</h6>
-                            <h5>${profitStats.totalCompanyCommission?.toLocaleString('ar-SA')} ريال</h5>
+                            <h5>${profitStats.totalCompanyCommission?.toLocaleString('ar-SA')} جنيه</h5>
                         </div>
                     </div>
                 </div>
@@ -300,7 +300,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="sortBy" class="form-label">ترتيب حسب</label>
                     <select class="form-select" id="sortBy" name="sortBy">
                         <option value="invoiceDate" ${filters.sortBy === 'invoiceDate' ? 'selected' : ''}>تاريخ الفاتورة</option>
-                        <option value="amount" ${filters.sortBy === 'amount' ? 'selected' : ''}>المبلغ</option>
+                        <option value="amount" ${filters.sortBy === 'amount' ? 'selected' : ''}>اجمالي الفاتورة</option>
                         <option value="createdAt" ${filters.sortBy === 'createdAt' ? 'selected' : ''}>تاريخ الإنشاء</option>
                         <option value="invoiceCode" ${filters.sortBy === 'invoiceCode' ? 'selected' : ''}>رقم الفاتورة</option>
                     </select>
@@ -350,11 +350,11 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                             <th>العميل</th>
                             <th>الملف/الشركة</th>
                             <th>الموزع</th>
-                            <th>المبلغ</th>
-                            <th>عمولة العميل</th>
-                            <th>عمولة الموزع</th>
-                            <th>عمولة الشركة</th>
-                            <th>صافي الربح</th>
+                            <th>اجمالي الفاتورة</th>
+                            <th>النسبة </th>
+                            <th>الضريبة </th>
+                            <th>ضريبة الشركة</th>
+                            <th> الربح</th>
                             <th>حالة الدفع</th>
                             <th>التاريخ</th>
                         </tr>
@@ -394,22 +394,22 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                                         <small class="text-muted">${invoice.file?.company?.name || 'غير محدد'}</small>
                                     </td>
                                     <td>${invoice.assignedDistributor?.username || 'غير محدد'}</td>
-                                    <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} ريال</span></td>
+                                    <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
                                     <td>
                                         <div>%${invoice.clientCommissionRate}</div>
-                                        <small class="text-muted">${clientCommission.toFixed(2)} ريال</small>
+                                        <small class="text-muted">${clientCommission.toFixed(2)} جنيه</small>
                                     </td>
                                     <td>
                                         <div>%${invoice.distributorCommissionRate}</div>
-                                        <small class="text-muted">${distributorCommission.toFixed(2)} ريال</small>
+                                        <small class="text-muted">${distributorCommission.toFixed(2)} جنيه</small>
                                     </td>
                                     <td>
                                         <div>%${invoice.companyCommissionRate}</div>
-                                        <small class="text-muted">${companyCommission.toFixed(2)} ريال</small>
+                                        <small class="text-muted">${companyCommission.toFixed(2)} جنيه</small>
                                     </td>
                                     <td>
                                         <span class="badge ${netProfit >= 0 ? 'bg-success' : 'bg-danger'}">
-                                            ${netProfit.toFixed(2)} ريال
+                                            ${netProfit.toFixed(2)} جنيه
                                         </span>
                                     </td>
                                     <td>

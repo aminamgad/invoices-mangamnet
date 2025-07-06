@@ -71,7 +71,7 @@
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h4 class="mb-0">${invoices && invoices.length > 0 ? invoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString('ar-SA') : 0}</h4>
-                        <p class="mb-0">إجمالي المبالغ (ريال)</p>
+                        <p class="mb-0">إجمالي الفاتورة (جنيه)</p>
                     </div>
                     <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
                 </div>
@@ -238,12 +238,12 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-success fs-6">
-                                            ${invoice.amount.toLocaleString('ar-SA')} ريال
+                                            ${invoice.amount.toLocaleString('ar-SA')} جنيه
                                         </span>
                                         <div class="commission-details mt-1">
-                                            <small class="d-block">عميل: ${clientCommission.toFixed(2)} ريال</small>
-                                            <small class="d-block">موزع: ${distributorCommission.toFixed(2)} ريال</small>
-                                            <small class="d-block">شركة: ${companyCommission.toFixed(2)} ريال</small>
+                                            <small class="d-block">عميل: ${clientCommission.toFixed(2)} جنيه</small>
+                                            <small class="d-block">موزع: ${distributorCommission.toFixed(2)} جنيه</small>
+                                            <small class="d-block">شركة: ${companyCommission.toFixed(2)} جنيه</small>
                                         </div>
                                     </td>
                                     <td>
