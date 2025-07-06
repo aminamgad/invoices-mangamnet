@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'نظام إدارة الفواتير والعملاء' %></title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts - Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Light mode colors */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --text-inverse: #ffffff;
+            --border-color: #e9ecef;
+            --shadow-color: rgba(0,0,0,0.1);
+            --sidebar-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-hover: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            --card-bg: #ffffff;
+            --table-bg: #ffffff;
+            --input-bg: #ffffff;
+            --input-border: #e9ecef;
+            --navbar-bg: #ffffff;
+            --number-color: #333333;
+            --badge-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode colors */
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #888888;
+            --text-inverse: #333333;
+            --border-color: #404040;
+            --shadow-color: rgba(0,0,0,0.3);
+            --sidebar-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-hover: linear-gradient(135deg, #3d4852 0%, #4c3085 100%);
+            --card-bg: #2d2d2d;
+            --table-bg: #2d2d2d;
+            --input-bg: #3d3d3d;
+            --input-border: #555555;
+            --navbar-bg: #1e1e1e;
+            --number-color: #ffffff;
+            --badge-text: #ffffff;
+        }
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Fix number visibility in dark mode */
+        .badge, .badge * {
+            color: var(--badge-text) !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary) !important;
+        }
+        
+        .table td, .table th {
+            color: var(--text-primary) !important;
+        }
+        
+        .table td strong, .table th strong {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Ensure all numbers are visible */
+        .stats-card h3, .stats-card h4, .stats-card h5 {
+            color: white !important;
+        }
+        
+        .card-body h3, .card-body h4, .card-body h5, .card-body h6 {
+            color: var(--text-primary) !important;
+        }
+        
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        .small, small {
+            color: var(--text-muted) !important;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: var(--sidebar-gradient);
+            box-shadow: 2px 0 10px var(--shadow-color);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .sidebar .nav-link.disabled {
+            color: rgba(255,255,255,0.4);
+            cursor: not-allowed;
+        }
+        
+        .sidebar .nav-link.disabled:hover {
+            background-color: transparent;
+            transform: none;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: white !important;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            color: white !important;
+        }
+        
+        .table {
+            background: var(--table-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            color: var(--text-primary);
+        }
+        
+        .table th {
+            background: var(--primary-gradient);
+            color: white !important;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .table td {
+            border-color: var(--border-color);
+            background-color: var(--table-bg);
+            color: var(--text-primary) !important;
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .badge {
+            font-size: 0.75em;
+            border-radius: 6px;
+            color: white !important;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg);
+            border-color: #667eea;
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .stats-card {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card i {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .border-bottom {
+            border-color: var(--border-color) !important;
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 300px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            z-index: 1050;
+            transform: translateX(-320px);
+            transition: transform 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .settings-panel.show {
+            transform: translateX(0);
+        }
+        
+        .settings-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        
+        .settings-body {
+            padding: 20px;
+        }
+        
+        .setting-group {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .setting-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .setting-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .setting-description {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .theme-option {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-option:hover {
+            border-color: #667eea;
+            background-color: var(--bg-tertiary);
+        }
+        
+        .theme-option.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+        
+        .theme-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .theme-preview.light {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px solid #e9ecef;
+        }
+        
+        .theme-preview.dark {
+            background: linear-gradient(135deg, #2d2d2d 0%, #121212 100%);
+            border: 2px solid #404040;
+        }
+        
+        .theme-preview.auto {
+            background: linear-gradient(135deg, #ffffff 0%, #2d2d2d 100%);
+            border: 2px solid #667eea;
+        }
+        
+        .font-size-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .animation-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background-color: var(--border-color);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background-color: #667eea;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(25px);
+        }
+        
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1060;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-hover);
+        }
+        
+        .theme-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+        
+        .settings-toggle {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            z-index: 1060;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            color: white;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+        
+        .settings-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-hover);
+        }
+        
+        /* Dropdown menus */
+        .dropdown-menu {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .dropdown-item {
+            color: var(--text-primary);
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* Pagination */
+        .page-link {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .page-link:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .page-item.active .page-link {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            color: white !important;
+        }
+        
+        /* Modal dark mode */
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+        
+        .modal-footer {
+            border-top-color: var(--border-color);
+        }
+        
+        /* Scrollbar dark mode */
+        [data-theme="dark"] ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+        
+        /* Animation classes */
+        .no-animations * {
+            transition: none !important;
+            animation: none !important;
+        }
+        
+        /* Font size classes */
+        .font-small {
+            font-size: 0.9em;
+        }
+        
+        .font-large {
+            font-size: 1.1em;
+        }
+        
+        .font-extra-large {
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 80%;
+                height: 100vh;
+                z-index: 1050;
+                transition: right 0.3s ease;
+            }
+            
+            .sidebar.show {
+                right: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 1040;
+            }
+            
+            .sidebar-overlay.show {
+                display: block;
+            }
+            
+            .theme-toggle {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .settings-toggle {
+                top: 60px;
+                left: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            .settings-panel {
+                top: 100px;
+                left: 10px;
+                width: calc(100vw - 20px);
+                max-width: 280px;
+                transform: translateX(calc(-100vw + 10px));
+            }
+            
+            .settings-panel.show {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="تبديل الوضع المظلم">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <!-- Settings Toggle Button -->
+    <button class="settings-toggle" id="settingsToggle" title="الإعدادات المتقدمة">
+        <i class="fas fa-cog" id="settingsIcon"></i>
+    </button>
+
+    <!-- Advanced Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h6 class="mb-0">الإعدادات المتقدمة</h6>
+            <button class="btn btn-sm btn-outline-light" id="closeSettings">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="settings-body">
+            <!-- Theme Selection -->
+            <div class="setting-group">
+                <label class="setting-label">نمط العرض</label>
+                <div class="setting-description">اختر نمط العرض المفضل لديك</div>
+                
+                <div class="theme-option" data-theme="light">
+                    <div class="theme-preview light"></div>
+                    <div>
+                        <div>الوضع المضيء</div>
+                        <small class="text-muted">مناسب للاستخدام النهاري</small>
+                    </div>
+                </div>
+                
+                <div class="theme-option" data-theme="dark">
+                    <div class="theme-preview dark"></div>
+                    <div>
+                        <div>الوضع المظلم</div>
+                        <small class="text-muted">مناسب للاستخدام الليلي</small>
+                    </div>
+                </div>
+                
+                <div class="theme-option" data-theme="auto">
+                    <div class="theme-preview auto"></div>
+                    <div>
+                        <div>تلقائي</div>
+                        <small class="text-muted">يتبع إعدادات النظام</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Font Size -->
+            <div class="setting-group">
+                <label class="setting-label">حجم الخط</label>
+                <div class="setting-description">اضبط حجم الخط حسب راحتك</div>
+                <input type="range" class="font-size-slider" id="fontSizeSlider" min="0" max="3" value="1" step="1">
+                <div class="d-flex justify-content-between">
+                    <small>صغير</small>
+                    <small>عادي</small>
+                    <small>كبير</small>
+                    <small>كبير جداً</small>
+                </div>
+            </div>
+
+            <!-- Animations -->
+            <div class="setting-group">
+                <label class="setting-label">الحركات والانتقالات</label>
+                <div class="setting-description">تفعيل أو إلغاء الحركات المتحركة</div>
+                <div class="animation-toggle">
+                    <span>تفعيل الحركات</span>
+                    <div class="toggle-switch active" id="animationToggle"></div>
+                </div>
+            </div>
+
+            <!-- Language (Future) -->
+            <div class="setting-group">
+                <label class="setting-label">اللغة</label>
+                <div class="setting-description">اختر لغة واجهة النظام</div>
+                <select class="form-select" id="languageSelect">
+                    <option value="ar" selected>العربية</option>
+                    <option value="en" disabled>English (قريباً)</option>
+                </select>
+            </div>
+
+            <!-- Reset Settings -->
+            <div class="setting-group">
+                <label class="setting-label">إعادة تعيين</label>
+                <div class="setting-description">استعادة الإعدادات الافتراضية</div>
+                <button class="btn btn-outline-danger btn-sm w-100" id="resetSettings">
+                    <i class="fas fa-undo"></i>
+                    إعادة تعيين الإعدادات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <% if (currentUser) { %>
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <div class="text-center mb-4">
+                            <h4 class="text-white">نظام الفواتير</h4>
+                            <small class="text-white-50">مرحباً <%= currentUser.username %></small>
+                        </div>
+                        
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/dashboard">
+                                    <i class="fas fa-tachometer-alt ms-2"></i>
+                                    لوحة التحكم
+                                </a>
+                            </li>
+                            
+                            <!-- Reports - Check for view_own or view_all permission -->
+                            <% 
+                            const canViewReports = currentUser.role === 'admin' || 
+                                                 currentUser.permissions.canViewReports ||
+                                                 (currentUser.detailedPermissions && 
+                                                  currentUser.detailedPermissions.some(p => 
+                                                    p.module === 'reports' && 
+                                                    (p.action === 'view_own' || p.action === 'view_all')
+                                                  ));
+                            %>
+                            <% if (canViewReports) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/reports">
+                                    <i class="fas fa-chart-line ms-2"></i>
+                                    تقارير الأرباح
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Clients - Check for any client permission -->
+                            <% 
+                            const canAccessClients = currentUser.role === 'admin' || 
+                                                    currentUser.permissions.canManageClients ||
+                                                    (currentUser.detailedPermissions && 
+                                                     currentUser.detailedPermissions.some(p => 
+                                                       p.module === 'clients'
+                                                     ));
+                            %>
+                            <% if (canAccessClients) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/clients">
+                                    <i class="fas fa-users ms-2"></i>
+                                    العملاء
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Distributors - Admin only or view_all permission -->
+                            <% 
+                            const canAccessDistributors = currentUser.role === 'admin' ||
+                                                         (currentUser.detailedPermissions && 
+                                                          currentUser.detailedPermissions.some(p => 
+                                                            p.module === 'distributors' && 
+                                                            p.action === 'view_all'
+                                                          ));
+                            %>
+                            <% if (canAccessDistributors) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/distributors">
+                                    <i class="fas fa-user-tie ms-2"></i>
+                                    الموزعين
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Companies - Check for any company permission -->
+                            <% 
+                            const canAccessCompanies = currentUser.role === 'admin' || 
+                                                      currentUser.permissions.canCreateCompanies ||
+                                                      (currentUser.detailedPermissions && 
+                                                       currentUser.detailedPermissions.some(p => 
+                                                         p.module === 'companies'
+                                                       ));
+                            %>
+                            <% if (canAccessCompanies) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/companies">
+                                    <i class="fas fa-building ms-2"></i>
+                                    الشركات
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Files - Check for any file permission -->
+                            <% 
+                            const canAccessFiles = currentUser.role === 'admin' ||
+                                                  (currentUser.detailedPermissions && 
+                                                   currentUser.detailedPermissions.some(p => 
+                                                     p.module === 'files'
+                                                   ));
+                            %>
+                            <% if (canAccessFiles) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/files">
+                                    <i class="fas fa-folder ms-2"></i>
+                                    الملفات
+                                </a>
+                            </li>
+                            <% } else { %>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" href="#" title="ليس لديك صلاحية للوصول">
+                                    <i class="fas fa-folder ms-2"></i>
+                                    الملفات
+                                    <i class="fas fa-lock ms-1" style="font-size: 0.8em;"></i>
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Invoices - Check for any invoice permission -->
+                            <% 
+                            const canAccessInvoices = currentUser.role === 'admin' || 
+                                                     currentUser.permissions.canCreateInvoices ||
+                                                     (currentUser.detailedPermissions && 
+                                                      currentUser.detailedPermissions.some(p => 
+                                                        p.module === 'invoices'
+                                                      ));
+                            %>
+                            <% if (canAccessInvoices) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/invoices">
+                                    <i class="fas fa-file-invoice ms-2"></i>
+                                    الفواتير
+                                </a>
+                            </li>
+                            <% } else { %>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" href="#" title="ليس لديك صلاحية للوصول">
+                                    <i class="fas fa-file-invoice ms-2"></i>
+                                    الفواتير
+                                    <i class="fas fa-lock ms-1" style="font-size: 0.8em;"></i>
+                                </a>
+                            </li>
+                            <% } %>
+                            
+                            <!-- Commission Tiers - Admin only -->
+                            <% if (currentUser.role === 'admin') { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/commission-tiers">
+                                    <i class="fas fa-percentage ms-2"></i>
+                                    مستويات العمولة
+                                </a>
+                            </li>
+                            <% } %>
+                        </ul>
+                        
+                        <div class="mt-auto pt-3">
+                            <form method="POST" action="/auth/logout" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                                    <i class="fas fa-sign-out-alt ms-2"></i>
+                                    تسجيل الخروج
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </nav>
+                
+                <!-- Main content -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <!-- Mobile navbar -->
+                    <div class="d-md-none">
+                        <nav class="navbar navbar-expand-lg navbar-light mb-3">
+                            <div class="container-fluid">
+                                <button class="navbar-toggler" type="button" id="sidebarToggle">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                                <span class="navbar-brand">نظام الفواتير</span>
+                            </div>
+                        </nav>
+                    </div>
+                    
+                    <!-- Flash messages -->
+                    <% if (success && success.length > 0) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= success %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+                    
+                    <% if (error && error.length > 0) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+                    
+                    <%- body %>
+                </main>
+            </div>
+        </div>
+        
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <% } else { %>
+        <%- body %>
+    <% } %>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Advanced Settings Manager
+        class AdvancedSettingsManager {
+            constructor() {
+                this.settings = {
+                    theme: localStorage.getItem('theme') || 'auto',
+                    fontSize: parseInt(localStorage.getItem('fontSize')) || 1,
+                    animations: localStorage.getItem('animations') !== 'false',
+                    language: localStorage.getItem('language') || 'ar'
+                };
+                
+                this.themeToggle = document.getElementById('themeToggle');
+                this.themeIcon = document.getElementById('themeIcon');
+                this.settingsToggle = document.getElementById('settingsToggle');
+                this.settingsPanel = document.getElementById('settingsPanel');
+                this.closeSettings = document.getElementById('closeSettings');
+                
+                this.init();
+            }
+            
+            init() {
+                this.applySettings();
+                this.bindEvents();
+                this.updateUI();
+            }
+            
+            bindEvents() {
+                // Theme toggle
+                if (this.themeToggle) {
+                    this.themeToggle.addEventListener('click', () => this.quickToggleTheme());
+                }
+                
+                // Settings panel toggle
+                if (this.settingsToggle) {
+                    this.settingsToggle.addEventListener('click', () => this.toggleSettingsPanel());
+                }
+                
+                if (this.closeSettings) {
+                    this.closeSettings.addEventListener('click', () => this.hideSettingsPanel());
+                }
+                
+                // Theme options
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        const theme = option.dataset.theme;
+                        this.setTheme(theme);
+                    });
+                });
+                
+                // Font size slider
+                const fontSizeSlider = document.getElementById('fontSizeSlider');
+                if (fontSizeSlider) {
+                    fontSizeSlider.addEventListener('input', (e) => {
+                        this.setFontSize(parseInt(e.target.value));
+                    });
+                }
+                
+                // Animation toggle
+                const animationToggle = document.getElementById('animationToggle');
+                if (animationToggle) {
+                    animationToggle.addEventListener('click', () => {
+                        this.toggleAnimations();
+                    });
+                }
+                
+                // Reset settings
+                const resetSettings = document.getElementById('resetSettings');
+                if (resetSettings) {
+                    resetSettings.addEventListener('click', () => {
+                        this.resetSettings();
+                    });
+                }
+                
+                // Close panel when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.settingsPanel.contains(e.target) && 
+                        !this.settingsToggle.contains(e.target) && 
+                        this.settingsPanel.classList.contains('show')) {
+                        this.hideSettingsPanel();
+                    }
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl/Cmd + Shift + D for theme toggle
+                    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+                        e.preventDefault();
+                        this.quickToggleTheme();
+                    }
+                    
+                    // Ctrl/Cmd + Shift + S for settings
+                    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+                        e.preventDefault();
+                        this.toggleSettingsPanel();
+                    }
+                    
+                    // Escape to close settings
+                    if (e.key === 'Escape' && this.settingsPanel.classList.contains('show')) {
+                        this.hideSettingsPanel();
+                    }
+                });
+                
+                // Listen for system theme changes
+                if (window.matchMedia) {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        if (this.settings.theme === 'auto') {
+                            this.applyTheme(e.matches ? 'dark' : 'light');
+                        }
+                    });
+                }
+            }
+            
+            setTheme(theme) {
+                this.settings.theme = theme;
+                localStorage.setItem('theme', theme);
+                
+                if (theme === 'auto') {
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    this.applyTheme(prefersDark ? 'dark' : 'light');
+                } else {
+                    this.applyTheme(theme);
+                }
+                
+                this.updateUI();
+            }
+            
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                if (this.themeIcon) {
+                    if (theme === 'dark') {
+                        this.themeIcon.className = 'fas fa-sun';
+                        this.themeToggle.title = 'تبديل للوضع المضيء';
+                    } else {
+                        this.themeIcon.className = 'fas fa-moon';
+                        this.themeToggle.title = 'تبديل للوضع المظلم';
+                    }
+                }
+                
+                // Dispatch custom event
+                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+            }
+            
+            quickToggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                this.setTheme(newTheme);
+                
+                // Animation effect
+                if (this.themeToggle) {
+                    this.themeToggle.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        this.themeToggle.style.transform = 'scale(1)';
+                    }, 150);
+                }
+            }
+            
+            setFontSize(size) {
+                this.settings.fontSize = size;
+                localStorage.setItem('fontSize', size);
+                this.applyFontSize(size);
+            }
+            
+            applyFontSize(size) {
+                document.body.classList.remove('font-small', 'font-large', 'font-extra-large');
+                
+                switch(size) {
+                    case 0:
+                        document.body.classList.add('font-small');
+                        break;
+                    case 2:
+                        document.body.classList.add('font-large');
+                        break;
+                    case 3:
+                        document.body.classList.add('font-extra-large');
+                        break;
+                    default:
+                        // Normal size (1) - no class needed
+                        break;
+                }
+            }
+            
+            toggleAnimations() {
+                this.settings.animations = !this.settings.animations;
+                localStorage.setItem('animations', this.settings.animations);
+                this.applyAnimations(this.settings.animations);
+                this.updateUI();
+            }
+            
+            applyAnimations(enabled) {
+                if (enabled) {
+                    document.body.classList.remove('no-animations');
+                } else {
+                    document.body.classList.add('no-animations');
+                }
+            }
+            
+            toggleSettingsPanel() {
+                this.settingsPanel.classList.toggle('show');
+            }
+            
+            hideSettingsPanel() {
+                this.settingsPanel.classList.remove('show');
+            }
+            
+            resetSettings() {
+                if (confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات؟')) {
+                    localStorage.removeItem('theme');
+                    localStorage.removeItem('fontSize');
+                    localStorage.removeItem('animations');
+                    localStorage.removeItem('language');
+                    
+                    this.settings = {
+                        theme: 'auto',
+                        fontSize: 1,
+                        animations: true,
+                        language: 'ar'
+                    };
+                    
+                    this.applySettings();
+                    this.updateUI();
+                    
+                    // Show success message
+                    this.showNotification('تم إعادة تعيين الإعدادات بنجاح', 'success');
+                }
+            }
+            
+            applySettings() {
+                // Apply theme
+                if (this.settings.theme === 'auto') {
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    this.applyTheme(prefersDark ? 'dark' : 'light');
+                } else {
+                    this.applyTheme(this.settings.theme);
+                }
+                
+                // Apply font size
+                this.applyFontSize(this.settings.fontSize);
+                
+                // Apply animations
+                this.applyAnimations(this.settings.animations);
+            }
+            
+            updateUI() {
+                // Update theme options
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.classList.toggle('active', option.dataset.theme === this.settings.theme);
+                });
+                
+                // Update font size slider
+                const fontSizeSlider = document.getElementById('fontSizeSlider');
+                if (fontSizeSlider) {
+                    fontSizeSlider.value = this.settings.fontSize;
+                }
+                
+                // Update animation toggle
+                const animationToggle = document.getElementById('animationToggle');
+                if (animationToggle) {
+                    animationToggle.classList.toggle('active', this.settings.animations);
+                }
+            }
+            
+            showNotification(message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                notification.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 3000);
+            }
+            
+            getTheme() {
+                return this.settings.theme;
+            }
+        }
+        
+        // Initialize settings manager
+        const settingsManager = new AdvancedSettingsManager();
+        
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    sidebarOverlay.classList.toggle('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+        
+        // Expose settings manager globally
+        window.settingsManager = settingsManager;
+        window.themeManager = settingsManager; // Backward compatibility
+    </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<% const title = 'إدارة الموزعين'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إدارة الموزعين</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/distributors/new" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            إضافة موزع جديد
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        ${distributors && distributors.length > 0 ? `
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>اسم المستخدم</th>
+                            <th>نسبة العمولة</th>
+                            <th>الصلاحيات</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${distributors.map(distributor => {
+                            // Get permission summary
+                            const permissionSummary = [];
+                            const allPermissions = new Set();
+                            
+                            distributor.roles.forEach(role => {
+                                role.permissions.forEach(permission => {
+                                    allPermissions.add(`${permission.module}.${permission.action}`);
+                                });
+                            });
+                            
+                            const modules = ['companies', 'clients', 'files', 'invoices', 'distributors', 'reports'];
+                            const moduleNames = {
+                                'companies': 'الشركات',
+                                'clients': 'العملاء', 
+                                'files': 'الملفات',
+                                'invoices': 'الفواتير',
+                                'distributors': 'الموزعين',
+                                'reports': 'التقارير'
+                            };
+                            
+                            modules.forEach(module => {
+                                const hasAnyPermission = Array.from(allPermissions).some(p => p.startsWith(module + '.'));
+                                if (hasAnyPermission) {
+                                    permissionSummary.push(moduleNames[module]);
+                                }
+                            });
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${distributor.username}</strong></td>
+                                    <td><span class="badge bg-info">%${distributor.commissionRate}</span></td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            ${permissionSummary.slice(0, 3).map(module => 
+                                                `<span class="badge bg-primary">${module}</span>`
+                                            ).join('')}
+                                            ${permissionSummary.length > 3 ? 
+                                                `<span class="badge bg-secondary">+${permissionSummary.length - 3} أخرى</span>` : 
+                                                ''
+                                            }
+                                        </div>
+                                        <small class="text-muted">${allPermissions.size} صلاحية</small>
+                                    </td>
+                                    <td>
+                                        ${distributor.isActive ? 
+                                            '<span class="badge bg-success">نشط</span>' : 
+                                            '<span class="badge bg-danger">غير نشط</span>'
+                                        }
+                                    </td>
+                                    <td>${new Date(distributor.createdAt).toLocaleDateString('ar-EG')}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/distributors/${distributor._id}/edit" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="text-center py-5">
+                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد موزعين حالياً</h5>
+                <p class="text-muted">ابدأ بإضافة موزع جديد</p>
+                <a href="/distributors/new" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    إضافة موزع جديد
+                </a>
+            </div>
+        `}
+    </div>
+</div>
+` }) %>

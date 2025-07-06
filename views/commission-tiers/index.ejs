@@ -1,0 +1,159 @@
+<% const title = 'إدارة مستويات العمولة'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إدارة مستويات العمولة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/commission-tiers/new" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            إضافة مستوى عمولة جديد
+        </a>
+    </div>
+</div>
+
+<!-- Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="/commission-tiers" class="row g-3">
+            <div class="col-md-4">
+                <label for="entityType" class="form-label">نوع الكيان</label>
+                <select class="form-select" id="entityType" name="entityType" onchange="updateEntityOptions()">
+                    <option value="">جميع الأنواع</option>
+                    <option value="company" ${selectedEntityType === 'company' ? 'selected' : ''}>شركة</option>
+                    <option value="client" ${selectedEntityType === 'client' ? 'selected' : ''}>عميل</option>
+                    <option value="distributor" ${selectedEntityType === 'distributor' ? 'selected' : ''}>موزع</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="entityId" class="form-label">الكيان</label>
+                <select class="form-select" id="entityId" name="entityId">
+                    <option value="">جميع الكيانات</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-filter"></i>
+                    تصفية
+                </button>
+                <a href="/commission-tiers" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                    إلغاء التصفية
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        ${tiers && tiers.length > 0 ? `
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>نوع الكيان</th>
+                            <th>اسم الكيان</th>
+                            <th>الحد الأدنى</th>
+                            <th>الحد الأقصى</th>
+                            <th>نسبة العمولة</th>
+                            <th>الحالة</th>
+                            <th>تم الإنشاء بواسطة</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tiers.map(tier => `
+                            <tr>
+                                <td>
+                                    ${tier.entityType === 'company' ? '<span class="badge bg-info">شركة</span>' :
+                                      tier.entityType === 'client' ? '<span class="badge bg-success">عميل</span>' :
+                                      '<span class="badge bg-warning">موزع</span>'}
+                                </td>
+                                <td><strong>
+                                    ${tier.entityType === 'company' ? tier.entityId?.name :
+                                      tier.entityType === 'client' ? tier.entityId?.fullName :
+                                      tier.entityId?.username}
+                                </strong></td>
+                                <td>${tier.minAmount} ريال</td>
+                                <td>${tier.maxAmount} ريال</td>
+                                <td><span class="badge bg-primary">%${tier.commissionRate}</span></td>
+                                <td>
+                                    ${tier.isActive ? 
+                                        '<span class="badge bg-success">نشط</span>' : 
+                                        '<span class="badge bg-danger">غير نشط</span>'
+                                    }
+                                </td>
+                                <td>${tier.createdBy?.username || 'غير محدد'}</td>
+                                <td>${new Date(tier.createdAt).toLocaleDateString('ar-EG')}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/commission-tiers/${tier._id}/edit" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="/commission-tiers/${tier._id}?_method=DELETE" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد من حذف مستوى العمولة هذا؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="text-center py-5">
+                <i class="fas fa-percentage fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد مستويات عمولة حالياً</h5>
+                <p class="text-muted">ابدأ بإضافة مستوى عمولة جديد</p>
+                <a href="/commission-tiers/new" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    إضافة مستوى عمولة جديد
+                </a>
+            </div>
+        `}
+    </div>
+</div>
+
+<script>
+const companies = ${JSON.stringify(companies)};
+const clients = ${JSON.stringify(clients)};
+const distributors = ${JSON.stringify(distributors)};
+const selectedEntityId = '${selectedEntityId || ''}';
+
+function updateEntityOptions() {
+    const entityType = document.getElementById('entityType').value;
+    const entitySelect = document.getElementById('entityId');
+    
+    // Clear existing options
+    entitySelect.innerHTML = '<option value="">جميع الكيانات</option>';
+    
+    let entities = [];
+    if (entityType === 'company') {
+        entities = companies;
+    } else if (entityType === 'client') {
+        entities = clients;
+    } else if (entityType === 'distributor') {
+        entities = distributors;
+    }
+    
+    entities.forEach(entity => {
+        const option = document.createElement('option');
+        option.value = entity._id;
+        option.textContent = entity.name || entity.fullName || entity.username;
+        if (entity._id === selectedEntityId) {
+            option.selected = true;
+        }
+        entitySelect.appendChild(option);
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateEntityOptions();
+});
+</script>
+` }) %>

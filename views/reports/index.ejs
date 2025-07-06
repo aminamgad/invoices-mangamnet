@@ -1,0 +1,404 @@
+<% const title = 'تقارير الأرباح'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">تقارير الأرباح والفواتير</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-success" onclick="exportData('json')">
+                <i class="fas fa-download"></i>
+                تصدير JSON
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="exportData('csv')">
+                <i class="fas fa-file-csv"></i>
+                تصدير CSV
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Profit Statistics Cards -->
+${profitStats && Object.keys(profitStats).length > 0 ? `
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.totalInvoices}</h4>
+                            <p class="mb-0">إجمالي الفواتير</p>
+                        </div>
+                        <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.totalAmount?.toLocaleString('ar-SA')} ريال</h4>
+                            <p class="mb-0">إجمالي المبالغ</p>
+                        </div>
+                        <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${(profitStats.totalClientCommission + profitStats.totalDistributorCommission + profitStats.totalCompanyCommission)?.toLocaleString('ar-SA')} ريال</h4>
+                            <p class="mb-0">إجمالي العمولات</p>
+                        </div>
+                        <i class="fas fa-percentage fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.totalNetProfit?.toLocaleString('ar-SA')} ريال</h4>
+                            <p class="mb-0">صافي الربح</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">تفصيل العمولات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <h6 class="text-primary">عمولة العملاء</h6>
+                            <h5>${profitStats.totalClientCommission?.toLocaleString('ar-SA')} ريال</h5>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h6 class="text-success">عمولة الموزعين</h6>
+                            <h5>${profitStats.totalDistributorCommission?.toLocaleString('ar-SA')} ريال</h5>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h6 class="text-info">عمولة الشركات</h6>
+                            <h5>${profitStats.totalCompanyCommission?.toLocaleString('ar-SA')} ريال</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">حالة الفواتير</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <h6 class="text-warning">قيد الانتظار</h6>
+                            <h5>${profitStats.statusBreakdown?.pending || 0}</h5>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h6 class="text-success">مكتملة</h6>
+                            <h5>${profitStats.statusBreakdown?.completed || 0}</h5>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h6 class="text-danger">ملغية</h6>
+                            <h5>${profitStats.statusBreakdown?.cancelled || 0}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+` : ''}
+
+<!-- Advanced Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter"></i>
+            البحث والتصفية المتقدمة
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="/reports" id="filterForm">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="startDate" class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" id="startDate" name="startDate" value="${filters.startDate || ''}">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="endDate" class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="endDate" name="endDate" value="${filters.endDate || ''}">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="client" class="form-label">العميل</label>
+                    <select class="form-select" id="client" name="client">
+                        <option value="">جميع العملاء</option>
+                        ${clients.map(client => `
+                            <option value="${client._id}" ${filters.client === client._id.toString() ? 'selected' : ''}>${client.fullName}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="distributor" class="form-label">الموزع</label>
+                    <select class="form-select" id="distributor" name="distributor">
+                        <option value="">جميع الموزعين</option>
+                        ${distributors.map(distributor => `
+                            <option value="${distributor._id}" ${filters.distributor === distributor._id.toString() ? 'selected' : ''}>${distributor.username}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="company" class="form-label">الشركة</label>
+                    <select class="form-select" id="company" name="company">
+                        <option value="">جميع الشركات</option>
+                        ${companies.map(company => `
+                            <option value="${company._id}" ${filters.company === company._id.toString() ? 'selected' : ''}>${company.name}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="pending" ${filters.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
+                        <option value="completed" ${filters.status === 'completed' ? 'selected' : ''}>مكتملة</option>
+                        <option value="cancelled" ${filters.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="minAmount" class="form-label">الحد الأدنى للمبلغ</label>
+                    <input type="number" class="form-control" id="minAmount" name="minAmount" min="0" step="0.01" value="${filters.minAmount || ''}" placeholder="0.00">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="maxAmount" class="form-label">الحد الأقصى للمبلغ</label>
+                    <input type="number" class="form-control" id="maxAmount" name="maxAmount" min="0" step="0.01" value="${filters.maxAmount || ''}" placeholder="0.00">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="sortBy" class="form-label">ترتيب حسب</label>
+                    <select class="form-select" id="sortBy" name="sortBy">
+                        <option value="invoiceDate" ${filters.sortBy === 'invoiceDate' ? 'selected' : ''}>تاريخ الفاتورة</option>
+                        <option value="amount" ${filters.sortBy === 'amount' ? 'selected' : ''}>المبلغ</option>
+                        <option value="createdAt" ${filters.sortBy === 'createdAt' ? 'selected' : ''}>تاريخ الإنشاء</option>
+                        <option value="invoiceCode" ${filters.sortBy === 'invoiceCode' ? 'selected' : ''}>رقم الفاتورة</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="sortOrder" class="form-label">اتجاه الترتيب</label>
+                    <select class="form-select" id="sortOrder" name="sortOrder">
+                        <option value="desc" ${filters.sortOrder === 'desc' ? 'selected' : ''}>تنازلي</option>
+                        <option value="asc" ${filters.sortOrder === 'asc' ? 'selected' : ''}>تصاعدي</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i>
+                        بحث وتصفية
+                    </button>
+                    <a href="/reports" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times"></i>
+                        إلغاء التصفية
+                    </a>
+                    <button type="button" class="btn btn-outline-info" onclick="toggleAdvancedSearch()">
+                        <i class="fas fa-cog"></i>
+                        خيارات متقدمة
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-table"></i>
+            تفاصيل الفواتير والأرباح
+            ${pagination.totalInvoices ? `(${pagination.totalInvoices} فاتورة)` : ''}
+        </h5>
+    </div>
+    <div class="card-body">
+        ${invoices && invoices.length > 0 ? `
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>العميل</th>
+                            <th>الملف/الشركة</th>
+                            <th>الموزع</th>
+                            <th>المبلغ</th>
+                            <th>عمولة العميل</th>
+                            <th>عمولة الموزع</th>
+                            <th>عمولة الشركة</th>
+                            <th>صافي الربح</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoices.map(invoice => {
+                            const clientCommission = (invoice.amount * invoice.clientCommissionRate) / 100;
+                            const distributorCommission = (invoice.amount * invoice.distributorCommissionRate) / 100;
+                            const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
+                            const netProfit = invoice.amount - clientCommission - distributorCommission - companyCommission;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${invoice.invoiceCode}</strong></td>
+                                    <td>${invoice.client?.fullName || 'غير محدد'}</td>
+                                    <td>
+                                        <div>${invoice.file?.fileName || 'غير محدد'}</div>
+                                        <small class="text-muted">${invoice.file?.company?.name || 'غير محدد'}</small>
+                                    </td>
+                                    <td>${invoice.assignedDistributor?.username || 'غير محدد'}</td>
+                                    <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} ريال</span></td>
+                                    <td>
+                                        <div>%${invoice.clientCommissionRate}</div>
+                                        <small class="text-muted">${clientCommission.toFixed(2)} ريال</small>
+                                    </td>
+                                    <td>
+                                        <div>%${invoice.distributorCommissionRate}</div>
+                                        <small class="text-muted">${distributorCommission.toFixed(2)} ريال</small>
+                                    </td>
+                                    <td>
+                                        <div>%${invoice.companyCommissionRate}</div>
+                                        <small class="text-muted">${companyCommission.toFixed(2)} ريال</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${netProfit >= 0 ? 'bg-success' : 'bg-danger'}">
+                                            ${netProfit.toFixed(2)} ريال
+                                        </span>
+                                    </td>
+                                    <td>
+                                        ${invoice.status === 'pending' ? '<span class="badge bg-warning">قيد الانتظار</span>' :
+                                          invoice.status === 'completed' ? '<span class="badge bg-success">مكتملة</span>' :
+                                          '<span class="badge bg-danger">ملغية</span>'}
+                                    </td>
+                                    <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            ${pagination.totalPages > 1 ? `
+                <nav aria-label="تصفح الصفحات" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        ${pagination.currentPage > 1 ? `
+                            <li class="page-item">
+                                <a class="page-link" href="?${new URLSearchParams({...filters, page: pagination.currentPage - 1}).toString()}">السابق</a>
+                            </li>
+                        ` : ''}
+                        
+                        ${Array.from({length: Math.min(5, pagination.totalPages)}, (_, i) => {
+                            const pageNum = Math.max(1, pagination.currentPage - 2) + i;
+                            if (pageNum <= pagination.totalPages) {
+                                return `
+                                    <li class="page-item ${pageNum === pagination.currentPage ? 'active' : ''}">
+                                        <a class="page-link" href="?${new URLSearchParams({...filters, page: pageNum}).toString()}">${pageNum}</a>
+                                    </li>
+                                `;
+                            }
+                            return '';
+                        }).join('')}
+                        
+                        ${pagination.currentPage < pagination.totalPages ? `
+                            <li class="page-item">
+                                <a class="page-link" href="?${new URLSearchParams({...filters, page: pagination.currentPage + 1}).toString()}">التالي</a>
+                            </li>
+                        ` : ''}
+                    </ul>
+                </nav>
+            ` : ''}
+        ` : `
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد فواتير تطابق معايير البحث</h5>
+                <p class="text-muted">جرب تعديل معايير البحث أو إلغاء التصفية</p>
+                <a href="/reports" class="btn btn-primary">
+                    <i class="fas fa-refresh"></i>
+                    عرض جميع الفواتير
+                </a>
+            </div>
+        `}
+    </div>
+</div>
+
+<script>
+function exportData(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('format', format);
+    
+    const exportUrl = '/reports/export?' + params.toString();
+    
+    if (format === 'csv') {
+        // Download CSV file
+        const link = document.createElement('a');
+        link.href = exportUrl;
+        link.download = 'invoices-report.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        // Open JSON in new tab
+        window.open(exportUrl, '_blank');
+    }
+}
+
+function toggleAdvancedSearch() {
+    // This could expand to show more advanced search options
+    alert('خيارات البحث المتقدمة ستتوفر قريباً');
+}
+
+// Auto-submit form when filters change (optional)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+    const autoSubmitElements = ['client', 'distributor', 'company', 'status'];
+    
+    autoSubmitElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', function() {
+                // Optional: Auto-submit on change
+                // form.submit();
+            });
+        }
+    });
+});
+</script>
+` }) %>

@@ -1,0 +1,56 @@
+<% const title = 'تعديل الشركة'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">تعديل الشركة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/companies" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة للشركات
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات الشركة</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/companies/${company._id}?_method=PUT">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">اسم الشركة <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="${company.name}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="commissionRate" class="form-label">نسبة العمولة (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="commissionRate" name="commissionRate" min="0" max="100" step="0.01" value="${company.commissionRate}" required>
+                        <div class="form-text">أدخل نسبة العمولة للشركة (مثال: 5 تعني 5%)</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            حفظ التعديلات
+                        </button>
+                        <a href="/companies" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات الشركة</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>تاريخ الإنشاء:</strong><br>${new Date(company.createdAt).toLocaleDateString('ar-EG')}</p>
+                <p><strong>آخر تحديث:</strong><br>${new Date(company.updatedAt).toLocaleDateString('ar-EG')}</p>
+            </div>
+        </div>
+    </div>
+</div>
+` }) %>

@@ -1,0 +1,28 @@
+{
+  "name": "arabic-invoice-system",
+  "version": "1.0.0",
+  "description": "Complete Invoice and User Management System in Arabic",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node scripts/createAdmin.js",
+    "seed-permissions": "node scripts/seedPermissions.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "ejs": "^3.1.9",
+    "express-session": "^1.17.3",
+    "bcryptjs": "^2.4.3",
+    "multer": "^1.4.5-lts.1",
+    "moment": "^2.29.4",
+    "dotenv": "^16.3.1",
+    "express-flash": "^0.0.2",
+    "method-override": "^3.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

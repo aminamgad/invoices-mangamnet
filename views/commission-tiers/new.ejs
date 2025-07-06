@@ -1,0 +1,135 @@
+<% const title = 'إضافة مستوى عمولة جديد'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إضافة مستوى عمولة جديد</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/commission-tiers" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة لمستويات العمولة
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات مستوى العمولة</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/commission-tiers">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="entityType" class="form-label">نوع الكيان <span class="text-danger">*</span></label>
+                            <select class="form-select" id="entityType" name="entityType" required onchange="updateEntityOptions()">
+                                <option value="">اختر نوع الكيان</option>
+                                <option value="company">شركة</option>
+                                <option value="client">عميل</option>
+                                <option value="distributor">موزع</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="entityId" class="form-label">الكيان <span class="text-danger">*</span></label>
+                            <select class="form-select" id="entityId" name="entityId" required>
+                                <option value="">اختر الكيان</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="minAmount" class="form-label">الحد الأدنى للمبلغ (ريال) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="minAmount" name="minAmount" min="0" step="0.01" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="maxAmount" class="form-label">الحد الأقصى للمبلغ (ريال) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="maxAmount" name="maxAmount" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="commissionRate" class="form-label">نسبة العمولة (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="commissionRate" name="commissionRate" min="0" max="100" step="0.01" required>
+                        <div class="form-text">أدخل نسبة العمولة (مثال: 5 تعني 5%)</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            حفظ مستوى العمولة
+                        </button>
+                        <a href="/commission-tiers" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">تعليمات</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-info-circle text-info"></i>
+                        اختر نوع الكيان أولاً ثم الكيان المحدد
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-calculator text-warning"></i>
+                        تأكد من عدم تداخل النطاقات
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-percentage text-success"></i>
+                        النسبة ستطبق على الفواتير في هذا النطاق
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">مثال</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>النطاق:</strong> 1000 - 2000 ريال</p>
+                <p><strong>النسبة:</strong> 1%</p>
+                <p><strong>المعنى:</strong> أي فاتورة بمبلغ بين 1000 و 2000 ريال ستحصل على عمولة 1%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const companies = ${JSON.stringify(companies)};
+const clients = ${JSON.stringify(clients)};
+const distributors = ${JSON.stringify(distributors)};
+
+function updateEntityOptions() {
+    const entityType = document.getElementById('entityType').value;
+    const entitySelect = document.getElementById('entityId');
+    
+    // Clear existing options
+    entitySelect.innerHTML = '<option value="">اختر الكيان</option>';
+    
+    let entities = [];
+    if (entityType === 'company') {
+        entities = companies;
+    } else if (entityType === 'client') {
+        entities = clients;
+    } else if (entityType === 'distributor') {
+        entities = distributors;
+    }
+    
+    entities.forEach(entity => {
+        const option = document.createElement('option');
+        option.value = entity._id;
+        option.textContent = entity.name || entity.fullName || entity.username;
+        entitySelect.appendChild(option);
+    });
+}
+</script>
+` }) %>

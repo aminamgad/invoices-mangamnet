@@ -1,0 +1,425 @@
+<% const title = 'إدارة العملاء'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-users text-primary"></i>
+        إدارة العملاء
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        ${userPermissions && userPermissions.canCreate ? `
+            <a href="/clients/new" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                إضافة عميل جديد
+            </a>
+        ` : ''}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${clients ? clients.length : 0}</h4>
+                        <p class="mb-0">إجمالي العملاء</p>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${clients ? clients.filter(c => c.commissionRate > 0).length : 0}</h4>
+                        <p class="mb-0">عملاء بعمولة</p>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${clients && clients.length > 0 ? (clients.reduce((sum, c) => sum + c.commissionRate, 0) / clients.length).toFixed(1) : 0}%</h4>
+                        <p class="mb-0">متوسط العمولة</p>
+                    </div>
+                    <i class="fas fa-chart-bar fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${clients ? clients.filter(c => new Date(c.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length : 0}</h4>
+                        <p class="mb-0">جدد هذا الشهر</p>
+                    </div>
+                    <i class="fas fa-calendar fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="searchClients" class="form-label">البحث في العملاء</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchClients" placeholder="ابحث بالاسم أو رقم الجوال...">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="sortBy" class="form-label">ترتيب حسب</label>
+                <select class="form-select" id="sortBy" onchange="sortClients()">
+                    <option value="name">الاسم</option>
+                    <option value="commission">نسبة العمولة</option>
+                    <option value="date">تاريخ الإضافة</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="filterCommission" class="form-label">تصفية العمولة</label>
+                <select class="form-select" id="filterCommission" onchange="filterByCommission()">
+                    <option value="">جميع العملاء</option>
+                    <option value="with">عملاء بعمولة</option>
+                    <option value="without">عملاء بدون عمولة</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clients Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i>
+            قائمة العملاء
+            <span class="badge bg-primary ms-2" id="clientCount">${clients ? clients.length : 0}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        ${clients && clients.length > 0 ? `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="clientsTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>
+                                <i class="fas fa-user"></i>
+                                الاسم الكامل
+                            </th>
+                            <th>
+                                <i class="fas fa-phone"></i>
+                                رقم الجوال
+                            </th>
+                            <th>
+                                <i class="fas fa-percentage"></i>
+                                نسبة العمولة
+                            </th>
+                            <th>
+                                <i class="fas fa-sticky-note"></i>
+                                الملاحظات
+                            </th>
+                            <th>
+                                <i class="fas fa-user-tie"></i>
+                                تم الإنشاء بواسطة
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                تاريخ الإنشاء
+                            </th>
+                            ${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? `
+                                <th class="text-center">
+                                    <i class="fas fa-cogs"></i>
+                                    الإجراءات
+                                </th>
+                            ` : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${clients.map(client => `
+                            <tr class="client-row" data-name="${client.fullName.toLowerCase()}" data-phone="${client.mobileNumber}" data-commission="${client.commissionRate}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-primary text-white me-2">
+                                            ${client.fullName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <strong>${client.fullName}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="tel:${client.mobileNumber}" class="text-decoration-none">
+                                        <i class="fas fa-phone-alt text-success me-1"></i>
+                                        ${client.mobileNumber}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge ${client.commissionRate > 0 ? 'bg-success' : 'bg-secondary'} fs-6">
+                                        ${client.commissionRate}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="notes-cell" title="${client.notes || 'لا توجد ملاحظات'}">
+                                        ${client.notes ? (client.notes.length > 50 ? client.notes.substring(0, 50) + '...' : client.notes) : '<span class="text-muted">لا توجد ملاحظات</span>'}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        ${client.createdBy?.username || 'غير محدد'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        ${new Date(client.createdAt).toLocaleDateString('ar-SA')}
+                                        <br>
+                                        ${new Date(client.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}
+                                    </small>
+                                </td>
+                                ${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? `
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            ${userPermissions.canUpdate ? `
+                                                <a href="/clients/${client._id}/edit" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            ` : ''}
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewClientDetails('${client._id}')" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            ${userPermissions.canDelete ? `
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteClient('${client._id}', '${client.fullName}')" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </td>
+                                ` : ''}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-users fa-5x text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-3">لا توجد عملاء حالياً</h4>
+                <p class="text-muted mb-4">ابدأ بإضافة عميل جديد لبناء قاعدة عملائك</p>
+                ${userPermissions && userPermissions.canCreate ? `
+                    <a href="/clients/new" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة أول عميل
+                    </a>
+                ` : ''}
+            </div>
+        `}
+    </div>
+</div>
+
+<!-- Client Details Modal -->
+<div class="modal fade" id="clientDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user"></i>
+                    تفاصيل العميل
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="clientDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.notes-cell {
+    max-width: 200px;
+    cursor: help;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--bs-light);
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+}
+</style>
+
+<script>
+// Search functionality
+document.getElementById('searchClients').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.client-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const name = row.dataset.name;
+        const phone = row.dataset.phone;
+        
+        if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('clientCount').textContent = visibleCount;
+});
+
+// Clear search
+function clearSearch() {
+    document.getElementById('searchClients').value = '';
+    document.querySelectorAll('.client-row').forEach(row => {
+        row.style.display = '';
+    });
+    document.getElementById('clientCount').textContent = ${clients ? clients.length : 0};
+}
+
+// Sort functionality
+function sortClients() {
+    const sortBy = document.getElementById('sortBy').value;
+    const tbody = document.querySelector('#clientsTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('.client-row'));
+    
+    rows.sort((a, b) => {
+        switch(sortBy) {
+            case 'name':
+                return a.dataset.name.localeCompare(b.dataset.name);
+            case 'commission':
+                return parseFloat(b.dataset.commission) - parseFloat(a.dataset.commission);
+            case 'date':
+                const dateA = new Date(a.querySelector('td:nth-last-child(2) small').textContent.split('\\n')[0]);
+                const dateB = new Date(b.querySelector('td:nth-last-child(2) small').textContent.split('\\n')[0]);
+                return dateB - dateA;
+            default:
+                return 0;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Filter by commission
+function filterByCommission() {
+    const filter = document.getElementById('filterCommission').value;
+    const rows = document.querySelectorAll('.client-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const commission = parseFloat(row.dataset.commission);
+        let show = true;
+        
+        switch(filter) {
+            case 'with':
+                show = commission > 0;
+                break;
+            case 'without':
+                show = commission === 0;
+                break;
+            default:
+                show = true;
+        }
+        
+        if (show) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('clientCount').textContent = visibleCount;
+}
+
+// View client details
+function viewClientDetails(clientId) {
+    // This would typically fetch client details via AJAX
+    // For now, we'll show a placeholder
+    document.getElementById('clientDetailsContent').innerHTML = \`
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-2">جاري تحميل تفاصيل العميل...</p>
+        </div>
+    \`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
+    modal.show();
+    
+    // Simulate loading
+    setTimeout(() => {
+        document.getElementById('clientDetailsContent').innerHTML = \`
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                تفاصيل العميل ستظهر هنا. يمكن تطوير هذه الميزة لاحقاً.
+            </div>
+        \`;
+    }, 1000);
+}
+
+// Delete client
+function deleteClient(clientId, clientName) {
+    if (confirm(\`هل أنت متأكد من حذف العميل "\${clientName}"؟\\n\\nهذا الإجراء لا يمكن التراجع عنه.\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/clients/\${clientId}?_method=DELETE\`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+` }) %>

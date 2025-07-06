@@ -1,0 +1,119 @@
+<% const title = 'تعديل الفاتورة'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">تعديل الفاتورة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/invoices" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة للفواتير
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/invoices/${invoice._id}?_method=PUT">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceCode" class="form-label">رقم الفاتورة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="invoiceCode" name="invoiceCode" value="${invoice.invoiceCode}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceDate" class="form-label">تاريخ الفاتورة <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="invoiceDate" name="invoiceDate" value="${new Date(invoice.invoiceDate).toISOString().split('T')[0]}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="client" class="form-label">العميل <span class="text-danger">*</span></label>
+                            <select class="form-select" id="client" name="client" required>
+                                <option value="">اختر العميل</option>
+                                ${clients.map(client => `
+                                    <option value="${client._id}" ${client._id.toString() === invoice.client._id.toString() ? 'selected' : ''}>${client.fullName}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="file" class="form-label">الملف <span class="text-danger">*</span></label>
+                            <select class="form-select" id="file" name="file" required>
+                                <option value="">اختر الملف</option>
+                                ${files.map(file => `
+                                    <option value="${file._id}" ${file._id.toString() === invoice.file._id.toString() ? 'selected' : ''}>${file.fileName} - ${file.company?.name || 'غير محدد'}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assignedDistributor" class="form-label">الموزع المكلف <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assignedDistributor" name="assignedDistributor" required>
+                                <option value="">اختر الموزع</option>
+                                ${distributors.map(distributor => `
+                                    <option value="${distributor._id}" ${distributor._id.toString() === invoice.assignedDistributor._id.toString() ? 'selected' : ''}>${distributor.username}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">المبلغ (ريال) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" value="${invoice.amount}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">حالة الفاتورة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" ${invoice.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
+                            <option value="completed" ${invoice.status === 'completed' ? 'selected' : ''}>مكتملة</option>
+                            <option value="cancelled" ${invoice.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            حفظ التعديلات
+                        </button>
+                        <a href="/invoices" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات العمولة</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>عمولة العميل:</strong> %${invoice.clientCommissionRate}</p>
+                <p><strong>عمولة الموزع:</strong> %${invoice.distributorCommissionRate}</p>
+                <div class="alert alert-info">
+                    <small>هذه النسب محفوظة من وقت إنشاء الفاتورة</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>تاريخ الإنشاء:</strong><br>${new Date(invoice.createdAt).toLocaleDateString('ar-EG')}</p>
+                <p><strong>آخر تحديث:</strong><br>${new Date(invoice.updatedAt).toLocaleDateString('ar-EG')}</p>
+                <p><strong>تم الإنشاء بواسطة:</strong><br>${invoice.createdBy?.username || 'غير محدد'}</p>
+            </div>
+        </div>
+    </div>
+</div>
+` }) %>

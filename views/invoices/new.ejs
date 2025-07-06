@@ -1,0 +1,206 @@
+<% const title = 'إنشاء فاتورة جديدة'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إنشاء فاتورة جديدة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/invoices" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة للفواتير
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/invoices" id="invoiceForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceCode" class="form-label">رقم الفاتورة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="invoiceCode" name="invoiceCode" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceDate" class="form-label">تاريخ الفاتورة <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="invoiceDate" name="invoiceDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="client" class="form-label">العميل <span class="text-danger">*</span></label>
+                            <select class="form-select" id="client" name="client" required>
+                                <option value="">اختر العميل</option>
+                                ${clients.map(client => `
+                                    <option value="${client._id}">${client.fullName}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="file" class="form-label">الملف <span class="text-danger">*</span></label>
+                            <select class="form-select" id="file" name="file" required>
+                                <option value="">اختر الملف</option>
+                                ${files.map(file => `
+                                    <option value="${file._id}">${file.fileName} - ${file.company?.name || 'غير محدد'}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assignedDistributor" class="form-label">الموزع المكلف <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assignedDistributor" name="assignedDistributor" required>
+                                <option value="">اختر الموزع</option>
+                                ${distributors.map(distributor => `
+                                    <option value="${distributor._id}">${distributor.username}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">المبلغ (ريال) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            إنشاء الفاتورة
+                        </button>
+                        <a href="/invoices" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات العمولة</h5>
+            </div>
+            <div class="card-body">
+                <div id="commissionInfo">
+                    <p class="text-muted">أدخل جميع البيانات والمبلغ لعرض معلومات العمولة</p>
+                </div>
+                <button type="button" class="btn btn-outline-info btn-sm w-100" id="calculateBtn" disabled>
+                    <i class="fas fa-calculator"></i>
+                    حساب العمولة
+                </button>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">تعليمات</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-hashtag text-info"></i>
+                        رقم الفاتورة يجب أن يكون فريد
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-percentage text-warning"></i>
+                        نسب العمولة تحسب تلقائياً حسب المبلغ
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-calculator text-success"></i>
+                        تأكد من صحة المبلغ المدخل
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('client');
+    const distributorSelect = document.getElementById('assignedDistributor');
+    const fileSelect = document.getElementById('file');
+    const amountInput = document.getElementById('amount');
+    const commissionInfo = document.getElementById('commissionInfo');
+    const calculateBtn = document.getElementById('calculateBtn');
+    
+    function checkFormCompletion() {
+        const isComplete = clientSelect.value && distributorSelect.value && fileSelect.value && amountInput.value && parseFloat(amountInput.value) > 0;
+        calculateBtn.disabled = !isComplete;
+    }
+    
+    function calculateCommission() {
+        if (!clientSelect.value || !distributorSelect.value || !fileSelect.value || !amountInput.value) {
+            return;
+        }
+        
+        const amount = parseFloat(amountInput.value);
+        if (amount <= 0) {
+            return;
+        }
+        
+        calculateBtn.disabled = true;
+        calculateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحساب...';
+        
+        fetch('/invoices/calculate-commission', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                clientId: clientSelect.value,
+                distributorId: distributorSelect.value,
+                fileId: fileSelect.value,
+                amount: amount
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                commissionInfo.innerHTML = \`<div class="alert alert-danger">\${data.error}</div>\`;
+            } else {
+                commissionInfo.innerHTML = \`
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <strong>عمولة العميل:</strong> %\${data.clientRate}
+                            <br><small class="text-muted">\${data.clientCommission} ريال</small>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الموزع:</strong> %\${data.distributorRate}
+                            <br><small class="text-muted">\${data.distributorCommission} ريال</small>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الشركة:</strong> %\${data.companyRate}
+                            <br><small class="text-muted">\${data.companyCommission} ريال</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-2">
+                        <small>ستحفظ هذه النسب مع الفاتورة</small>
+                    </div>
+                \`;
+            }
+        })
+        .catch(error => {
+            commissionInfo.innerHTML = '<div class="alert alert-danger">حدث خطأ أثناء حساب العمولة</div>';
+        })
+        .finally(() => {
+            calculateBtn.disabled = false;
+            calculateBtn.innerHTML = '<i class="fas fa-calculator"></i> حساب العمولة';
+            checkFormCompletion();
+        });
+    }
+    
+    clientSelect.addEventListener('change', checkFormCompletion);
+    distributorSelect.addEventListener('change', checkFormCompletion);
+    fileSelect.addEventListener('change', checkFormCompletion);
+    amountInput.addEventListener('input', checkFormCompletion);
+    calculateBtn.addEventListener('click', calculateCommission);
+});
+</script>
+` }) %>

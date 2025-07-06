@@ -1,0 +1,93 @@
+<% const title = 'إضافة ملف جديد'; %>
+<%- include('../layout', { title, body: `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إضافة ملف جديد</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/files" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة للملفات
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات الملف</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/files" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileName" class="form-label">اسم الملف <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="fileName" name="fileName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="company" class="form-label">الشركة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="company" name="company" required>
+                            <option value="">اختر الشركة</option>
+                            ${companies.map(company => `
+                                <option value="${company._id}">${company.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">الحالة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="active">نشط</option>
+                            <option value="archived">مؤرشف</option>
+                            <option value="under_review">قيد المراجعة</option>
+                            <option value="completed">مكتمل</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pdf" class="form-label">ملف PDF <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="pdf" name="pdf" accept=".pdf" required>
+                        <div class="form-text">يجب أن يكون الملف من نوع PDF فقط</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">الملاحظات</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="ملاحظات إضافية حول الملف"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            حفظ الملف
+                        </button>
+                        <a href="/files" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">تعليمات</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-file-pdf text-danger"></i>
+                        يجب أن يكون الملف من نوع PDF فقط
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-upload text-info"></i>
+                        الحد الأقصى لحجم الملف 10 ميجابايت
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-building text-warning"></i>
+                        اختر الشركة المناسبة للملف
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+` }) %>
