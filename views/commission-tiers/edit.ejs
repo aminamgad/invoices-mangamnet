@@ -96,4 +96,137 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Dark mode form styling */
+.form-control, .form-select {
+    background-color: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control[readonly] {
+    background-color: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-text {
+    color: var(--text-muted);
+}
+
+.form-check-label {
+    color: var(--text-primary);
+}
+
+.form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.card-header {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.alert {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: var(--text-primary);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control[readonly] {
+    background-color: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] p strong {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .alert-warning i {
+    color: #ffd43b;
+}
+</style>
 ` }) %>

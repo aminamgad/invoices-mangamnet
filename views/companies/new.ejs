@@ -65,4 +65,89 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Dark mode form styling */
+.form-control, .form-select {
+    background-color: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-text {
+    color: var(--text-muted);
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.card-header {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .text-info {
+    color: #74c0fc !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #ffd43b !important;
+}
+
+[data-theme="dark"] .text-success {
+    color: #51cf66 !important;
+}
+</style>
 ` }) %>

@@ -33,11 +33,11 @@
                 <div class="d-flex justify-content-end">
                     <div class="input-group" style="max-width: 250px;">
                         <select class="form-select" id="monthSelector" onchange="changeMonth()">
-                            ${monthOptions.map(option => `
-                                <option value="${option.value}" ${option.value === selectedMonth ? 'selected' : ''}>
-                                    ${option.label} ${option.isCurrent ? '(الحالي)' : ''}
-                                </option>
-                            `).join('')}
+                            ${monthOptions.map(option => 
+                                '<option value="' + option.value + '"' + (option.value === selectedMonth ? ' selected' : '') + '>' +
+                                option.label + (option.isCurrent ? ' (الحالي)' : '') +
+                                '</option>'
+                            ).join('')}
                         </select>
                         <button class="btn btn-outline-light" type="button" onclick="goToCurrentMonth()">
                             <i class="fas fa-calendar-day"></i>
@@ -100,7 +100,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h4 class="mb-0">${profitStats.totalNetProfit?.toLocaleString('ar-SA')} جنيه</h4>
-                            <p class="mb-0"> الربح</p>
+                            <p class="mb-0">صافي الربح</p>
                         </div>
                         <i class="fas fa-chart-line fa-2x opacity-75"></i>
                     </div>
@@ -237,9 +237,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="client" class="form-label">العميل</label>
                     <select class="form-select" id="client" name="client">
                         <option value="">جميع العملاء</option>
-                        ${clients.map(client => `
-                            <option value="${client._id}" ${filters.client === client._id.toString() ? 'selected' : ''}>${client.fullName}</option>
-                        `).join('')}
+                        ${clients.map(client => 
+                            '<option value="' + client._id + '"' + (filters.client === client._id.toString() ? ' selected' : '') + '>' + client.fullName + '</option>'
+                        ).join('')}
                     </select>
                 </div>
                 
@@ -247,9 +247,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="distributor" class="form-label">الموزع</label>
                     <select class="form-select" id="distributor" name="distributor">
                         <option value="">جميع الموزعين</option>
-                        ${distributors.map(distributor => `
-                            <option value="${distributor._id}" ${filters.distributor === distributor._id.toString() ? 'selected' : ''}>${distributor.username}</option>
-                        `).join('')}
+                        ${distributors.map(distributor => 
+                            '<option value="' + distributor._id + '"' + (filters.distributor === distributor._id.toString() ? ' selected' : '') + '>' + distributor.username + '</option>'
+                        ).join('')}
                     </select>
                 </div>
                 
@@ -257,9 +257,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="company" class="form-label">الشركة</label>
                     <select class="form-select" id="company" name="company">
                         <option value="">جميع الشركات</option>
-                        ${companies.map(company => `
-                            <option value="${company._id}" ${filters.company === company._id.toString() ? 'selected' : ''}>${company.name}</option>
-                        `).join('')}
+                        ${companies.map(company => 
+                            '<option value="' + company._id + '"' + (filters.company === company._id.toString() ? ' selected' : '') + '>' + company.name + '</option>'
+                        ).join('')}
                     </select>
                 </div>
                 
@@ -267,9 +267,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="status" class="form-label">الحالة</label>
                     <select class="form-select" id="status" name="status">
                         <option value="">جميع الحالات</option>
-                        <option value="pending" ${filters.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
-                        <option value="completed" ${filters.status === 'completed' ? 'selected' : ''}>مكتملة</option>
-                        <option value="cancelled" ${filters.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
+                        <option value="pending"${filters.status === 'pending' ? ' selected' : ''}>قيد الانتظار</option>
+                        <option value="completed"${filters.status === 'completed' ? ' selected' : ''}>مكتملة</option>
+                        <option value="cancelled"${filters.status === 'cancelled' ? ' selected' : ''}>ملغية</option>
                     </select>
                 </div>
             </div>
@@ -279,10 +279,10 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="paymentStatus" class="form-label">حالة الدفع</label>
                     <select class="form-select" id="paymentStatus" name="paymentStatus">
                         <option value="">جميع حالات الدفع</option>
-                        <option value="client_pending" ${filters.paymentStatus === 'client_pending' ? 'selected' : ''}>في انتظار العميل</option>
-                        <option value="distributor_pending" ${filters.paymentStatus === 'distributor_pending' ? 'selected' : ''}>في انتظار الموزع</option>
-                        <option value="admin_pending" ${filters.paymentStatus === 'admin_pending' ? 'selected' : ''}>في انتظار الإدارة</option>
-                        <option value="fully_completed" ${filters.paymentStatus === 'fully_completed' ? 'selected' : ''}>مكتملة الدفع</option>
+                        <option value="client_pending"${filters.paymentStatus === 'client_pending' ? ' selected' : ''}>في انتظار العميل</option>
+                        <option value="distributor_pending"${filters.paymentStatus === 'distributor_pending' ? ' selected' : ''}>في انتظار الموزع</option>
+                        <option value="admin_pending"${filters.paymentStatus === 'admin_pending' ? ' selected' : ''}>في انتظار الإدارة</option>
+                        <option value="fully_completed"${filters.paymentStatus === 'fully_completed' ? ' selected' : ''}>مكتملة الدفع</option>
                     </select>
                 </div>
                 
@@ -299,10 +299,10 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                 <div class="col-md-3 mb-3">
                     <label for="sortBy" class="form-label">ترتيب حسب</label>
                     <select class="form-select" id="sortBy" name="sortBy">
-                        <option value="invoiceDate" ${filters.sortBy === 'invoiceDate' ? 'selected' : ''}>تاريخ الفاتورة</option>
-                        <option value="amount" ${filters.sortBy === 'amount' ? 'selected' : ''}>اجمالي الفاتورة</option>
-                        <option value="createdAt" ${filters.sortBy === 'createdAt' ? 'selected' : ''}>تاريخ الإنشاء</option>
-                        <option value="invoiceCode" ${filters.sortBy === 'invoiceCode' ? 'selected' : ''}>رقم الفاتورة</option>
+                        <option value="invoiceDate"${filters.sortBy === 'invoiceDate' ? ' selected' : ''}>تاريخ الفاتورة</option>
+                        <option value="amount"${filters.sortBy === 'amount' ? ' selected' : ''}>اجمالي الفاتورة</option>
+                        <option value="createdAt"${filters.sortBy === 'createdAt' ? ' selected' : ''}>تاريخ الإنشاء</option>
+                        <option value="invoiceCode"${filters.sortBy === 'invoiceCode' ? ' selected' : ''}>رقم الفاتورة</option>
                     </select>
                 </div>
             </div>
@@ -311,8 +311,8 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                 <div class="col-md-3 mb-3">
                     <label for="sortOrder" class="form-label">اتجاه الترتيب</label>
                     <select class="form-select" id="sortOrder" name="sortOrder">
-                        <option value="desc" ${filters.sortOrder === 'desc' ? 'selected' : ''}>تنازلي</option>
-                        <option value="asc" ${filters.sortOrder === 'asc' ? 'selected' : ''}>تصاعدي</option>
+                        <option value="desc"${filters.sortOrder === 'desc' ? ' selected' : ''}>تنازلي</option>
+                        <option value="asc"${filters.sortOrder === 'asc' ? ' selected' : ''}>تصاعدي</option>
                     </select>
                 </div>
                 
@@ -337,7 +337,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
         <h5 class="mb-0">
             <i class="fas fa-table"></i>
             تفاصيل الفواتير والأرباح
-            ${pagination.totalInvoices ? `(${pagination.totalInvoices} فاتورة)` : ''}
+            ${pagination.totalInvoices ? '(' + pagination.totalInvoices + ' فاتورة)' : ''}
         </h5>
     </div>
     <div class="card-body">
@@ -351,10 +351,10 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                             <th>الملف/الشركة</th>
                             <th>الموزع</th>
                             <th>اجمالي الفاتورة</th>
-                            <th>النسبة </th>
-                            <th>الضريبة </th>
-                            <th>ضريبة الشركة</th>
-                            <th> الربح</th>
+                            <th>عمولة العميل</th>
+                            <th>عمولة الموزع</th>
+                            <th>عمولة الشركة</th>
+                            <th>صافي الربح</th>
                             <th>حالة الدفع</th>
                             <th>التاريخ</th>
                         </tr>
@@ -385,46 +385,50 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                                 paymentStatusClass = 'bg-warning';
                             }
                             
-                            return `
-                                <tr>
-                                    <td><strong>${invoice.invoiceCode}</strong></td>
-                                    <td>${invoice.client?.fullName || 'غير محدد'}</td>
-                                    <td>
-                                        <div>${invoice.file?.fileName || 'غير محدد'}</div>
-                                        <small class="text-muted">${invoice.file?.company?.name || 'غير محدد'}</small>
-                                    </td>
-                                    <td>${invoice.assignedDistributor?.username || 'غير محدد'}</td>
-                                    <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
-                                    <td>
-                                        <div>%${invoice.clientCommissionRate}</div>
-                                        <small class="text-muted">${clientCommission.toFixed(2)} جنيه</small>
-                                    </td>
-                                    <td>
-                                        <div>%${invoice.distributorCommissionRate}</div>
-                                        <small class="text-muted">${distributorCommission.toFixed(2)} جنيه</small>
-                                    </td>
-                                    <td>
-                                        <div>%${invoice.companyCommissionRate}</div>
-                                        <small class="text-muted">${companyCommission.toFixed(2)} جنيه</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge ${netProfit >= 0 ? 'bg-success' : 'bg-danger'}">
-                                            ${netProfit.toFixed(2)} جنيه
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge ${paymentStatusClass}">
-                                            ${paymentStatusText}
-                                        </span>
-                                        <div class="payment-progress mt-1">
-                                            <div class="progress" style="height: 5px;">
-                                                <div class="progress-bar bg-success" style="width: ${(invoice.paymentStatus.clientToDistributor.isPaid ? 33 : 0) + (invoice.paymentStatus.distributorToAdmin.isPaid ? 33 : 0) + (invoice.paymentStatus.adminToCompany.isPaid ? 34 : 0)}%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
-                                </tr>
-                            `;
+                            return '<tr>' +
+                                '<td><strong>' + invoice.invoiceCode + '</strong></td>' +
+                                '<td>' + (invoice.client?.fullName || 'غير محدد') + '</td>' +
+                                '<td>' +
+                                    '<div>' + (invoice.file?.fileName || 'غير محدد') + '</div>' +
+                                    '<small class="text-muted">' + (invoice.file?.company?.name || 'غير محدد') + '</small>' +
+                                '</td>' +
+                                '<td>' + (invoice.assignedDistributor?.username || 'غير محدد') + '</td>' +
+                                '<td><span class="badge bg-primary">' + invoice.amount.toLocaleString('ar-SA') + ' جنيه</span></td>' +
+                                '<td>' +
+                                    '<div class="commission-display">' +
+                                        '<div class="amount-primary">' + clientCommission.toFixed(2) + ' جنيه</div>' +
+                                        '<div class="percentage-secondary">%' + invoice.clientCommissionRate + '</div>' +
+                                    '</div>' +
+                                '</td>' +
+                                '<td>' +
+                                    '<div class="commission-display">' +
+                                        '<div class="amount-primary">' + distributorCommission.toFixed(2) + ' جنيه</div>' +
+                                        '<div class="percentage-secondary">%' + invoice.distributorCommissionRate + '</div>' +
+                                    '</div>' +
+                                '</td>' +
+                                '<td>' +
+                                    '<div class="commission-display">' +
+                                        '<div class="amount-primary">' + companyCommission.toFixed(2) + ' جنيه</div>' +
+                                        '<div class="percentage-secondary">%' + invoice.companyCommissionRate + '</div>' +
+                                    '</div>' +
+                                '</td>' +
+                                '<td>' +
+                                    '<span class="badge ' + (netProfit >= 0 ? 'bg-success' : 'bg-danger') + '">' +
+                                        netProfit.toFixed(2) + ' جنيه' +
+                                    '</span>' +
+                                '</td>' +
+                                '<td>' +
+                                    '<span class="badge ' + paymentStatusClass + '">' +
+                                        paymentStatusText +
+                                    '</span>' +
+                                    '<div class="payment-progress mt-1">' +
+                                        '<div class="progress" style="height: 5px;">' +
+                                            '<div class="progress-bar bg-success" style="width: ' + ((invoice.paymentStatus.clientToDistributor.isPaid ? 33 : 0) + (invoice.paymentStatus.distributorToAdmin.isPaid ? 33 : 0) + (invoice.paymentStatus.adminToCompany.isPaid ? 34 : 0)) + '%"></div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</td>' +
+                                '<td>' + new Date(invoice.invoiceDate).toLocaleDateString('ar-EG') + '</td>' +
+                            '</tr>';
                         }).join('')}
                     </tbody>
                 </table>
@@ -501,6 +505,50 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
     background-color: var(--input-bg);
 }
 
+/* Commission Display Styling */
+.commission-display {
+    text-align: center;
+    line-height: 1.2;
+}
+
+.amount-primary {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.percentage-secondary {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Dark mode support for commission display */
+[data-theme="dark"] .amount-primary {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .percentage-secondary {
+    color: var(--text-muted);
+}
+
+/* Light mode specific styling */
+[data-theme="light"] .amount-primary {
+    color: #333333;
+}
+
+[data-theme="light"] .percentage-secondary {
+    color: #6c757d;
+}
+
+/* Enhanced table styling for commission columns */
+.table td .commission-display {
+    padding: 4px 0;
+    min-width: 80px;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .btn-toolbar .btn-group {
         margin-bottom: 10px;
@@ -509,6 +557,40 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
     .table-responsive {
         font-size: 0.875rem;
     }
+    
+    .commission-display {
+        min-width: 70px;
+    }
+    
+    .amount-primary {
+        font-size: 0.85em;
+    }
+    
+    .percentage-secondary {
+        font-size: 0.75em;
+    }
+}
+
+/* Hover effects for better UX */
+.table tbody tr:hover .commission-display .amount-primary {
+    color: var(--primary-color, #007bff);
+    transition: color 0.2s ease;
+}
+
+/* Ensure consistent alignment */
+.table th, .table td {
+    vertical-align: middle;
+}
+
+/* Better spacing for commission columns */
+.table th:nth-child(6),
+.table th:nth-child(7),
+.table th:nth-child(8),
+.table td:nth-child(6),
+.table td:nth-child(7),
+.table td:nth-child(8) {
+    min-width: 100px;
+    text-align: center;
 }
 </style>
 
@@ -555,7 +637,7 @@ function exportData(format) {
         // Download CSV file
         const link = document.createElement('a');
         link.href = exportUrl;
-        link.download = \`invoices-report-\${document.getElementById('monthSelector').value}.csv\`;
+        link.download = 'invoices-report-' + document.getElementById('monthSelector').value + '.csv';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

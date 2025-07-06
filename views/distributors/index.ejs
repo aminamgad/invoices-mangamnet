@@ -1,7 +1,10 @@
 <% const title = 'إدارة الموزعين'; %>
 <%- include('../layout', { title, body: `
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">إدارة الموزعين</h1>
+    <h1 class="h2">
+        <i class="fas fa-user-tie text-primary"></i>
+        إدارة الموزعين
+    </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="/distributors/new" class="btn btn-primary">
             <i class="fas fa-plus"></i>
@@ -10,19 +13,138 @@
     </div>
 </div>
 
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${distributors ? distributors.length : 0}</h4>
+                        <p class="mb-0">إجمالي الموزعين</p>
+                    </div>
+                    <i class="fas fa-user-tie fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${distributors ? distributors.filter(d => d.isActive).length : 0}</h4>
+                        <p class="mb-0">موزعين نشطين</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${distributors ? distributors.filter(d => !d.isActive).length : 0}</h4>
+                        <p class="mb-0">موزعين غير نشطين</p>
+                    </div>
+                    <i class="fas fa-user-slash fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0">${distributors && distributors.length > 0 ? (distributors.reduce((sum, d) => sum + d.commissionRate, 0) / distributors.length).toFixed(1) : 0}%</h4>
+                        <p class="mb-0">متوسط العمولة</p>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="searchDistributors" class="form-label">البحث في الموزعين</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchDistributors" placeholder="ابحث باسم المستخدم...">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="filterStatus" class="form-label">تصفية الحالة</label>
+                <select class="form-select" id="filterStatus" onchange="filterByStatus()">
+                    <option value="">جميع الموزعين</option>
+                    <option value="active">نشطين</option>
+                    <option value="inactive">غير نشطين</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="sortBy" class="form-label">ترتيب حسب</label>
+                <select class="form-select" id="sortBy" onchange="sortDistributors()">
+                    <option value="name">اسم المستخدم</option>
+                    <option value="commission">نسبة العمولة</option>
+                    <option value="date">تاريخ الإضافة</option>
+                    <option value="permissions">عدد الصلاحيات</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Distributors Table -->
 <div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i>
+            قائمة الموزعين
+            <span class="badge bg-primary ms-2" id="distributorCount">${distributors ? distributors.length : 0}</span>
+        </h5>
+    </div>
     <div class="card-body">
         ${distributors && distributors.length > 0 ? `
             <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+                <table class="table table-striped table-hover" id="distributorsTable">
+                    <thead class="table-dark">
                         <tr>
-                            <th>اسم المستخدم</th>
-                            <th>نسبة العمولة</th>
-                            <th>الصلاحيات</th>
-                            <th>الحالة</th>
-                            <th>تاريخ الإنشاء</th>
-                            <th>الإجراءات</th>
+                            <th>
+                                <i class="fas fa-user"></i>
+                                اسم المستخدم
+                            </th>
+                            <th>
+                                <i class="fas fa-percentage"></i>
+                                نسبة العمولة
+                            </th>
+                            <th>
+                                <i class="fas fa-shield-alt"></i>
+                                الصلاحيات
+                            </th>
+                            <th>
+                                <i class="fas fa-toggle-on"></i>
+                                الحالة
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                تاريخ الإنشاء
+                            </th>
+                            <th class="text-center">
+                                <i class="fas fa-cogs"></i>
+                                الإجراءات
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,33 +177,76 @@
                             });
                             
                             return `
-                                <tr>
-                                    <td><strong>${distributor.username}</strong></td>
-                                    <td><span class="badge bg-info">%${distributor.commissionRate}</span></td>
+                                <tr class="distributor-row" 
+                                    data-name="${distributor.username.toLowerCase()}" 
+                                    data-status="${distributor.isActive ? 'active' : 'inactive'}"
+                                    data-commission="${distributor.commissionRate}"
+                                    data-permissions="${allPermissions.size}"
+                                    data-date="${new Date(distributor.createdAt).getTime()}">
                                     <td>
-                                        <div class="d-flex flex-wrap gap-1">
-                                            ${permissionSummary.slice(0, 3).map(module => 
-                                                `<span class="badge bg-primary">${module}</span>`
-                                            ).join('')}
-                                            ${permissionSummary.length > 3 ? 
-                                                `<span class="badge bg-secondary">+${permissionSummary.length - 3} أخرى</span>` : 
-                                                ''
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary text-white me-2">
+                                                ${distributor.username.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <strong>${distributor.username}</strong>
+                                                <div class="small text-muted">
+                                                    ${distributor.roles.length} ${distributor.roles.length === 1 ? 'دور' : 'أدوار'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${distributor.commissionRate > 0 ? 'bg-success' : 'bg-secondary'} fs-6">
+                                            ${distributor.commissionRate}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="permissions-summary">
+                                            <div class="d-flex flex-wrap gap-1 mb-1">
+                                                ${permissionSummary.slice(0, 2).map(module => 
+                                                    `<span class="badge bg-primary badge-sm">${module}</span>`
+                                                ).join('')}
+                                                ${permissionSummary.length > 2 ? 
+                                                    `<span class="badge bg-secondary badge-sm">+${permissionSummary.length - 2}</span>` : 
+                                                    ''
+                                                }
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-key me-1"></i>
+                                                ${allPermissions.size} صلاحية
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="status-indicator">
+                                            ${distributor.isActive ? 
+                                                '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>نشط</span>' : 
+                                                '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>غير نشط</span>'
                                             }
                                         </div>
-                                        <small class="text-muted">${allPermissions.size} صلاحية</small>
                                     </td>
                                     <td>
-                                        ${distributor.isActive ? 
-                                            '<span class="badge bg-success">نشط</span>' : 
-                                            '<span class="badge bg-danger">غير نشط</span>'
-                                        }
+                                        <div class="date-info">
+                                            <div class="fw-bold">${new Date(distributor.createdAt).toLocaleDateString('ar-SA')}</div>
+                                            <small class="text-muted">
+                                                ${new Date(distributor.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}
+                                            </small>
+                                        </div>
                                     </td>
-                                    <td>${new Date(distributor.createdAt).toLocaleDateString('ar-EG')}</td>
-                                    <td>
+                                    <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <a href="/distributors/${distributor._id}/edit" class="btn btn-sm btn-outline-primary">
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewDistributorDetails('${distributor._id}')" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <a href="/distributors/${distributor._id}/edit" class="btn btn-sm btn-outline-primary" title="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <button class="btn btn-sm btn-outline-${distributor.isActive ? 'warning' : 'success'}" 
+                                                    onclick="toggleDistributorStatus('${distributor._id}', ${distributor.isActive})" 
+                                                    title="${distributor.isActive ? 'إلغاء التفعيل' : 'تفعيل'}">
+                                                <i class="fas fa-${distributor.isActive ? 'user-slash' : 'user-check'}"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -92,15 +257,533 @@
             </div>
         ` : `
             <div class="text-center py-5">
-                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">لا توجد موزعين حالياً</h5>
-                <p class="text-muted">ابدأ بإضافة موزع جديد</p>
-                <a href="/distributors/new" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    إضافة موزع جديد
+                <div class="mb-4">
+                    <i class="fas fa-user-tie fa-5x text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-3">لا توجد موزعين حالياً</h4>
+                <p class="text-muted mb-4">ابدأ بإضافة موزع جديد لبناء فريق العمل</p>
+                <a href="/distributors/new" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة أول موزع
                 </a>
             </div>
         `}
     </div>
 </div>
+
+<!-- Distributor Details Modal -->
+<div class="modal fade" id="distributorDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tie"></i>
+                    تفاصيل الموزع
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="distributorDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.permissions-summary {
+    max-width: 200px;
+}
+
+.badge-sm {
+    font-size: 0.7em;
+    padding: 0.25em 0.5em;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.date-info {
+    min-width: 120px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--bs-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .permissions-summary {
+        max-width: 150px;
+    }
+    
+    .badge-sm {
+        font-size: 0.65em;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-card h4 {
+        font-size: 1.5rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin: 1px 0;
+        border-radius: 0.25rem !important;
+    }
+}
+
+/* Dark mode enhancements */
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,0.05);
+    box-shadow: 0 2px 8px rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .avatar-circle {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme="dark"] .permissions-summary .badge {
+    background: linear-gradient(135deg, #4a5568 0%, #553c9a 100%) !important;
+}
+
+/* Animation enhancements */
+.distributor-row {
+    transition: all 0.3s ease;
+}
+
+.distributor-row:hover {
+    transform: translateX(-2px);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced badges */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%) !important;
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, #007bff 0%, #6610f2 100%) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+    color: #212529 !important;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+}
+</style>
+
+<script>
+// Search functionality
+document.getElementById('searchDistributors').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    filterDistributors();
+});
+
+// Combined filter function
+function filterDistributors() {
+    const searchTerm = document.getElementById('searchDistributors').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('.distributor-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const name = row.dataset.name;
+        const status = row.dataset.status;
+        
+        const matchesSearch = name.includes(searchTerm);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        if (matchesSearch && matchesStatus) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('distributorCount').textContent = visibleCount;
+    
+    // Show/hide empty state
+    const tableBody = document.querySelector('#distributorsTable tbody');
+    const emptyState = document.querySelector('.text-center.py-5');
+    
+    if (visibleCount === 0 && ${distributors ? distributors.length : 0} > 0) {
+        if (!document.querySelector('.no-results-message')) {
+            const noResults = document.createElement('tr');
+            noResults.className = 'no-results-message';
+            noResults.innerHTML = \`
+                <td colspan="6" class="text-center py-4">
+                    <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">لا توجد نتائج تطابق البحث</p>
+                </td>
+            \`;
+            tableBody.appendChild(noResults);
+        }
+    } else {
+        const noResults = document.querySelector('.no-results-message');
+        if (noResults) {
+            noResults.remove();
+        }
+    }
+}
+
+// Clear search
+function clearSearch() {
+    document.getElementById('searchDistributors').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.querySelectorAll('.distributor-row').forEach(row => {
+        row.style.display = '';
+    });
+    document.getElementById('distributorCount').textContent = ${distributors ? distributors.length : 0};
+    
+    const noResults = document.querySelector('.no-results-message');
+    if (noResults) {
+        noResults.remove();
+    }
+}
+
+// Filter by status
+function filterByStatus() {
+    filterDistributors();
+}
+
+// Sort functionality
+function sortDistributors() {
+    const sortBy = document.getElementById('sortBy').value;
+    const tbody = document.querySelector('#distributorsTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('.distributor-row'));
+    
+    rows.sort((a, b) => {
+        switch(sortBy) {
+            case 'name':
+                return a.dataset.name.localeCompare(b.dataset.name);
+            case 'commission':
+                return parseFloat(b.dataset.commission) - parseFloat(a.dataset.commission);
+            case 'permissions':
+                return parseInt(b.dataset.permissions) - parseInt(a.dataset.permissions);
+            case 'date':
+                return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+            default:
+                return 0;
+        }
+    });
+    
+    // Add smooth animation
+    tbody.style.opacity = '0.5';
+    setTimeout(() => {
+        rows.forEach(row => tbody.appendChild(row));
+        tbody.style.opacity = '1';
+    }, 150);
+}
+
+// View distributor details
+function viewDistributorDetails(distributorId) {
+    const distributor = ${JSON.stringify(distributors)}.find(d => d._id === distributorId);
+    
+    if (!distributor) {
+        alert('لم يتم العثور على بيانات الموزع');
+        return;
+    }
+    
+    // Calculate permission details
+    const allPermissions = new Set();
+    const modulePermissions = {};
+    
+    distributor.roles.forEach(role => {
+        role.permissions.forEach(permission => {
+            allPermissions.add(\`\${permission.module}.\${permission.action}\`);
+            if (!modulePermissions[permission.module]) {
+                modulePermissions[permission.module] = [];
+            }
+            modulePermissions[permission.module].push(permission.action);
+        });
+    });
+    
+    const moduleNames = {
+        'companies': 'الشركات',
+        'clients': 'العملاء', 
+        'files': 'الملفات',
+        'invoices': 'الفواتير',
+        'distributors': 'الموزعين',
+        'reports': 'التقارير'
+    };
+    
+    const actionNames = {
+        'view_own': 'عرض الخاصة',
+        'view_all': 'عرض الكل',
+        'create': 'إنشاء',
+        'update': 'تعديل',
+        'delete': 'حذف'
+    };
+    
+    let permissionsHtml = '';
+    Object.keys(modulePermissions).forEach(module => {
+        const moduleName = moduleNames[module] || module;
+        const actions = modulePermissions[module].map(action => actionNames[action] || action).join('، ');
+        permissionsHtml += \`
+            <div class="mb-2">
+                <strong>\${moduleName}:</strong> <span class="text-muted">\${actions}</span>
+            </div>
+        \`;
+    });
+    
+    document.getElementById('distributorDetailsContent').innerHTML = \`
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">المعلومات الأساسية</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>اسم المستخدم:</strong></td>
+                        <td>\${distributor.username}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>نسبة العمولة:</strong></td>
+                        <td><span class="badge bg-success">\${distributor.commissionRate}%</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>الحالة:</strong></td>
+                        <td>
+                            \${distributor.isActive ? 
+                                '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>نشط</span>' : 
+                                '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>غير نشط</span>'
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>تاريخ الإنشاء:</strong></td>
+                        <td>\${new Date(distributor.createdAt).toLocaleDateString('ar-SA')}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>عدد الأدوار:</strong></td>
+                        <td><span class="badge bg-info">\${distributor.roles.length}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>إجمالي الصلاحيات:</strong></td>
+                        <td><span class="badge bg-primary">\${allPermissions.size}</span></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">تفاصيل الصلاحيات</h6>
+                <div class="permissions-details" style="max-height: 300px; overflow-y: auto;">
+                    \${permissionsHtml || '<p class="text-muted">لا توجد صلاحيات محددة</p>'}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3 pt-3 border-top">
+            <div class="d-flex justify-content-end gap-2">
+                <a href="/distributors/\${distributor._id}/edit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i>
+                    تعديل الموزع
+                </a>
+                <button class="btn btn-outline-\${distributor.isActive ? 'warning' : 'success'} btn-sm" 
+                        onclick="toggleDistributorStatus('\${distributor._id}', \${distributor.isActive})">
+                    <i class="fas fa-\${distributor.isActive ? 'user-slash' : 'user-check'} me-1"></i>
+                    \${distributor.isActive ? 'إلغاء التفعيل' : 'تفعيل'}
+                </button>
+            </div>
+        </div>
+    \`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('distributorDetailsModal'));
+    modal.show();
+}
+
+// Toggle distributor status
+function toggleDistributorStatus(distributorId, currentStatus) {
+    const action = currentStatus ? 'إلغاء تفعيل' : 'تفعيل';
+    const distributor = ${JSON.stringify(distributors)}.find(d => d._id === distributorId);
+    
+    if (confirm(\`هل أنت متأكد من \${action} الموزع "\${distributor?.username}"؟\`)) {
+        // Here you would typically make an AJAX call to update the status
+        // For now, we'll show a placeholder message
+        alert(\`سيتم \${action} الموزع. هذه الميزة تحتاج إلى تطوير endpoint في الخادم.\`);
+        
+        // Placeholder for actual implementation:
+        /*
+        fetch(\`/distributors/\${distributorId}/toggle-status\`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ isActive: !currentStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء تحديث حالة الموزع');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحديث حالة الموزع');
+        });
+        */
+    }
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + F for search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            document.getElementById('searchDistributors').focus();
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            clearSearch();
+        }
+    });
+    
+    // Auto-focus search on page load
+    setTimeout(() => {
+        const searchInput = document.getElementById('searchDistributors');
+        if (searchInput && window.innerWidth > 768) {
+            searchInput.focus();
+        }
+    }, 500);
+});
+
+// Enhanced loading states
+function showLoading(element) {
+    element.classList.add('loading');
+}
+
+function hideLoading(element) {
+    element.classList.remove('loading');
+}
+
+// Export functionality (placeholder)
+function exportDistributors() {
+    const visibleRows = document.querySelectorAll('.distributor-row:not([style*="display: none"])');
+    const data = Array.from(visibleRows).map(row => ({
+        username: row.dataset.name,
+        commission: row.dataset.commission,
+        permissions: row.dataset.permissions,
+        status: row.dataset.status,
+        createdAt: new Date(parseInt(row.dataset.date)).toLocaleDateString('ar-SA')
+    }));
+    
+    console.log('Export data:', data);
+    alert(\`سيتم تصدير \${data.length} موزع. هذه الميزة تحتاج إلى تطوير.\`);
+}
+</script>
 ` }) %>
