@@ -76,6 +76,7 @@
                             <option value="completed" ${invoice.status === 'completed' ? 'selected' : ''}>مكتملة</option>
                             <option value="cancelled" ${invoice.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
                         </select>
+                        <div class="form-text">ملاحظة: حالة الدفع تُدار من خلال مسار الدفع المتدرج</div>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -98,8 +99,72 @@
             <div class="card-body">
                 <p><strong>عمولة العميل:</strong> %${invoice.clientCommissionRate}</p>
                 <p><strong>عمولة الموزع:</strong> %${invoice.distributorCommissionRate}</p>
+                <p><strong>عمولة الشركة:</strong> %${invoice.companyCommissionRate}</p>
                 <div class="alert alert-info">
                     <small>هذه النسب محفوظة من وقت إنشاء الفاتورة</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">حالة الدفع</h5>
+            </div>
+            <div class="card-body">
+                <div class="payment-status-display">
+                    <!-- Client to Distributor -->
+                    <div class="payment-step-display mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="step-icon ${invoice.paymentStatus.clientToDistributor.isPaid ? 'completed' : 'pending'} me-2">
+                                <i class="fas ${invoice.paymentStatus.clientToDistributor.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            </div>
+                            <div>
+                                <strong>العميل → الموزع</strong>
+                                <div class="small text-muted">
+                                    ${invoice.paymentStatus.clientToDistributor.isPaid ? 
+                                        `تم الدفع في: ${new Date(invoice.paymentStatus.clientToDistributor.paidAt).toLocaleDateString('ar-SA')}` : 
+                                        'في انتظار الدفع'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Distributor to Admin -->
+                    <div class="payment-step-display mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="step-icon ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'completed' : 'pending'} me-2">
+                                <i class="fas ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            </div>
+                            <div>
+                                <strong>الموزع → الإدارة</strong>
+                                <div class="small text-muted">
+                                    ${invoice.paymentStatus.distributorToAdmin.isPaid ? 
+                                        `تم الدفع في: ${new Date(invoice.paymentStatus.distributorToAdmin.paidAt).toLocaleDateString('ar-SA')}` : 
+                                        'في انتظار الدفع'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin to Company -->
+                    <div class="payment-step-display">
+                        <div class="d-flex align-items-center">
+                            <div class="step-icon ${invoice.paymentStatus.adminToCompany.isPaid ? 'completed' : 'pending'} me-2">
+                                <i class="fas ${invoice.paymentStatus.adminToCompany.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            </div>
+                            <div>
+                                <strong>الإدارة → الشركة</strong>
+                                <div class="small text-muted">
+                                    ${invoice.paymentStatus.adminToCompany.isPaid ? 
+                                        `تم الدفع في: ${new Date(invoice.paymentStatus.adminToCompany.paidAt).toLocaleDateString('ar-SA')}` : 
+                                        'في انتظار الدفع'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -116,4 +181,33 @@
         </div>
     </div>
 </div>
+
+<style>
+.payment-status-display .step-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.payment-status-display .step-icon.completed {
+    background-color: #28a745;
+    color: white;
+}
+
+.payment-status-display .step-icon.pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.payment-step-display {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+}
+</style>
 ` }) %>

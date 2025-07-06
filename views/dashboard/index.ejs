@@ -69,6 +69,105 @@ ${user.role === 'admin' ? `
             </div>
         </div>
     </div>
+
+    <!-- Admin Bulk Payment Section -->
+    <div class="row mt-4">
+        <!-- Distributors Bulk Payment -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-tie text-primary"></i>
+                        دفع جماعي للموزعين
+                    </h5>
+                </div>
+                <div class="card-body">
+                    ${stats.bulkPaymentData.distributors && stats.bulkPaymentData.distributors.length > 0 ? `
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>الموزع</th>
+                                        <th>عدد الفواتير</th>
+                                        <th>المبلغ الإجمالي</th>
+                                        <th>الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.bulkPaymentData.distributors.map(dist => `
+                                        <tr>
+                                            <td><strong>${dist.distributorName}</strong></td>
+                                            <td><span class="badge bg-warning">${dist.unpaidCount}</span></td>
+                                            <td><span class="badge bg-info">${dist.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-success" onclick="bulkPayDistributor('${dist.distributorId}', '${dist.distributorName}', ${dist.unpaidCount})">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    دفع الكل
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : `
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="text-muted">جميع الموزعين مدفوعين</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+
+        <!-- Companies Bulk Payment -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building text-primary"></i>
+                        دفع جماعي للشركات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    ${stats.bulkPaymentData.companies && stats.bulkPaymentData.companies.length > 0 ? `
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>الشركة</th>
+                                        <th>عدد الفواتير</th>
+                                        <th>المبلغ الإجمالي</th>
+                                        <th>الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.bulkPaymentData.companies.map(company => `
+                                        <tr>
+                                            <td><strong>${company.companyName}</strong></td>
+                                            <td><span class="badge bg-warning">${company.unpaidCount}</span></td>
+                                            <td><span class="badge bg-info">${company.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-success" onclick="bulkPayCompany('${company.companyId}', '${company.companyName}', ${company.unpaidCount})">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    دفع الكل
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : `
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="text-muted">جميع الشركات مدفوعة</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    </div>
 ` : `
     <!-- Distributor Dashboard -->
     <div class="row">
@@ -96,6 +195,51 @@ ${user.role === 'admin' ? `
             </div>
         </div>
     </div>
+
+    <!-- Distributor Bulk Payment Section -->
+    ${stats.bulkPaymentData.clients && stats.bulkPaymentData.clients.length > 0 ? `
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users text-primary"></i>
+                            دفع جماعي للعملاء
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>العميل</th>
+                                        <th>عدد الفواتير غير المدفوعة</th>
+                                        <th>المبلغ الإجمالي</th>
+                                        <th>الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.bulkPaymentData.clients.map(client => `
+                                        <tr>
+                                            <td><strong>${client.clientName}</strong></td>
+                                            <td><span class="badge bg-warning">${client.unpaidCount}</span></td>
+                                            <td><span class="badge bg-info">${client.totalAmount.toLocaleString('ar-SA')} ريال</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-success" onclick="bulkPayClient('${client.clientId}', '${client.clientName}', ${client.unpaidCount})">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    تحديد الكل كمدفوع
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    ` : ''}
 `}
 
 <!-- Recent Invoices -->
@@ -206,4 +350,37 @@ ${user.role === 'admin' ? `
         </div>
     </div>
 </div>
+
+<script>
+// Bulk payment functions
+function bulkPayClient(clientId, clientName, count) {
+    if (confirm(\`هل أنت متأكد من تحديد جميع الفواتير (\${count}) للعميل "\${clientName}" كمدفوعة؟\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/invoices/bulk-pay/client/\${clientId}\`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function bulkPayDistributor(distributorId, distributorName, count) {
+    if (confirm(\`هل أنت متأكد من دفع جميع الفواتير (\${count}) للموزع "\${distributorName}"؟\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/invoices/bulk-pay/distributor/\${distributorId}\`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function bulkPayCompany(companyId, companyName, count) {
+    if (confirm(\`هل أنت متأكد من دفع جميع الفواتير (\${count}) للشركة "\${companyName}"؟\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/invoices/bulk-pay/company/\${companyId}\`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 ` }) %>

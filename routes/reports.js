@@ -8,16 +8,38 @@ import { requireModuleAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Helper function to get month start and end dates
+function getMonthDateRange(monthString) {
+  let year, month;
+  
+  if (monthString) {
+    // Parse YYYY-MM format
+    const [yearStr, monthStr] = monthString.split('-');
+    year = parseInt(yearStr);
+    month = parseInt(monthStr) - 1; // JavaScript months are 0-indexed
+  } else {
+    // Default to current month
+    const now = new Date();
+    year = now.getFullYear();
+    month = now.getMonth();
+  }
+  
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999); // Last day of month
+  
+  return { startDate, endDate, monthString: `${year}-${String(month + 1).padStart(2, '0')}` };
+}
+
 // Reports dashboard
 router.get('/', requireModuleAccess('reports'), async (req, res) => {
   try {
     const {
-      startDate,
-      endDate,
+      month, // New month parameter
       client,
       distributor,
       company,
       status,
+      paymentStatus,
       minAmount,
       maxAmount,
       sortBy = 'invoiceDate',
@@ -25,6 +47,9 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       page = 1,
       limit = 20
     } = req.query;
+
+    // Get month date range
+    const { startDate, endDate, monthString } = getMonthDateRange(month);
 
     // Build query
     let query = {};
@@ -34,21 +59,40 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       query.assignedDistributor = req.session.user.id;
     }
 
-    // Date range filter
-    if (startDate || endDate) {
-      query.invoiceDate = {};
-      if (startDate) query.invoiceDate.$gte = new Date(startDate);
-      if (endDate) query.invoiceDate.$lte = new Date(endDate);
-    }
+    // Month filter (always applied)
+    query.invoiceDate = {
+      $gte: startDate,
+      $lte: endDate
+    };
 
     // Other filters
     if (client) query.client = client;
     if (distributor) query.assignedDistributor = distributor;
     if (status) query.status = status;
 
+    // Payment status filter
+    if (paymentStatus) {
+      switch (paymentStatus) {
+        case 'client_pending':
+          query['paymentStatus.clientToDistributor.isPaid'] = false;
+          break;
+        case 'distributor_pending':
+          query['paymentStatus.clientToDistributor.isPaid'] = true;
+          query['paymentStatus.distributorToAdmin.isPaid'] = false;
+          break;
+        case 'admin_pending':
+          query['paymentStatus.distributorToAdmin.isPaid'] = true;
+          query['paymentStatus.adminToCompany.isPaid'] = false;
+          break;
+        case 'fully_completed':
+          query['paymentStatus.adminToCompany.isPaid'] = true;
+          break;
+      }
+    }
+
     // Amount range filter
     if (minAmount || maxAmount) {
-      query.amount = {};
+      if (!query.amount) query.amount = {};
       if (minAmount) query.amount.$gte = parseFloat(minAmount);
       if (maxAmount) query.amount.$lte = parseFloat(maxAmount);
     }
@@ -70,6 +114,9 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       .populate('file', 'fileName company')
       .populate('assignedDistributor', 'username')
       .populate('createdBy', 'username')
+      .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+      .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+      .populate('paymentStatus.adminToCompany.markedBy', 'username')
       .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
       .skip((currentPage - 1) * limit)
       .limit(parseInt(limit));
@@ -101,7 +148,7 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       invoices.filter(invoice => invoice.file && invoice.file.company && invoice.file.company._id.toString() === company) : 
       invoices;
 
-    // Calculate profit statistics
+    // Calculate profit statistics for the selected month
     const profitStats = await calculateProfitStats(query, company);
 
     // Get filter options
@@ -111,6 +158,9 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       Company.find().sort({ name: 1 })
     ]);
 
+    // Generate month options for the dropdown
+    const monthOptions = generateMonthOptions();
+
     res.render('reports/index', {
       invoices: filteredInvoices,
       profitStats,
@@ -118,12 +168,12 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
       distributors,
       companies,
       filters: {
-        startDate,
-        endDate,
+        month: monthString,
         client,
         distributor,
         company,
         status,
+        paymentStatus,
         minAmount,
         maxAmount,
         sortBy,
@@ -135,20 +185,30 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
         totalInvoices: filteredInvoices.length,
         limit: parseInt(limit)
       },
-      userPermissions: req.userPermissionLevel
+      userPermissions: req.userPermissionLevel,
+      monthOptions,
+      selectedMonth: monthString,
+      monthName: getMonthName(monthString)
     });
   } catch (error) {
     console.error('Reports error:', error);
     req.flash('error', 'حدث خطأ أثناء تحميل التقارير');
+    
+    const { monthString } = getMonthDateRange();
+    const monthOptions = generateMonthOptions();
+    
     res.render('reports/index', {
       invoices: [],
       profitStats: {},
       clients: [],
       distributors: [],
       companies: [],
-      filters: {},
+      filters: { month: monthString },
       pagination: {},
-      userPermissions: req.userPermissionLevel || {}
+      userPermissions: req.userPermissionLevel || {},
+      monthOptions,
+      selectedMonth: monthString,
+      monthName: getMonthName(monthString)
     });
   }
 });
@@ -157,14 +217,17 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
 router.get('/export', requireModuleAccess('reports'), async (req, res) => {
   try {
     const {
-      startDate,
-      endDate,
+      month,
       client,
       distributor,
       company,
       status,
+      paymentStatus,
       format = 'json'
     } = req.query;
+
+    // Get month date range
+    const { startDate, endDate } = getMonthDateRange(month);
 
     // Build query (same as above)
     let query = {};
@@ -173,20 +236,43 @@ router.get('/export', requireModuleAccess('reports'), async (req, res) => {
       query.assignedDistributor = req.session.user.id;
     }
 
-    if (startDate || endDate) {
-      query.invoiceDate = {};
-      if (startDate) query.invoiceDate.$gte = new Date(startDate);
-      if (endDate) query.invoiceDate.$lte = new Date(endDate);
-    }
+    // Month filter (always applied)
+    query.invoiceDate = {
+      $gte: startDate,
+      $lte: endDate
+    };
 
     if (client) query.client = client;
     if (distributor) query.assignedDistributor = distributor;
     if (status) query.status = status;
 
+    // Payment status filter
+    if (paymentStatus) {
+      switch (paymentStatus) {
+        case 'client_pending':
+          query['paymentStatus.clientToDistributor.isPaid'] = false;
+          break;
+        case 'distributor_pending':
+          query['paymentStatus.clientToDistributor.isPaid'] = true;
+          query['paymentStatus.distributorToAdmin.isPaid'] = false;
+          break;
+        case 'admin_pending':
+          query['paymentStatus.distributorToAdmin.isPaid'] = true;
+          query['paymentStatus.adminToCompany.isPaid'] = false;
+          break;
+        case 'fully_completed':
+          query['paymentStatus.adminToCompany.isPaid'] = true;
+          break;
+      }
+    }
+
     const invoices = await Invoice.find(query)
       .populate('client', 'fullName')
       .populate('file', 'fileName company')
       .populate('assignedDistributor', 'username')
+      .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+      .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+      .populate('paymentStatus.adminToCompany.markedBy', 'username')
       .populate({
         path: 'file',
         populate: {
@@ -208,6 +294,16 @@ router.get('/export', requireModuleAccess('reports'), async (req, res) => {
       const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
       const netProfit = invoice.amount - clientCommission - distributorCommission - companyCommission;
 
+      // Determine payment status
+      let paymentStatus = 'client_pending';
+      if (invoice.paymentStatus.adminToCompany.isPaid) {
+        paymentStatus = 'fully_completed';
+      } else if (invoice.paymentStatus.distributorToAdmin.isPaid) {
+        paymentStatus = 'admin_pending';
+      } else if (invoice.paymentStatus.clientToDistributor.isPaid) {
+        paymentStatus = 'distributor_pending';
+      }
+
       return {
         invoiceCode: invoice.invoiceCode,
         clientName: invoice.client?.fullName || 'غير محدد',
@@ -223,6 +319,13 @@ router.get('/export', requireModuleAccess('reports'), async (req, res) => {
         companyCommission: companyCommission.toFixed(2),
         netProfit: netProfit.toFixed(2),
         status: invoice.status,
+        paymentStatus: paymentStatus,
+        clientToDistributorPaid: invoice.paymentStatus.clientToDistributor.isPaid,
+        clientToDistributorPaidAt: invoice.paymentStatus.clientToDistributor.paidAt,
+        distributorToAdminPaid: invoice.paymentStatus.distributorToAdmin.isPaid,
+        distributorToAdminPaidAt: invoice.paymentStatus.distributorToAdmin.paidAt,
+        adminToCompanyPaid: invoice.paymentStatus.adminToCompany.isPaid,
+        adminToCompanyPaidAt: invoice.paymentStatus.adminToCompany.paidAt,
         invoiceDate: invoice.invoiceDate.toISOString().split('T')[0],
         createdAt: invoice.createdAt.toISOString()
       };
@@ -231,14 +334,16 @@ router.get('/export', requireModuleAccess('reports'), async (req, res) => {
     if (format === 'csv') {
       // Generate CSV
       const csv = generateCSV(exportData);
+      const { monthString } = getMonthDateRange(month);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', 'attachment; filename=invoices-report.csv');
+      res.setHeader('Content-Disposition', `attachment; filename=invoices-report-${monthString}.csv`);
       res.send('\uFEFF' + csv); // Add BOM for Arabic support
     } else {
       // Return JSON
       res.json({
         data: exportData,
-        summary: await calculateProfitStats(query, company)
+        summary: await calculateProfitStats(query, company),
+        month: getMonthDateRange(month).monthString
       });
     }
   } catch (error) {
@@ -282,6 +387,12 @@ async function calculateProfitStats(query, companyFilter) {
         completed: 0,
         cancelled: 0
       },
+      paymentStatusBreakdown: {
+        client_pending: 0,
+        distributor_pending: 0,
+        admin_pending: 0,
+        fully_completed: 0
+      },
       monthlyBreakdown: {}
     };
 
@@ -299,6 +410,17 @@ async function calculateProfitStats(query, companyFilter) {
 
       // Status breakdown
       stats.statusBreakdown[invoice.status]++;
+
+      // Payment status breakdown
+      let paymentStatus = 'client_pending';
+      if (invoice.paymentStatus.adminToCompany.isPaid) {
+        paymentStatus = 'fully_completed';
+      } else if (invoice.paymentStatus.distributorToAdmin.isPaid) {
+        paymentStatus = 'admin_pending';
+      } else if (invoice.paymentStatus.clientToDistributor.isPaid) {
+        paymentStatus = 'distributor_pending';
+      }
+      stats.paymentStatusBreakdown[paymentStatus]++;
 
       // Monthly breakdown
       const monthKey = invoice.invoiceDate.toISOString().substring(0, 7); // YYYY-MM
@@ -335,6 +457,38 @@ async function calculateProfitStats(query, companyFilter) {
   }
 }
 
+// Helper function to generate month options
+function generateMonthOptions() {
+  const options = [];
+  const currentDate = new Date();
+  
+  // Generate last 12 months + current month + next 3 months
+  for (let i = -12; i <= 3; i++) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
+    const monthString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthName = getMonthName(monthString);
+    
+    options.push({
+      value: monthString,
+      label: monthName,
+      isCurrent: i === 0
+    });
+  }
+  
+  return options;
+}
+
+// Helper function to get month name in Arabic
+function getMonthName(monthString) {
+  const [year, month] = monthString.split('-');
+  const monthNames = [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ];
+  
+  return `${monthNames[parseInt(month) - 1]} ${year}`;
+}
+
 // Helper function to generate CSV
 function generateCSV(data) {
   if (data.length === 0) return '';
@@ -354,6 +508,13 @@ function generateCSV(data) {
     'عمولة الشركة',
     'صافي الربح',
     'الحالة',
+    'حالة الدفع',
+    'عميل→موزع مدفوع',
+    'تاريخ دفع عميل→موزع',
+    'موزع→إدارة مدفوع',
+    'تاريخ دفع موزع→إدارة',
+    'إدارة→شركة مدفوع',
+    'تاريخ دفع إدارة→شركة',
     'تاريخ الفاتورة',
     'تاريخ الإنشاء'
   ];
@@ -375,6 +536,13 @@ function generateCSV(data) {
       row.companyCommission,
       row.netProfit,
       `"${row.status}"`,
+      `"${row.paymentStatus}"`,
+      row.clientToDistributorPaid,
+      `"${row.clientToDistributorPaidAt || ''}"`,
+      row.distributorToAdminPaid,
+      `"${row.distributorToAdminPaidAt || ''}"`,
+      row.adminToCompanyPaid,
+      `"${row.adminToCompanyPaidAt || ''}"`,
       `"${row.invoiceDate}"`,
       `"${row.createdAt}"`
     ].join(','))

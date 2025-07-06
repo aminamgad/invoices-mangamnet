@@ -50,17 +50,22 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
       .populate('file', 'fileName')
       .populate('assignedDistributor', 'username')
       .populate('createdBy', 'username')
+      .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+      .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+      .populate('paymentStatus.adminToCompany.markedBy', 'username')
       .sort({ createdAt: -1 });
       
     res.render('invoices/index', { 
       invoices,
-      userPermissions: req.userPermissionLevel
+      userPermissions: req.userPermissionLevel,
+      currentUser: req.session.user
     });
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء تحميل الفواتير');
     res.render('invoices/index', { 
       invoices: [],
-      userPermissions: req.userPermissionLevel || {}
+      userPermissions: req.userPermissionLevel || {},
+      currentUser: req.session.user
     });
   }
 });
@@ -150,6 +155,238 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء إنشاء الفاتورة');
     res.redirect('/invoices/new');
+  }
+});
+
+// Mark payment step as paid
+router.post('/:id/payment/:step', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { id, step } = req.params;
+    const validSteps = ['clientToDistributor', 'distributorToAdmin', 'adminToCompany'];
+    
+    if (!validSteps.includes(step)) {
+      req.flash('error', 'خطوة الدفع غير صحيحة');
+      return res.redirect('/invoices');
+    }
+    
+    let query = { _id: id };
+    
+    // If user can only view own, ensure they are assigned to this invoice
+    if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
+      query.assignedDistributor = req.session.user.id;
+    }
+    
+    const invoice = await Invoice.findOne(query);
+    
+    if (!invoice) {
+      req.flash('error', 'الفاتورة غير موجودة أو ليس لديك صلاحية للوصول إليها');
+      return res.redirect('/invoices');
+    }
+    
+    // Check if user can mark this payment step
+    if (!invoice.canUserMarkPayment(req.session.user.id, req.session.user.role, step)) {
+      req.flash('error', 'ليس لديك صلاحية لتحديث هذه الخطوة');
+      return res.redirect('/invoices');
+    }
+    
+    // Check if step is already paid
+    if (invoice.paymentStatus[step].isPaid) {
+      req.flash('error', 'هذه الخطوة مدفوعة بالفعل');
+      return res.redirect('/invoices');
+    }
+    
+    // Mark the payment step as paid
+    invoice.markPaymentStep(step, req.session.user.id);
+    await invoice.save();
+    
+    const stepNames = {
+      clientToDistributor: 'العميل → الموزع',
+      distributorToAdmin: 'الموزع → الإدارة',
+      adminToCompany: 'الإدارة → الشركة'
+    };
+    
+    req.flash('success', `تم تحديث حالة الدفع: ${stepNames[step]}`);
+    res.redirect('/invoices');
+  } catch (error) {
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
+    res.redirect('/invoices');
+  }
+});
+
+// Bulk payment for client (distributor only)
+router.post('/bulk-pay/client/:clientId', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    
+    // Only distributors can use this endpoint
+    if (req.session.user.role !== 'distributor') {
+      req.flash('error', 'ليس لديك صلاحية لتنفيذ هذا الإجراء');
+      return res.redirect('/dashboard');
+    }
+    
+    // Find all unpaid invoices for this client assigned to current distributor
+    const invoices = await Invoice.find({
+      client: clientId,
+      assignedDistributor: req.session.user.id,
+      'paymentStatus.clientToDistributor.isPaid': false
+    }).populate('client', 'fullName');
+    
+    if (invoices.length === 0) {
+      req.flash('error', 'لا توجد فواتير غير مدفوعة لهذا العميل');
+      return res.redirect('/dashboard');
+    }
+    
+    // Mark all as paid
+    let updatedCount = 0;
+    for (const invoice of invoices) {
+      invoice.markPaymentStep('clientToDistributor', req.session.user.id);
+      await invoice.save();
+      updatedCount++;
+    }
+    
+    const clientName = invoices[0].client?.fullName || 'العميل';
+    req.flash('success', `تم تحديث ${updatedCount} فاتورة للعميل "${clientName}" كمدفوعة`);
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Bulk payment error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
+    res.redirect('/dashboard');
+  }
+});
+
+// Bulk payment for distributor (admin only)
+router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { distributorId } = req.params;
+    
+    // Only admin can use this endpoint
+    if (req.session.user.role !== 'admin') {
+      req.flash('error', 'ليس لديك صلاحية لتنفيذ هذا الإجراء');
+      return res.redirect('/dashboard');
+    }
+    
+    // Find all unpaid invoices for this distributor
+    const invoices = await Invoice.find({
+      assignedDistributor: distributorId,
+      'paymentStatus.clientToDistributor.isPaid': true,
+      'paymentStatus.distributorToAdmin.isPaid': false
+    }).populate('assignedDistributor', 'username');
+    
+    if (invoices.length === 0) {
+      req.flash('error', 'لا توجد فواتير جاهزة للدفع لهذا الموزع');
+      return res.redirect('/dashboard');
+    }
+    
+    // Mark all as paid
+    let updatedCount = 0;
+    for (const invoice of invoices) {
+      invoice.markPaymentStep('distributorToAdmin', req.session.user.id);
+      await invoice.save();
+      updatedCount++;
+    }
+    
+    const distributorName = invoices[0].assignedDistributor?.username || 'الموزع';
+    req.flash('success', `تم تحديث ${updatedCount} فاتورة للموزع "${distributorName}" كمدفوعة`);
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Bulk payment error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
+    res.redirect('/dashboard');
+  }
+});
+
+// Bulk payment for company (admin only)
+router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    
+    // Only admin can use this endpoint
+    if (req.session.user.role !== 'admin') {
+      req.flash('error', 'ليس لديك صلاحية لتنفيذ هذا الإجراء');
+      return res.redirect('/dashboard');
+    }
+    
+    // Find all unpaid invoices for this company
+    const invoices = await Invoice.find({
+      'paymentStatus.distributorToAdmin.isPaid': true,
+      'paymentStatus.adminToCompany.isPaid': false
+    }).populate({
+      path: 'file',
+      populate: {
+        path: 'company',
+        model: 'Company'
+      }
+    });
+    
+    // Filter by company
+    const companyInvoices = invoices.filter(invoice => 
+      invoice.file && 
+      invoice.file.company && 
+      invoice.file.company._id.toString() === companyId
+    );
+    
+    if (companyInvoices.length === 0) {
+      req.flash('error', 'لا توجد فواتير جاهزة للدفع لهذه الشركة');
+      return res.redirect('/dashboard');
+    }
+    
+    // Mark all as paid
+    let updatedCount = 0;
+    for (const invoice of companyInvoices) {
+      invoice.markPaymentStep('adminToCompany', req.session.user.id);
+      await invoice.save();
+      updatedCount++;
+    }
+    
+    const companyName = companyInvoices[0].file?.company?.name || 'الشركة';
+    req.flash('success', `تم تحديث ${updatedCount} فاتورة للشركة "${companyName}" كمدفوعة`);
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Bulk payment error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
+    res.redirect('/dashboard');
+  }
+});
+
+// Unmark payment step (admin only)
+router.delete('/:id/payment/:step', requirePermission('invoices', 'update'), async (req, res) => {
+  try {
+    const { id, step } = req.params;
+    const validSteps = ['clientToDistributor', 'distributorToAdmin', 'adminToCompany'];
+    
+    if (!validSteps.includes(step)) {
+      req.flash('error', 'خطوة الدفع غير صحيحة');
+      return res.redirect('/invoices');
+    }
+    
+    // Only admin can unmark payment steps
+    if (req.session.user.role !== 'admin') {
+      req.flash('error', 'ليس لديك صلاحية لإلغاء حالة الدفع');
+      return res.redirect('/invoices');
+    }
+    
+    const invoice = await Invoice.findById(id);
+    
+    if (!invoice) {
+      req.flash('error', 'الفاتورة غير موجودة');
+      return res.redirect('/invoices');
+    }
+    
+    // Unmark the payment step
+    invoice.unmarkPaymentStep(step);
+    await invoice.save();
+    
+    const stepNames = {
+      clientToDistributor: 'العميل → الموزع',
+      distributorToAdmin: 'الموزع → الإدارة',
+      adminToCompany: 'الإدارة → الشركة'
+    };
+    
+    req.flash('success', `تم إلغاء حالة الدفع: ${stepNames[step]}`);
+    res.redirect('/invoices');
+  } catch (error) {
+    req.flash('error', 'حدث خطأ أثناء إلغاء حالة الدفع');
+    res.redirect('/invoices');
   }
 });
 

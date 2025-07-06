@@ -1,7 +1,10 @@
 <% const title = 'تقارير الأرباح'; %>
 <%- include('../layout', { title, body: `
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">تقارير الأرباح والفواتير</h1>
+    <h1 class="h2">
+        <i class="fas fa-chart-line text-primary"></i>
+        تقارير الأرباح والفواتير
+    </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group">
             <button type="button" class="btn btn-outline-success" onclick="exportData('json')">
@@ -12,6 +15,36 @@
                 <i class="fas fa-file-csv"></i>
                 تصدير CSV
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Month Selection Header -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    تقرير شهر: ${monthName}
+                </h5>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end">
+                    <div class="input-group" style="max-width: 250px;">
+                        <select class="form-select" id="monthSelector" onchange="changeMonth()">
+                            ${monthOptions.map(option => `
+                                <option value="${option.value}" ${option.value === selectedMonth ? 'selected' : ''}>
+                                    ${option.label} ${option.isCurrent ? '(الحالي)' : ''}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <button class="btn btn-outline-light" type="button" onclick="goToCurrentMonth()">
+                            <i class="fas fa-calendar-day"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -70,6 +103,65 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                             <p class="mb-0">صافي الربح</p>
                         </div>
                         <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Status Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.paymentStatusBreakdown?.client_pending || 0}</h4>
+                            <p class="mb-0">في انتظار العميل</p>
+                        </div>
+                        <i class="fas fa-user-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.paymentStatusBreakdown?.distributor_pending || 0}</h4>
+                            <p class="mb-0">في انتظار الموزع</p>
+                        </div>
+                        <i class="fas fa-user-tie fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.paymentStatusBreakdown?.admin_pending || 0}</h4>
+                            <p class="mb-0">في انتظار الإدارة</p>
+                        </div>
+                        <i class="fas fa-user-shield fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">${profitStats.paymentStatusBreakdown?.fully_completed || 0}</h4>
+                            <p class="mb-0">مكتملة الدفع</p>
+                        </div>
+                        <i class="fas fa-check-double fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -138,17 +230,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
     </div>
     <div class="card-body">
         <form method="GET" action="/reports" id="filterForm">
+            <input type="hidden" name="month" value="${selectedMonth}">
+            
             <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="startDate" class="form-label">من تاريخ</label>
-                    <input type="date" class="form-control" id="startDate" name="startDate" value="${filters.startDate || ''}">
-                </div>
-                
-                <div class="col-md-3 mb-3">
-                    <label for="endDate" class="form-label">إلى تاريخ</label>
-                    <input type="date" class="form-control" id="endDate" name="endDate" value="${filters.endDate || ''}">
-                </div>
-                
                 <div class="col-md-3 mb-3">
                     <label for="client" class="form-label">العميل</label>
                     <select class="form-select" id="client" name="client">
@@ -168,9 +252,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                         `).join('')}
                     </select>
                 </div>
-            </div>
-            
-            <div class="row">
+                
                 <div class="col-md-3 mb-3">
                     <label for="company" class="form-label">الشركة</label>
                     <select class="form-select" id="company" name="company">
@@ -190,6 +272,19 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                         <option value="cancelled" ${filters.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
                     </select>
                 </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="paymentStatus" class="form-label">حالة الدفع</label>
+                    <select class="form-select" id="paymentStatus" name="paymentStatus">
+                        <option value="">جميع حالات الدفع</option>
+                        <option value="client_pending" ${filters.paymentStatus === 'client_pending' ? 'selected' : ''}>في انتظار العميل</option>
+                        <option value="distributor_pending" ${filters.paymentStatus === 'distributor_pending' ? 'selected' : ''}>في انتظار الموزع</option>
+                        <option value="admin_pending" ${filters.paymentStatus === 'admin_pending' ? 'selected' : ''}>في انتظار الإدارة</option>
+                        <option value="fully_completed" ${filters.paymentStatus === 'fully_completed' ? 'selected' : ''}>مكتملة الدفع</option>
+                    </select>
+                </div>
                 
                 <div class="col-md-3 mb-3">
                     <label for="minAmount" class="form-label">الحد الأدنى للمبلغ</label>
@@ -200,9 +295,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     <label for="maxAmount" class="form-label">الحد الأقصى للمبلغ</label>
                     <input type="number" class="form-control" id="maxAmount" name="maxAmount" min="0" step="0.01" value="${filters.maxAmount || ''}" placeholder="0.00">
                 </div>
-            </div>
-            
-            <div class="row">
+                
                 <div class="col-md-3 mb-3">
                     <label for="sortBy" class="form-label">ترتيب حسب</label>
                     <select class="form-select" id="sortBy" name="sortBy">
@@ -212,7 +305,9 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                         <option value="invoiceCode" ${filters.sortBy === 'invoiceCode' ? 'selected' : ''}>رقم الفاتورة</option>
                     </select>
                 </div>
-                
+            </div>
+            
+            <div class="row">
                 <div class="col-md-3 mb-3">
                     <label for="sortOrder" class="form-label">اتجاه الترتيب</label>
                     <select class="form-select" id="sortOrder" name="sortOrder">
@@ -221,18 +316,14 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                     </select>
                 </div>
                 
-                <div class="col-md-6 mb-3 d-flex align-items-end">
+                <div class="col-md-9 mb-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-search"></i>
                         بحث وتصفية
                     </button>
-                    <a href="/reports" class="btn btn-outline-secondary me-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
                         <i class="fas fa-times"></i>
                         إلغاء التصفية
-                    </a>
-                    <button type="button" class="btn btn-outline-info" onclick="toggleAdvancedSearch()">
-                        <i class="fas fa-cog"></i>
-                        خيارات متقدمة
                     </button>
                 </div>
             </div>
@@ -264,7 +355,7 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                             <th>عمولة الموزع</th>
                             <th>عمولة الشركة</th>
                             <th>صافي الربح</th>
-                            <th>الحالة</th>
+                            <th>حالة الدفع</th>
                             <th>التاريخ</th>
                         </tr>
                     </thead>
@@ -274,6 +365,25 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                             const distributorCommission = (invoice.amount * invoice.distributorCommissionRate) / 100;
                             const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
                             const netProfit = invoice.amount - clientCommission - distributorCommission - companyCommission;
+                            
+                            // Determine payment status
+                            let paymentStatus = 'client_pending';
+                            let paymentStatusText = 'في انتظار العميل';
+                            let paymentStatusClass = 'bg-danger';
+                            
+                            if (invoice.paymentStatus.adminToCompany.isPaid) {
+                                paymentStatus = 'fully_completed';
+                                paymentStatusText = 'مكتملة الدفع';
+                                paymentStatusClass = 'bg-success';
+                            } else if (invoice.paymentStatus.distributorToAdmin.isPaid) {
+                                paymentStatus = 'admin_pending';
+                                paymentStatusText = 'في انتظار الإدارة';
+                                paymentStatusClass = 'bg-info';
+                            } else if (invoice.paymentStatus.clientToDistributor.isPaid) {
+                                paymentStatus = 'distributor_pending';
+                                paymentStatusText = 'في انتظار الموزع';
+                                paymentStatusClass = 'bg-warning';
+                            }
                             
                             return `
                                 <tr>
@@ -303,9 +413,14 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
                                         </span>
                                     </td>
                                     <td>
-                                        ${invoice.status === 'pending' ? '<span class="badge bg-warning">قيد الانتظار</span>' :
-                                          invoice.status === 'completed' ? '<span class="badge bg-success">مكتملة</span>' :
-                                          '<span class="badge bg-danger">ملغية</span>'}
+                                        <span class="badge ${paymentStatusClass}">
+                                            ${paymentStatusText}
+                                        </span>
+                                        <div class="payment-progress mt-1">
+                                            <div class="progress" style="height: 5px;">
+                                                <div class="progress-bar bg-success" style="width: ${(invoice.paymentStatus.clientToDistributor.isPaid ? 33 : 0) + (invoice.paymentStatus.distributorToAdmin.isPaid ? 33 : 0) + (invoice.paymentStatus.adminToCompany.isPaid ? 34 : 0)}%"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
                                 </tr>
@@ -348,18 +463,88 @@ ${profitStats && Object.keys(profitStats).length > 0 ? `
         ` : `
             <div class="text-center py-5">
                 <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">لا توجد فواتير تطابق معايير البحث</h5>
-                <p class="text-muted">جرب تعديل معايير البحث أو إلغاء التصفية</p>
-                <a href="/reports" class="btn btn-primary">
-                    <i class="fas fa-refresh"></i>
-                    عرض جميع الفواتير
-                </a>
+                <h5 class="text-muted">لا توجد فواتير في ${monthName}</h5>
+                <p class="text-muted">جرب اختيار شهر آخر أو تعديل معايير البحث</p>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" onclick="goToCurrentMonth()">
+                        <i class="fas fa-calendar-day"></i>
+                        الشهر الحالي
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-refresh"></i>
+                        إلغاء التصفية
+                    </button>
+                </div>
             </div>
         `}
     </div>
 </div>
 
+<style>
+.payment-progress {
+    width: 100px;
+}
+
+.progress {
+    background-color: var(--bg-tertiary);
+}
+
+.month-selector-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+}
+
+.form-select option {
+    color: var(--text-primary);
+    background-color: var(--input-bg);
+}
+
+@media (max-width: 768px) {
+    .btn-toolbar .btn-group {
+        margin-bottom: 10px;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+</style>
+
 <script>
+// Month selection functionality
+function changeMonth() {
+    const selectedMonth = document.getElementById('monthSelector').value;
+    const url = new URL(window.location);
+    url.searchParams.set('month', selectedMonth);
+    
+    // Remove page parameter when changing month
+    url.searchParams.delete('page');
+    
+    window.location.href = url.toString();
+}
+
+function goToCurrentMonth() {
+    const url = new URL(window.location);
+    url.searchParams.delete('month');
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function clearFilters() {
+    const url = new URL(window.location);
+    const month = url.searchParams.get('month');
+    
+    // Keep only the month parameter
+    const newUrl = new URL(window.location.pathname, window.location.origin);
+    if (month) {
+        newUrl.searchParams.set('month', month);
+    }
+    
+    window.location.href = newUrl.toString();
+}
+
 function exportData(format) {
     const params = new URLSearchParams(window.location.search);
     params.set('format', format);
@@ -370,7 +555,7 @@ function exportData(format) {
         // Download CSV file
         const link = document.createElement('a');
         link.href = exportUrl;
-        link.download = 'invoices-report.csv';
+        link.download = \`invoices-report-\${document.getElementById('monthSelector').value}.csv\`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -380,15 +565,10 @@ function exportData(format) {
     }
 }
 
-function toggleAdvancedSearch() {
-    // This could expand to show more advanced search options
-    alert('خيارات البحث المتقدمة ستتوفر قريباً');
-}
-
 // Auto-submit form when filters change (optional)
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filterForm');
-    const autoSubmitElements = ['client', 'distributor', 'company', 'status'];
+    const autoSubmitElements = ['client', 'distributor', 'company', 'status', 'paymentStatus'];
     
     autoSubmitElements.forEach(id => {
         const element = document.getElementById(id);
@@ -399,6 +579,30 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+    
+    // Add keyboard shortcut for month navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateMonth(-1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateMonth(1);
+            }
+        }
+    });
 });
+
+function navigateMonth(direction) {
+    const monthSelector = document.getElementById('monthSelector');
+    const currentIndex = monthSelector.selectedIndex;
+    const newIndex = currentIndex + direction;
+    
+    if (newIndex >= 0 && newIndex < monthSelector.options.length) {
+        monthSelector.selectedIndex = newIndex;
+        changeMonth();
+    }
+}
 </script>
 ` }) %>

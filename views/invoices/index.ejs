@@ -42,8 +42,8 @@
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h4 class="mb-0">${invoices ? invoices.filter(i => i.status === 'completed').length : 0}</h4>
-                        <p class="mb-0">فواتير مكتملة</p>
+                        <h4 class="mb-0">${invoices ? invoices.filter(i => i.paymentStatus.adminToCompany.isPaid).length : 0}</h4>
+                        <p class="mb-0">مكتملة الدفع</p>
                     </div>
                     <i class="fas fa-check-circle fa-2x opacity-75"></i>
                 </div>
@@ -56,8 +56,8 @@
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h4 class="mb-0">${invoices ? invoices.filter(i => i.status === 'pending').length : 0}</h4>
-                        <p class="mb-0">قيد الانتظار</p>
+                        <h4 class="mb-0">${invoices ? invoices.filter(i => !i.paymentStatus.clientToDistributor.isPaid).length : 0}</h4>
+                        <p class="mb-0">في انتظار الدفع</p>
                     </div>
                     <i class="fas fa-clock fa-2x opacity-75"></i>
                 </div>
@@ -94,12 +94,13 @@
                 </div>
             </div>
             <div class="col-md-2 mb-3">
-                <label for="filterStatus" class="form-label">الحالة</label>
-                <select class="form-select" id="filterStatus" onchange="filterInvoices()">
+                <label for="filterPaymentStatus" class="form-label">حالة الدفع</label>
+                <select class="form-select" id="filterPaymentStatus" onchange="filterInvoices()">
                     <option value="">جميع الحالات</option>
-                    <option value="pending">قيد الانتظار</option>
-                    <option value="completed">مكتملة</option>
-                    <option value="cancelled">ملغية</option>
+                    <option value="client_pending">في انتظار العميل</option>
+                    <option value="distributor_pending">في انتظار الموزع</option>
+                    <option value="admin_pending">في انتظار الإدارة</option>
+                    <option value="fully_completed">مكتملة</option>
                 </select>
             </div>
             <div class="col-md-2 mb-3">
@@ -126,7 +127,7 @@
                     <option value="date">تاريخ الفاتورة</option>
                     <option value="amount">المبلغ</option>
                     <option value="code">رقم الفاتورة</option>
-                    <option value="status">الحالة</option>
+                    <option value="payment">حالة الدفع</option>
                 </select>
             </div>
             <div class="col-md-1 mb-3 d-flex align-items-end">
@@ -174,16 +175,12 @@
                                 المبلغ
                             </th>
                             <th>
-                                <i class="fas fa-percentage"></i>
-                                العمولات
+                                <i class="fas fa-route"></i>
+                                مسار الدفع
                             </th>
                             <th>
                                 <i class="fas fa-calendar"></i>
                                 تاريخ الفاتورة
-                            </th>
-                            <th>
-                                <i class="fas fa-info-circle"></i>
-                                الحالة
                             </th>
                             ${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? `
                                 <th class="text-center">
@@ -199,12 +196,22 @@
                             const distributorCommission = (invoice.amount * invoice.distributorCommissionRate) / 100;
                             const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
                             
+                            // Determine payment status
+                            let paymentStatus = 'client_pending';
+                            if (invoice.paymentStatus.adminToCompany.isPaid) {
+                                paymentStatus = 'fully_completed';
+                            } else if (invoice.paymentStatus.distributorToAdmin.isPaid) {
+                                paymentStatus = 'admin_pending';
+                            } else if (invoice.paymentStatus.clientToDistributor.isPaid) {
+                                paymentStatus = 'distributor_pending';
+                            }
+                            
                             return `
                                 <tr class="invoice-row" 
                                     data-code="${invoice.invoiceCode.toLowerCase()}" 
                                     data-client="${invoice.client?.fullName || ''}" 
                                     data-distributor="${invoice.assignedDistributor?.username || ''}"
-                                    data-status="${invoice.status}"
+                                    data-payment-status="${paymentStatus}"
                                     data-amount="${invoice.amount}">
                                     <td>
                                         <div class="d-flex align-items-center">
@@ -233,31 +240,79 @@
                                         <span class="badge bg-success fs-6">
                                             ${invoice.amount.toLocaleString('ar-SA')} ريال
                                         </span>
-                                    </td>
-                                    <td>
-                                        <div class="commission-details">
+                                        <div class="commission-details mt-1">
                                             <small class="d-block">عميل: ${clientCommission.toFixed(2)} ريال</small>
                                             <small class="d-block">موزع: ${distributorCommission.toFixed(2)} ريال</small>
                                             <small class="d-block">شركة: ${companyCommission.toFixed(2)} ريال</small>
                                         </div>
                                     </td>
                                     <td>
+                                        <div class="payment-flow">
+                                            <!-- Client to Distributor -->
+                                            <div class="payment-step d-flex align-items-center mb-1">
+                                                <div class="step-icon ${invoice.paymentStatus.clientToDistributor.isPaid ? 'completed' : 'pending'}">
+                                                    <i class="fas ${invoice.paymentStatus.clientToDistributor.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                                </div>
+                                                <span class="step-label">عميل → موزع</span>
+                                                ${currentUser.role === 'distributor' && 
+                                                  invoice.assignedDistributor._id.toString() === currentUser.id && 
+                                                  !invoice.paymentStatus.clientToDistributor.isPaid ? `
+                                                    <button class="btn btn-sm btn-success ms-2" onclick="markPaymentStep('${invoice._id}', 'clientToDistributor')" title="تحديد كمدفوع">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                ` : ''}
+                                                ${currentUser.role === 'admin' && invoice.paymentStatus.clientToDistributor.isPaid ? `
+                                                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="unmarkPaymentStep('${invoice._id}', 'clientToDistributor')" title="إلغاء الدفع">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                            
+                                            <!-- Distributor to Admin -->
+                                            <div class="payment-step d-flex align-items-center mb-1">
+                                                <div class="step-icon ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'completed' : 'pending'}">
+                                                    <i class="fas ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                                </div>
+                                                <span class="step-label">موزع → إدارة</span>
+                                                ${currentUser.role === 'admin' && 
+                                                  invoice.paymentStatus.clientToDistributor.isPaid && 
+                                                  !invoice.paymentStatus.distributorToAdmin.isPaid ? `
+                                                    <button class="btn btn-sm btn-success ms-2" onclick="markPaymentStep('${invoice._id}', 'distributorToAdmin')" title="تحديد كمدفوع">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                ` : ''}
+                                                ${currentUser.role === 'admin' && invoice.paymentStatus.distributorToAdmin.isPaid ? `
+                                                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="unmarkPaymentStep('${invoice._id}', 'distributorToAdmin')" title="إلغاء الدفع">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                            
+                                            <!-- Admin to Company -->
+                                            <div class="payment-step d-flex align-items-center">
+                                                <div class="step-icon ${invoice.paymentStatus.adminToCompany.isPaid ? 'completed' : 'pending'}">
+                                                    <i class="fas ${invoice.paymentStatus.adminToCompany.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                                </div>
+                                                <span class="step-label">إدارة → شركة</span>
+                                                ${currentUser.role === 'admin' && 
+                                                  invoice.paymentStatus.distributorToAdmin.isPaid && 
+                                                  !invoice.paymentStatus.adminToCompany.isPaid ? `
+                                                    <button class="btn btn-sm btn-success ms-2" onclick="markPaymentStep('${invoice._id}', 'adminToCompany')" title="تحديد كمدفوع">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                ` : ''}
+                                                ${currentUser.role === 'admin' && invoice.paymentStatus.adminToCompany.isPaid ? `
+                                                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="unmarkPaymentStep('${invoice._id}', 'adminToCompany')" title="إلغاء الدفع">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
                                         <small class="text-muted">
                                             ${new Date(invoice.invoiceDate).toLocaleDateString('ar-SA')}
                                         </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge ${
-                                            invoice.status === 'pending' ? 'bg-warning' :
-                                            invoice.status === 'completed' ? 'bg-success' :
-                                            'bg-danger'
-                                        }">
-                                            ${
-                                                invoice.status === 'pending' ? 'قيد الانتظار' :
-                                                invoice.status === 'completed' ? 'مكتملة' :
-                                                'ملغية'
-                                            }
-                                        </span>
                                     </td>
                                     ${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? `
                                         <td class="text-center">
@@ -336,6 +391,40 @@
     line-height: 1.2;
 }
 
+.payment-flow {
+    min-width: 200px;
+}
+
+.payment-step {
+    font-size: 0.8rem;
+}
+
+.step-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    font-size: 12px;
+}
+
+.step-icon.completed {
+    background-color: #28a745;
+    color: white;
+}
+
+.step-icon.pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.step-label {
+    flex-grow: 1;
+    white-space: nowrap;
+}
+
 .table-hover tbody tr:hover {
     background-color: var(--bs-light);
 }
@@ -356,6 +445,14 @@
     .commission-details {
         font-size: 0.7rem;
     }
+    
+    .payment-flow {
+        min-width: 150px;
+    }
+    
+    .step-label {
+        font-size: 0.7rem;
+    }
 }
 </style>
 
@@ -369,7 +466,7 @@ document.getElementById('searchInvoices').addEventListener('input', function() {
 // Filter invoices
 function filterInvoices() {
     const searchTerm = document.getElementById('searchInvoices').value.toLowerCase();
-    const statusFilter = document.getElementById('filterStatus').value;
+    const paymentStatusFilter = document.getElementById('filterPaymentStatus').value;
     const clientFilter = document.getElementById('filterClient').value;
     const distributorFilter = document.getElementById('filterDistributor').value;
     
@@ -380,14 +477,14 @@ function filterInvoices() {
         const code = row.dataset.code;
         const client = row.dataset.client;
         const distributor = row.dataset.distributor;
-        const status = row.dataset.status;
+        const paymentStatus = row.dataset.paymentStatus;
         
         const matchesSearch = code.includes(searchTerm) || client.toLowerCase().includes(searchTerm);
-        const matchesStatus = !statusFilter || status === statusFilter;
+        const matchesPaymentStatus = !paymentStatusFilter || paymentStatus === paymentStatusFilter;
         const matchesClient = !clientFilter || client === clientFilter;
         const matchesDistributor = !distributorFilter || distributor === distributorFilter;
         
-        if (matchesSearch && matchesStatus && matchesClient && matchesDistributor) {
+        if (matchesSearch && matchesPaymentStatus && matchesClient && matchesDistributor) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -401,7 +498,7 @@ function filterInvoices() {
 // Clear search
 function clearSearch() {
     document.getElementById('searchInvoices').value = '';
-    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterPaymentStatus').value = '';
     document.getElementById('filterClient').value = '';
     document.getElementById('filterDistributor').value = '';
     
@@ -423,11 +520,11 @@ function sortInvoices() {
                 return a.dataset.code.localeCompare(b.dataset.code);
             case 'amount':
                 return parseFloat(b.dataset.amount) - parseFloat(a.dataset.amount);
-            case 'status':
-                return a.dataset.status.localeCompare(b.dataset.status);
+            case 'payment':
+                return a.dataset.paymentStatus.localeCompare(b.dataset.paymentStatus);
             case 'date':
-                const dateA = new Date(a.querySelector('td:nth-child(7) small').textContent);
-                const dateB = new Date(b.querySelector('td:nth-child(7) small').textContent);
+                const dateA = new Date(a.querySelector('td:nth-last-child(2) small').textContent);
+                const dateB = new Date(b.querySelector('td:nth-last-child(2) small').textContent);
                 return dateB - dateA;
             default:
                 return 0;
@@ -435,6 +532,47 @@ function sortInvoices() {
     });
     
     rows.forEach(row => tbody.appendChild(row));
+}
+
+// Mark payment step as paid
+function markPaymentStep(invoiceId, step) {
+    const stepNames = {
+        clientToDistributor: 'العميل → الموزع',
+        distributorToAdmin: 'الموزع → الإدارة',
+        adminToCompany: 'الإدارة → الشركة'
+    };
+    
+    if (confirm(\`هل أنت متأكد من تحديد "\${stepNames[step]}" كمدفوع؟\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/invoices/\${invoiceId}/payment/\${step}\`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Unmark payment step (admin only)
+function unmarkPaymentStep(invoiceId, step) {
+    const stepNames = {
+        clientToDistributor: 'العميل → الموزع',
+        distributorToAdmin: 'الموزع → الإدارة',
+        adminToCompany: 'الإدارة → الشركة'
+    };
+    
+    if (confirm(\`هل أنت متأكد من إلغاء حالة الدفع "\${stepNames[step]}"؟\`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = \`/invoices/\${invoiceId}/payment/\${step}?_method=DELETE\`;
+        
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 
 // View invoice details
