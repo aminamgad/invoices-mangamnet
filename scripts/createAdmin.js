@@ -9,22 +9,22 @@ dotenv.config();
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-invoice-system')
   .then(async () => {
     console.log('MongoDB connected');
-    
+
     // Check if admin already exists
-    const existingAdmin = await User.findOne({ role: 'admin' });
+    const existingAdmin = await User.findOne({ username: 'taxinvadmin' });
     if (existingAdmin) {
       console.log('Admin user already exists');
-      
+
       // Update admin to have all permissions
       const allPermissions = await Permission.find();
       const adminRole = await Role.findOne({ name: 'admin' });
-      
+
       if (adminRole) {
         adminRole.permissions = allPermissions.map(p => p._id);
         await adminRole.save();
         console.log('Admin role updated with all permissions');
       }
-      
+
       // Update admin user permissions
       existingAdmin.permissions = {
         canCreateCompanies: true,
@@ -34,14 +34,14 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-in
       };
       await existingAdmin.save();
       console.log('Admin user permissions updated');
-      
+
       process.exit(0);
     }
-    
+
     // Get all permissions
     const allPermissions = await Permission.find();
     console.log(`Found ${allPermissions.length} permissions`);
-    
+
     // Create or update admin role with all permissions
     let adminRole = await Role.findOne({ name: 'admin' });
     if (!adminRole) {
@@ -59,11 +59,11 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-in
       await adminRole.save();
       console.log('Admin role updated with all permissions');
     }
-    
+
     // Create admin user
     const admin = new User({
-      username: 'admin',
-      password: 'admin123',
+      username: 'taxinvadmin',
+      password: 'a@201313A@',
       role: 'admin',
       roles: [adminRole._id],
       permissions: {
@@ -73,13 +73,13 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-in
         canViewReports: true
       }
     });
-    
+
     await admin.save();
     console.log('Admin user created successfully');
-    console.log('Username: admin');
-    console.log('Password: admin123');
+    console.log('Username: taxinvadmin');
+    console.log('Password: a@201313A@');
     console.log(`Admin has ${allPermissions.length} permissions`);
-    
+
     process.exit(0);
   })
   .catch(err => {
