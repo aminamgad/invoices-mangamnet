@@ -172,7 +172,8 @@
                                             <i class="fas fa-file-pdf"></i>
                                         </div>
                                         <div>
-                                            <strong>${file.fileName}</strong>
+                                            <strong class="text-body">${file.fileName}</strong>
+                                            ${file.invoiceCount > 0 ? `<div class="small text-muted">${file.invoiceCount} فاتورة</div>` : ''}
                                         </div>
                                     </div>
                                 </td>
@@ -198,7 +199,7 @@
                                 </td>
                                 <td>
                                     <div class="notes-cell" title="${file.notes || 'لا توجد ملاحظات'}">
-                                        ${file.notes ? (file.notes.length > 30 ? file.notes.substring(0, 30) + '...' : file.notes) : '<span class="text-muted">لا توجد ملاحظات</span>'}
+                                        ${file.notes ? `<span class="text-body">${file.notes.length > 30 ? file.notes.substring(0, 30) + '...' : file.notes}</span>` : '<span class="text-muted">لا توجد ملاحظات</span>'}
                                     </div>
                                 </td>
                                 <td>
@@ -208,17 +209,20 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">
-                                        ${new Date(file.createdAt).toLocaleDateString('ar-SA')}
+                                        <span class="text-body">${new Date(file.createdAt).toLocaleDateString('ar-SA')}</span>
                                         <br>
-                                        ${new Date(file.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}
+                                        <span class="text-muted">${new Date(file.createdAt).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</span>
                                     </small>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
-                                        <a href="/uploads/${file.pdfPath}" target="_blank" class="btn btn-sm btn-outline-success" title="عرض الملف">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewFileDetails('${file._id}')" title="عرض التفاصيل">
                                             <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="/uploads/${file.pdfPath}" target="_blank" class="btn btn-sm btn-outline-success" title="عرض الملف">
+                                            <i class="fas fa-file-pdf"></i>
                                         </a>
-                                        <a href="/uploads/${file.pdfPath}" download class="btn btn-sm btn-outline-info" title="تحميل">
+                                        <a href="/uploads/${file.pdfPath}" download class="btn btn-sm btn-outline-secondary" title="تحميل">
                                             <i class="fas fa-download"></i>
                                         </a>
                                         ${userPermissions && userPermissions.canUpdate ? `
@@ -256,6 +260,24 @@
     </div>
 </div>
 
+<!-- File Details Modal -->
+<div class="modal fade" id="fileDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-pdf"></i>
+                    تفاصيل الملف
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="fileDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .file-icon {
     width: 35px;
@@ -288,6 +310,65 @@
     .btn-group .btn {
         padding: 0.25rem 0.5rem;
     }
+}
+
+/* Dark mode improvements */
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .file-icon {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+[data-theme="dark"] .notes-cell .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .text-body {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .badge {
+    color: white !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-title {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1);
+}
+
+/* Enhanced text visibility for file names and dates */
+[data-theme="dark"] .file-row strong {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .file-row .small {
+    color: var(--text-muted) !important;
 }
 </style>
 
@@ -383,6 +464,101 @@ function sortFiles() {
     });
     
     rows.forEach(row => tbody.appendChild(row));
+}
+
+// View file details in modal
+function viewFileDetails(fileId) {
+    const modal = new bootstrap.Modal(document.getElementById('fileDetailsModal'));
+    const content = document.getElementById('fileDetailsContent');
+    
+    // Show loading state
+    content.innerHTML = \`
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-2">جاري تحميل تفاصيل الملف...</p>
+        </div>
+    \`;
+    
+    modal.show();
+    
+    // Create file details content (since there's no dedicated details route)
+    const fileRow = document.querySelector(\`[onclick="viewFileDetails('\${fileId}')"]\`).closest('tr');
+    const fileName = fileRow.querySelector('strong').textContent;
+    const company = fileRow.querySelector('.badge.bg-info').textContent;
+    const status = fileRow.querySelector('td:nth-child(3) .badge').textContent;
+    const notes = fileRow.querySelector('.notes-cell').textContent.trim();
+    const createdBy = fileRow.querySelector('.badge.bg-primary').textContent;
+    const createdAt = fileRow.querySelector('td:nth-child(6) small').textContent.trim();
+    
+    // Find the file data from the files array
+    const fileData = ${JSON.stringify(files || [])}.find(f => f._id === fileId);
+    
+    content.innerHTML = \`
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">معلومات الملف</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>اسم الملف:</strong><br>\${fileName}</p>
+                                <p><strong>الشركة:</strong><br><span class="badge bg-info">\${company}</span></p>
+                                <p><strong>الحالة:</strong><br><span class="badge \${
+                                    status === 'نشط' ? 'bg-success' :
+                                    status === 'مؤرشف' ? 'bg-secondary' :
+                                    status === 'قيد المراجعة' ? 'bg-warning' :
+                                    'bg-info'
+                                }">\${status}</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>تم الإنشاء بواسطة:</strong><br><span class="badge bg-primary">\${createdBy}</span></p>
+                                <p><strong>تاريخ الإنشاء:</strong><br>\${createdAt}</p>
+                                \${fileData && fileData.invoiceCount ? \`<p><strong>عدد الفواتير:</strong><br><span class="badge bg-success">\${fileData.invoiceCount} فاتورة</span></p>\` : ''}
+                            </div>
+                        </div>
+                        \${notes && notes !== 'لا توجد ملاحظات' ? \`
+                            <div class="row">
+                                <div class="col-12">
+                                    <p><strong>الملاحظات:</strong><br>\${notes}</p>
+                                </div>
+                            </div>
+                        \` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">الإجراءات</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            \${fileData ? \`
+                                <a href="/uploads/\${fileData.pdfPath}" target="_blank" class="btn btn-success">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    عرض الملف
+                                </a>
+                                <a href="/uploads/\${fileData.pdfPath}" download class="btn btn-outline-secondary">
+                                    <i class="fas fa-download me-2"></i>
+                                    تحميل الملف
+                                </a>
+                            \` : ''}
+                            \${${userPermissions && userPermissions.canUpdate} ? \`
+                                <a href="/files/\${fileId}/edit" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>
+                                    تعديل الملف
+                                </a>
+                            \` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    \`;
 }
 
 // Delete file

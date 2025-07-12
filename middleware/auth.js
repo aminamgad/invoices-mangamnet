@@ -91,6 +91,15 @@ export const loadUserPermissions = async (req, res, next) => {
         }
       } catch (error) {
         console.error('Error loading user permissions:', error);
+        // Set default permissions to prevent errors
+        req.session.user.detailedPermissions = [];
+        req.session.user.hasAllPermissions = false;
+        req.session.user.permissions = {
+          canCreateCompanies: false,
+          canCreateInvoices: false,
+          canManageClients: false,
+          canViewReports: false
+        };
       }
     }
   }
@@ -161,6 +170,14 @@ export const requireModuleAccess = (module) => {
       next();
     } catch (error) {
       console.error('Module access check error:', error);
+      // Set default permissions to prevent errors
+      req.userPermissionLevel = {
+        canViewOwn: false,
+        canViewAll: false,
+        canCreate: false,
+        canUpdate: false,
+        canDelete: false
+      };
       req.flash('error', 'حدث خطأ أثناء التحقق من الصلاحيات');
       return res.redirect('/dashboard');
     }

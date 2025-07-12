@@ -185,7 +185,7 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
         totalInvoices: filteredInvoices.length,
         limit: parseInt(limit)
       },
-      userPermissions: req.userPermissionLevel,
+      userPermissions: req.userPermissionLevel || {},
       monthOptions,
       selectedMonth: monthString,
       monthName: getMonthName(monthString)
@@ -199,12 +199,46 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
     
     res.render('reports/index', {
       invoices: [],
-      profitStats: {},
+      profitStats: {
+        totalInvoices: 0,
+        totalAmount: 0,
+        totalClientCommission: 0,
+        totalDistributorCommission: 0,
+        totalCompanyCommission: 0,
+        totalNetProfit: 0,
+        paymentStatusBreakdown: {
+          client_pending: 0,
+          distributor_pending: 0,
+          admin_pending: 0,
+          fully_completed: 0
+        },
+        statusBreakdown: {
+          pending: 0,
+          completed: 0,
+          cancelled: 0
+        }
+      },
       clients: [],
       distributors: [],
       companies: [],
-      filters: { month: monthString },
-      pagination: {},
+      filters: { 
+        month: monthString,
+        client: '',
+        distributor: '',
+        company: '',
+        status: '',
+        paymentStatus: '',
+        minAmount: '',
+        maxAmount: '',
+        sortBy: 'invoiceDate',
+        sortOrder: 'desc'
+      },
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalInvoices: 0,
+        limit: 20
+      },
       userPermissions: req.userPermissionLevel || {},
       monthOptions,
       selectedMonth: monthString,

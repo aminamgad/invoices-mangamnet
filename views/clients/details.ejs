@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل العميل - نظام إدارة الفواتير والعملاء</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts - Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Light mode colors */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --text-inverse: #ffffff;
+            --border-color: #e9ecef;
+            --shadow-color: rgba(0,0,0,0.1);
+            --sidebar-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-hover: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            --card-bg: #ffffff;
+            --table-bg: #ffffff;
+            --input-bg: #ffffff;
+            --input-border: #e9ecef;
+            --navbar-bg: #ffffff;
+            --number-color: #333333;
+            --badge-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode colors */
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #888888;
+            --text-inverse: #333333;
+            --border-color: #404040;
+            --shadow-color: rgba(0,0,0,0.3);
+            --sidebar-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-hover: linear-gradient(135deg, #3d4852 0%, #4c3085 100%);
+            --card-bg: #2d2d2d;
+            --table-bg: #2d2d2d;
+            --input-bg: #3d3d3d;
+            --input-border: #555555;
+            --navbar-bg: #1e1e1e;
+            --number-color: #ffffff;
+            --badge-text: #ffffff;
+        }
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: var(--sidebar-gradient);
+            box-shadow: 2px 0 10px var(--shadow-color);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: white !important;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            color: white !important;
+        }
+        
+        .table {
+            background: var(--table-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            color: var(--text-primary);
+        }
+        
+        .table th {
+            background: var(--primary-gradient);
+            color: white !important;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .table td {
+            border-color: var(--border-color);
+            background-color: var(--table-bg);
+            color: var(--text-primary) !important;
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .badge {
+            font-size: 0.75em;
+            border-radius: 6px;
+            color: white !important;
+        }
+        
+        .stats-card {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card i {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .border-bottom {
+            border-color: var(--border-color) !important;
+        }
+        
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1060;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-hover);
+        }
+        
+        .theme-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Enhanced client details styling */
+        .client-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .contact-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: #28a745;
+            transform: translateX(-3px);
+        }
+
+        .invoice-summary-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Enhanced table styling */
+        .invoice-table {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .invoice-table th {
+            background: var(--primary-gradient);
+            color: white !important;
+            font-weight: 600;
+            padding: 15px 12px;
+            border: none;
+        }
+
+        .invoice-table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            background-color: var(--table-bg);
+            color: var(--text-primary);
+        }
+
+        .invoice-code {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .amount-badge {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* Action buttons */
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h5 {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+        
+        /* Dark mode specific enhancements */
+        [data-theme="dark"] .client-avatar {
+            background: var(--primary-gradient);
+        }
+        
+        [data-theme="dark"] .detail-item {
+            border-bottom-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .detail-label {
+            color: var(--text-secondary);
+        }
+        
+        [data-theme="dark"] .detail-value {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .contact-link {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .contact-link:hover {
+            color: #51cf66 !important;
+        }
+        
+        [data-theme="dark"] .contact-link .text-body {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .invoice-summary-card {
+            background: linear-gradient(135deg, rgba(74, 85, 104, 0.1) 0%, rgba(85, 60, 154, 0.1) 100%) !important;
+            border-color: rgba(74, 85, 104, 0.2);
+        }
+        
+        [data-theme="dark"] .summary-number {
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .summary-label {
+            color: var(--text-secondary) !important;
+        }
+        
+        [data-theme="dark"] .invoice-table {
+            box-shadow: 0 8px 25px var(--shadow-color) !important;
+        }
+        
+        [data-theme="dark"] .invoice-table th {
+            background: var(--primary-gradient);
+        }
+        
+        [data-theme="dark"] .invoice-table td {
+            background-color: var(--table-bg);
+            color: var(--text-primary) !important;
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .invoice-table tbody tr:nth-of-type(odd) td {
+            background-color: var(--bg-tertiary) !important;
+        }
+        
+        [data-theme="dark"] .invoice-code {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .empty-state {
+            color: var(--text-muted) !important;
+        }
+        
+        [data-theme="dark"] .empty-state h5 {
+            color: var(--text-secondary);
+        }
+        
+        [data-theme="dark"] .empty-state p {
+            color: var(--text-muted);
+        }
+        
+        [data-theme="dark"] .action-btn:hover {
+            box-shadow: 0 4px 12px rgba(255,255,255,0.15);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 80%;
+                height: 100vh;
+                z-index: 1050;
+                transition: right 0.3s ease;
+            }
+            
+            .sidebar.show {
+                right: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 1040;
+            }
+            
+            .sidebar-overlay.show {
+                display: block;
+            }
+            
+            .theme-toggle {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .client-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .summary-number {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="تبديل الوضع المظلم">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">نظام الفواتير</h4>
+                        <small class="text-white-50">مرحباً <%= currentUser.username %></small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="fas fa-tachometer-alt ms-2"></i>
+                                لوحة التحكم
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/reports">
+                                <i class="fas fa-chart-line ms-2"></i>
+                                تقارير الأرباح
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/clients">
+                                <i class="fas fa-users ms-2"></i>
+                                العملاء
+                            </a>
+                        </li>
+                        
+                        <% if (currentUser.role === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/distributors">
+                                <i class="fas fa-user-tie ms-2"></i>
+                                الموزعين
+                            </a>
+                        </li>
+                        <% } %>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/companies">
+                                <i class="fas fa-building ms-2"></i>
+                                الشركات
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/files">
+                                <i class="fas fa-folder ms-2"></i>
+                                الملفات
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/invoices">
+                                <i class="fas fa-file-invoice ms-2"></i>
+                                الفواتير
+                            </a>
+                        </li>
+                        
+                        <% if (currentUser.role === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/commission-tiers">
+                                <i class="fas fa-percentage ms-2"></i>
+                                مستويات العمولة
+                            </a>
+                        </li>
+                        <% } %>
+                    </ul>
+                    
+                    <div class="mt-auto pt-3">
+                        <form method="POST" action="/auth/logout" class="d-inline">
+                            <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                                <i class="fas fa-sign-out-alt ms-2"></i>
+                                تسجيل الخروج
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Mobile navbar -->
+                <div class="d-md-none">
+                    <nav class="navbar navbar-expand-lg navbar-light mb-3">
+                        <div class="container-fluid">
+                            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <span class="navbar-brand">نظام الفواتير</span>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Flash messages -->
+                <% if (success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+                
+                <% if (error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+                
+                <!-- Page Content -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-user text-primary"></i>
+                        تفاصيل العميل
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <% if (userPermissions && userPermissions.canUpdate) { %>
+                                <a href="/clients/<%= client._id %>/edit" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                    تعديل العميل
+                                </a>
+                            <% } %>
+                        </div>
+                        <a href="/clients" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            العودة للعملاء
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Client Information -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="client-avatar mx-auto">
+                                    <%= client.fullName.charAt(0).toUpperCase() %>
+                                </div>
+                                <h4 class="mb-3"><%= client.fullName %></h4>
+                                
+                                <div class="detail-item">
+                                    <div class="detail-label">رقم الجوال</div>
+                                    <div class="detail-value">
+                                        <a href="tel:<%= client.mobileNumber %>" class="contact-link text-decoration-none">
+                                            <i class="fas fa-phone text-success me-2"></i>
+                                            <span class="text-body"><%= client.mobileNumber %></span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-label">نسبة العمولة</div>
+                                    <div class="detail-value">
+                                        <span class="badge bg-success fs-6"><%= client.commissionRate %>%</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-label">تم الإنشاء بواسطة</div>
+                                    <div class="detail-value">
+                                        <span class="badge bg-info"><%= client.createdBy?.username || 'غير محدد' %></span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-label">تاريخ الإنشاء</div>
+                                    <div class="detail-value">
+                                        <span class="text-body"><%= new Date(client.createdAt).toLocaleDateString('ar-SA') %></span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-label">آخر تحديث</div>
+                                    <div class="detail-value">
+                                        <span class="text-body"><%= new Date(client.updatedAt).toLocaleDateString('ar-SA') %></span>
+                                    </div>
+                                </div>
+
+                                <% if (client.notes) { %>
+                                <div class="detail-item">
+                                    <div class="detail-label">الملاحظات</div>
+                                    <div class="detail-value">
+                                        <span class="text-body"><%= client.notes %></span>
+                                    </div>
+                                </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="col-md-8">
+                        <div class="invoice-summary-card">
+                            <h5 class="mb-4 text-center">ملخص الفواتير</h5>
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="summary-item">
+                                        <div class="summary-number"><%= stats.totalInvoices %></div>
+                                        <div class="summary-label">إجمالي الفواتير</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="summary-item">
+                                        <div class="summary-number"><%= stats.totalAmount.toLocaleString('ar-SA') %></div>
+                                        <div class="summary-label">إجمالي المبلغ (جنيه)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="summary-item">
+                                        <div class="summary-number"><%= stats.completedInvoices %></div>
+                                        <div class="summary-label">فواتير مكتملة</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="summary-item">
+                                        <div class="summary-number"><%= stats.pendingInvoices %></div>
+                                        <div class="summary-label">فواتير معلقة</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Invoices -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-invoice"></i>
+                            فواتير العميل
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (invoices && invoices.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-striped invoice-table">
+                                    <thead>
+                                        <tr>
+                                            <th>رقم الفاتورة</th>
+                                            <th>الملف</th>
+                                            <th>الموزع</th>
+                                            <th>المبلغ</th>
+                                            <th>التاريخ</th>
+                                            <th class="text-center">الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% invoices.forEach(invoice => { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="invoice-code"><%= invoice.invoiceCode %></span>
+                                                </td>
+                                                <td><%= invoice.file?.fileName || 'غير محدد' %></td>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        <%= invoice.assignedDistributor?.username || 'غير محدد' %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="amount-badge">
+                                                        <%= invoice.amount.toLocaleString('ar-SA') %> جنيه
+                                                    </span>
+                                                </td>
+                                                <td><%= new Date(invoice.invoiceDate).toLocaleDateString('ar-SA') %></td>
+                                                <td class="text-center">
+                                                    <a href="/invoices/<%= invoice._id %>" class="btn btn-outline-info action-btn" title="عرض التفاصيل">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <% if (stats.totalInvoices > 10) { %>
+                                <div class="text-center mt-4">
+                                    <a href="/invoices?client=<%= client._id %>" class="btn btn-outline-primary">
+                                        <i class="fas fa-list"></i>
+                                        عرض جميع الفواتير (<%= stats.totalInvoices %>)
+                                    </a>
+                                </div>
+                            <% } %>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <i class="fas fa-file-invoice"></i>
+                                <h5>لا توجد فواتير</h5>
+                                <p>لا توجد فواتير لهذا العميل حتى الآن</p>
+                                <% if (userPermissions && userPermissions.canCreate) { %>
+                                    <a href="/invoices/new?client=<%= client._id %>" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i>
+                                        إنشاء فاتورة جديدة
+                                    </a>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Theme Manager
+        class ThemeManager {
+            constructor() {
+                this.themeToggle = document.getElementById('themeToggle');
+                this.themeIcon = document.getElementById('themeIcon');
+                this.currentTheme = localStorage.getItem('theme') || 'light';
+                
+                this.init();
+            }
+            
+            init() {
+                // Set initial theme
+                this.setTheme(this.currentTheme);
+                
+                // Add event listener
+                if (this.themeToggle) {
+                    this.themeToggle.addEventListener('click', () => this.toggleTheme());
+                }
+                
+                // Listen for system theme changes
+                if (window.matchMedia) {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        if (!localStorage.getItem('theme')) {
+                            this.setTheme(e.matches ? 'dark' : 'light');
+                        }
+                    });
+                }
+            }
+            
+            setTheme(theme) {
+                this.currentTheme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                if (this.themeIcon) {
+                    if (theme === 'dark') {
+                        this.themeIcon.className = 'fas fa-sun';
+                        this.themeToggle.title = 'تبديل للوضع المضيء';
+                    } else {
+                        this.themeIcon.className = 'fas fa-moon';
+                        this.themeToggle.title = 'تبديل للوضع المظلم';
+                    }
+                }
+                
+                // Save preference
+                localStorage.setItem('theme', theme);
+            }
+            
+            toggleTheme() {
+                const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+                this.setTheme(newTheme);
+                
+                // Add a nice animation effect
+                if (this.themeToggle) {
+                    this.themeToggle.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        this.themeToggle.style.transform = 'scale(1)';
+                    }, 150);
+                }
+            }
+        }
+        
+        // Initialize theme manager
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeManager = new ThemeManager();
+            
+            // Auto-detect system theme preference on first visit
+            if (!localStorage.getItem('theme')) {
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    themeManager.setTheme('dark');
+                }
+            }
+            
+            // Mobile sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    sidebarOverlay.classList.toggle('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+        
+        // Keyboard shortcut for theme toggle (Ctrl/Cmd + Shift + D)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                document.getElementById('themeToggle').click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -17,7 +17,7 @@
                 <h5 class="mb-0">بيانات الفاتورة</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="/invoices/${invoice._id}?_method=PUT">
+                <form method="POST" action="/invoices/${invoice._id}?_method=PUT" id="invoiceForm">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="invoiceCode" class="form-label">رقم الفاتورة <span class="text-danger">*</span></label>
@@ -70,13 +70,12 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="status" class="form-label">حالة الفاتورة <span class="text-danger">*</span></label>
+                        <label for="status" class="form-label">الحالة <span class="text-danger">*</span></label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="pending" ${invoice.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
                             <option value="completed" ${invoice.status === 'completed' ? 'selected' : ''}>مكتملة</option>
                             <option value="cancelled" ${invoice.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
                         </select>
-                        <div class="form-text">ملاحظة: حالة الدفع تُدار من خلال مسار الدفع المتدرج</div>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -94,78 +93,29 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">معلومات العمولة</h5>
+                <h5 class="mb-0">معلومات العمولة الحالية</h5>
             </div>
             <div class="card-body">
-                <p><strong>عمولة العميل:</strong> %${invoice.clientCommissionRate}</p>
-                <p><strong>عمولة الموزع:</strong> %${invoice.distributorCommissionRate}</p>
-                <p><strong>عمولة الشركة:</strong> %${invoice.companyCommissionRate}</p>
-                <div class="alert alert-info">
-                    <small>هذه النسب محفوظة من وقت إنشاء الفاتورة</small>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="mb-0">حالة الدفع</h5>
-            </div>
-            <div class="card-body">
-                <div class="payment-status-display">
-                    <!-- Client to Distributor -->
-                    <div class="payment-step-display mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="step-icon ${invoice.paymentStatus.clientToDistributor.isPaid ? 'completed' : 'pending'} me-2">
-                                <i class="fas ${invoice.paymentStatus.clientToDistributor.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
-                            </div>
-                            <div>
-                                <strong>العميل → الموزع</strong>
-                                <div class="small text-muted">
-                                    ${invoice.paymentStatus.clientToDistributor.isPaid ? 
-                                        `تم الدفع في: ${new Date(invoice.paymentStatus.clientToDistributor.paidAt).toLocaleDateString('ar-SA')}` : 
-                                        'في انتظار الدفع'
-                                    }
-                                </div>
-                            </div>
+                <div id="currentCommissionInfo">
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <strong>عمولة العميل:</strong> %${invoice.clientCommissionRate}
+                            <br><small class="text-muted">${((invoice.amount * invoice.clientCommissionRate) / 100).toFixed(2)} جنيه</small>
                         </div>
-                    </div>
-                    
-                    <!-- Distributor to Admin -->
-                    <div class="payment-step-display mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="step-icon ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'completed' : 'pending'} me-2">
-                                <i class="fas ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
-                            </div>
-                            <div>
-                                <strong>الموزع → الإدارة</strong>
-                                <div class="small text-muted">
-                                    ${invoice.paymentStatus.distributorToAdmin.isPaid ? 
-                                        `تم الدفع في: ${new Date(invoice.paymentStatus.distributorToAdmin.paidAt).toLocaleDateString('ar-SA')}` : 
-                                        'في انتظار الدفع'
-                                    }
-                                </div>
-                            </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الموزع:</strong> %${invoice.distributorCommissionRate}
+                            <br><small class="text-muted">${((invoice.amount * invoice.distributorCommissionRate) / 100).toFixed(2)} جنيه</small>
                         </div>
-                    </div>
-                    
-                    <!-- Admin to Company -->
-                    <div class="payment-step-display">
-                        <div class="d-flex align-items-center">
-                            <div class="step-icon ${invoice.paymentStatus.adminToCompany.isPaid ? 'completed' : 'pending'} me-2">
-                                <i class="fas ${invoice.paymentStatus.adminToCompany.isPaid ? 'fa-check-circle' : 'fa-clock'}"></i>
-                            </div>
-                            <div>
-                                <strong>الإدارة → الشركة</strong>
-                                <div class="small text-muted">
-                                    ${invoice.paymentStatus.adminToCompany.isPaid ? 
-                                        `تم الدفع في: ${new Date(invoice.paymentStatus.adminToCompany.paidAt).toLocaleDateString('ar-SA')}` : 
-                                        'في انتظار الدفع'
-                                    }
-                                </div>
-                            </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الشركة:</strong> %${invoice.companyCommissionRate}
+                            <br><small class="text-muted">${((invoice.amount * invoice.companyCommissionRate) / 100).toFixed(2)} جنيه</small>
                         </div>
                     </div>
                 </div>
+                <button type="button" class="btn btn-outline-info btn-sm w-100 mt-3" id="recalculateBtn">
+                    <i class="fas fa-calculator"></i>
+                    إعادة حساب العمولة
+                </button>
             </div>
         </div>
         
@@ -177,6 +127,45 @@
                 <p><strong>تاريخ الإنشاء:</strong><br>${new Date(invoice.createdAt).toLocaleDateString('ar-EG')}</p>
                 <p><strong>آخر تحديث:</strong><br>${new Date(invoice.updatedAt).toLocaleDateString('ar-EG')}</p>
                 <p><strong>تم الإنشاء بواسطة:</strong><br>${invoice.createdBy?.username || 'غير محدد'}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">حالة الدفع</h5>
+            </div>
+            <div class="card-body">
+                <div class="payment-status-display">
+                    <div class="payment-step mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${invoice.paymentStatus.clientToDistributor.isPaid ? 'fa-check-circle text-success' : 'fa-clock text-warning'} me-2"></i>
+                            <span>عميل → موزع</span>
+                        </div>
+                        ${invoice.paymentStatus.clientToDistributor.isPaid ? `
+                            <small class="text-muted">تم الدفع في ${new Date(invoice.paymentStatus.clientToDistributor.paidAt).toLocaleDateString('ar-EG')}</small>
+                        ` : '<small class="text-muted">في انتظار الدفع</small>'}
+                    </div>
+                    
+                    <div class="payment-step mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${invoice.paymentStatus.distributorToAdmin.isPaid ? 'fa-check-circle text-success' : 'fa-clock text-warning'} me-2"></i>
+                            <span>موزع → إدارة</span>
+                        </div>
+                        ${invoice.paymentStatus.distributorToAdmin.isPaid ? `
+                            <small class="text-muted">تم الدفع في ${new Date(invoice.paymentStatus.distributorToAdmin.paidAt).toLocaleDateString('ar-EG')}</small>
+                        ` : '<small class="text-muted">في انتظار الدفع</small>'}
+                    </div>
+                    
+                    <div class="payment-step">
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${invoice.paymentStatus.adminToCompany.isPaid ? 'fa-check-circle text-success' : 'fa-clock text-warning'} me-2"></i>
+                            <span>إدارة → شركة</span>
+                        </div>
+                        ${invoice.paymentStatus.adminToCompany.isPaid ? `
+                            <small class="text-muted">تم الدفع في ${new Date(invoice.paymentStatus.adminToCompany.paidAt).toLocaleDateString('ar-EG')}</small>
+                        ` : '<small class="text-muted">في انتظار الدفع</small>'}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -235,37 +224,24 @@
     border-color: var(--border-color);
 }
 
-.payment-status-display .step-icon {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-}
-
-.payment-status-display .step-icon.completed {
-    background-color: #28a745;
-    color: white;
-}
-
-.payment-status-display .step-icon.pending {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.payment-step-display {
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--bg-tertiary);
-}
-
-.alert {
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
+.btn-outline-info {
     color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    color: white;
+    border-color: #17a2b8;
+}
+
+.payment-step {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.payment-step:last-child {
+    border-bottom: none;
 }
 
 /* Dark mode specific adjustments */
@@ -287,23 +263,115 @@
     color: #ff6b6b !important;
 }
 
-[data-theme="dark"] .text-muted {
-    color: var(--text-muted) !important;
+[data-theme="dark"] .text-success {
+    color: #51cf66 !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #ffd43b !important;
 }
 
 [data-theme="dark"] p strong {
     color: var(--text-primary);
 }
 
-[data-theme="dark"] .alert {
+[data-theme="dark"] .btn-outline-info {
+    color: #74c0fc;
+    border-color: #74c0fc;
+}
+
+[data-theme="dark"] .btn-outline-info:hover {
+    background-color: #74c0fc;
+    color: var(--text-inverse);
+    border-color: #74c0fc;
+}
+
+[data-theme="dark"] .payment-step {
+    border-bottom-color: var(--border-color);
+}
+
+/* Commission info styling */
+#currentCommissionInfo {
+    min-height: 60px;
+}
+
+[data-theme="dark"] #currentCommissionInfo .alert {
     background-color: var(--bg-tertiary);
     border-color: var(--border-color);
     color: var(--text-primary);
 }
-
-[data-theme="dark"] .payment-step-display {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('client');
+    const distributorSelect = document.getElementById('assignedDistributor');
+    const fileSelect = document.getElementById('file');
+    const amountInput = document.getElementById('amount');
+    const commissionInfo = document.getElementById('currentCommissionInfo');
+    const recalculateBtn = document.getElementById('recalculateBtn');
+    
+    function recalculateCommission() {
+        if (!clientSelect.value || !distributorSelect.value || !fileSelect.value || !amountInput.value) {
+            return;
+        }
+        
+        const amount = parseFloat(amountInput.value);
+        if (amount <= 0) {
+            return;
+        }
+        
+        recalculateBtn.disabled = true;
+        recalculateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحساب...';
+        
+        fetch('/invoices/calculate-commission', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                clientId: clientSelect.value,
+                distributorId: distributorSelect.value,
+                fileId: fileSelect.value,
+                amount: amount
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                commissionInfo.innerHTML = \`<div class="alert alert-danger">\${data.error}</div>\`;
+            } else {
+                commissionInfo.innerHTML = \`
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <strong>عمولة العميل:</strong> %\${data.clientRate}
+                            <br><small class="text-muted">\${data.clientCommission} جنيه</small>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الموزع:</strong> %\${data.distributorRate}
+                            <br><small class="text-muted">\${data.distributorCommission} جنيه</small>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>عمولة الشركة:</strong> %\${data.companyRate}
+                            <br><small class="text-muted">\${data.companyCommission} جنيه</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-2">
+                        <small>ستحفظ هذه النسب الجديدة عند حفظ الفاتورة</small>
+                    </div>
+                \`;
+            }
+        })
+        .catch(error => {
+            commissionInfo.innerHTML = '<div class="alert alert-danger">حدث خطأ أثناء حساب العمولة</div>';
+        })
+        .finally(() => {
+            recalculateBtn.disabled = false;
+            recalculateBtn.innerHTML = '<i class="fas fa-calculator"></i> إعادة حساب العمولة';
+        });
+    }
+    
+    recalculateBtn.addEventListener('click', recalculateCommission);
+});
+</script>
 ` }) %>

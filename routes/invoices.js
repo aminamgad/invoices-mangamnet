@@ -5,6 +5,7 @@ import File from '../models/File.js';
 import User from '../models/User.js';
 import Company from '../models/Company.js';
 import CommissionTier from '../models/CommissionTier.js';
+import ExcelJS from 'exceljs';
 import { requireModuleAccess, requirePermission } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -57,15 +58,16 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
       
     res.render('invoices/index', { 
       invoices,
-      userPermissions: req.userPermissionLevel,
-      currentUser: req.session.user
+      userPermissions: req.userPermissionLevel || {},
+      currentUser: req.session.user || {}
     });
   } catch (error) {
+    console.error('Invoices list error:', error);
     req.flash('error', 'حدث خطأ أثناء تحميل الفواتير');
     res.render('invoices/index', { 
       invoices: [],
       userPermissions: req.userPermissionLevel || {},
-      currentUser: req.session.user
+      currentUser: req.session.user || {}
     });
   }
 });
@@ -73,8 +75,60 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
 // New invoice form
 router.get('/new', requirePermission('invoices', 'create'), async (req, res) => {
   try {
-    const clients = await Client.find().sort({ fullName: 1 });
-    const files = await File.find().populate('company', 'name').sort({ fileName: 1 });
+    // Get clients sorted by most used (invoice count)
+    const clients = await Client.aggregate([
+      {
+        $lookup: {
+          from: 'invoices',
+          localField: '_id',
+          foreignField: 'client',
+          as: 'invoices'
+        }
+      },
+      {
+        $addFields: {
+          invoiceCount: { $size: '$invoices' }
+        }
+      },
+      {
+        $sort: { invoiceCount: -1, fullName: 1 }
+      }
+    ]);
+    
+    // Get files sorted by most used (invoice count)
+    const files = await File.aggregate([
+      {
+        $lookup: {
+          from: 'invoices',
+          localField: '_id',
+          foreignField: 'file',
+          as: 'invoices'
+        }
+      },
+      {
+        $addFields: {
+          invoiceCount: { $size: '$invoices' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'company',
+          foreignField: '_id',
+          as: 'company'
+        }
+      },
+      {
+        $unwind: {
+          path: '$company',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $sort: { invoiceCount: -1, fileName: 1 }
+      }
+    ]);
+    
     const distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
     
     res.render('invoices/new', { clients, files, distributors });
@@ -491,6 +545,154 @@ router.delete('/:id', requirePermission('invoices', 'delete'), async (req, res) 
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء حذف الفاتورة');
     res.redirect('/invoices');
+  }
+});
+
+// Export invoices to Excel
+router.post('/export-excel', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { invoices } = req.body;
+    
+    if (!invoices || !Array.isArray(invoices) || invoices.length === 0) {
+      return res.status(400).json({ error: 'لا توجد بيانات للتصدير' });
+    }
+    
+    // Create a new workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('الفواتير');
+    
+    // Set RTL direction for Arabic text
+    worksheet.views = [{ rightToLeft: true }];
+    
+    // Define columns
+    worksheet.columns = [
+      { header: 'رقم الفاتورة', key: 'invoiceCode', width: 15 },
+      { header: 'اسم العميل', key: 'clientName', width: 20 },
+      { header: 'اسم الملف', key: 'fileName', width: 25 },
+      { header: 'اسم الموزع', key: 'distributorName', width: 15 },
+      { header: 'مبلغ الفاتورة (جنيه)', key: 'amount', width: 18 },
+      { header: 'عمولة العميل (جنيه)', key: 'clientCommission', width: 18 },
+      { header: 'عمولة الموزع (جنيه)', key: 'distributorCommission', width: 18 },
+      { header: 'عمولة الشركة (جنيه)', key: 'companyCommission', width: 18 },
+      { header: 'صافي الربح (جنيه)', key: 'netProfit', width: 18 },
+      { header: 'حالة الدفع', key: 'paymentStatus', width: 15 },
+      { header: 'نسبة التقدم', key: 'progressPercent', width: 12 },
+      { header: 'تاريخ الفاتورة', key: 'invoiceDate', width: 15 }
+    ];
+    
+    // Style the header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+    
+    // Add data rows
+    invoices.forEach((invoice, index) => {
+      const netProfit = invoice.amount - invoice.clientCommission - invoice.distributorCommission - invoice.companyCommission;
+      
+      const row = worksheet.addRow({
+        invoiceCode: invoice.invoiceCode,
+        clientName: invoice.clientName,
+        fileName: invoice.fileName,
+        distributorName: invoice.distributorName,
+        amount: invoice.amount,
+        clientCommission: invoice.clientCommission,
+        distributorCommission: invoice.distributorCommission,
+        companyCommission: invoice.companyCommission,
+        netProfit: netProfit,
+        paymentStatus: invoice.paymentStatus,
+        progressPercent: invoice.progressPercent,
+        invoiceDate: invoice.invoiceDate
+      });
+      
+      // Style data rows
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      
+      // Alternate row colors
+      if (index % 2 === 0) {
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'F2F2F2' }
+        };
+      }
+      
+      // Format currency cells
+      [5, 6, 7, 8, 9].forEach(colIndex => {
+        const cell = row.getCell(colIndex);
+        cell.numFmt = '#,##0.00';
+      });
+      
+      // Color code net profit
+      const netProfitCell = row.getCell(9);
+      if (netProfit >= 0) {
+        netProfitCell.font = { color: { argb: '008000' } }; // Green for positive
+      } else {
+        netProfitCell.font = { color: { argb: 'FF0000' } }; // Red for negative
+      }
+    });
+    
+    // Add borders to all cells
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+    
+    // Add summary row
+    const summaryRowIndex = worksheet.rowCount + 2;
+    const summaryRow = worksheet.getRow(summaryRowIndex);
+    
+    const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+    const totalClientCommission = invoices.reduce((sum, inv) => sum + inv.clientCommission, 0);
+    const totalDistributorCommission = invoices.reduce((sum, inv) => sum + inv.distributorCommission, 0);
+    const totalCompanyCommission = invoices.reduce((sum, inv) => sum + inv.companyCommission, 0);
+    const totalNetProfit = totalAmount - totalClientCommission - totalDistributorCommission - totalCompanyCommission;
+    
+    summaryRow.values = [
+      '', '', '', 'الإجمالي:', 
+      totalAmount, 
+      totalClientCommission, 
+      totalDistributorCommission, 
+      totalCompanyCommission, 
+      totalNetProfit, 
+      '', '', ''
+    ];
+    
+    summaryRow.font = { bold: true };
+    summaryRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFF00' }
+    };
+    
+    // Format summary currency cells
+    [5, 6, 7, 8, 9].forEach(colIndex => {
+      const cell = summaryRow.getCell(colIndex);
+      cell.numFmt = '#,##0.00';
+    });
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=invoices-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+    
+  } catch (error) {
+    console.error('Excel export error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تصدير البيانات' });
   }
 });
 

@@ -34,6 +34,7 @@
             --navbar-bg: #ffffff;
             --number-color: #333333;
             --badge-text: #ffffff;
+            --bs-light: #f8f9fa;
         }
 
         [data-theme="dark"] {
@@ -57,6 +58,7 @@
             --navbar-bg: #1e1e1e;
             --number-color: #ffffff;
             --badge-text: #ffffff;
+            --bs-light: rgba(255,255,255,0.05);
         }
         
         * {
@@ -119,7 +121,13 @@
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
             background-color: rgba(255,255,255,0.1);
             color: white;
-            transform: translateX(-5px);
+            transform: translateX(-3px);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            border-left: 3px solid rgba(255,255,255,0.8);
+            font-weight: 600;
         }
         
         .sidebar .nav-link.disabled {
@@ -130,6 +138,26 @@
         .sidebar .nav-link.disabled:hover {
             background-color: transparent;
             transform: none;
+        }
+        
+        /* Quick Create Invoice Button Styling */
+        .sidebar .nav-link.quick-create-invoice {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white !important;
+            font-weight: 600;
+            margin: 8px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .sidebar .nav-link.quick-create-invoice:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+            transform: translateX(-8px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .sidebar .nav-link.quick-create-invoice i {
+            font-size: 1.1em;
         }
         
         .card {
@@ -495,14 +523,64 @@
         .modal-content {
             background-color: var(--card-bg);
             color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
         
         .modal-header {
             border-bottom-color: var(--border-color);
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
         }
         
         .modal-footer {
             border-top-color: var(--border-color);
+            background-color: var(--bg-tertiary);
+        }
+        
+        .modal-body {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .modal-title {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Modal backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        [data-theme="dark"] .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        /* Enhanced modal styling for dark mode */
+        [data-theme="dark"] .modal-content {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-header {
+            background-color: var(--bg-tertiary);
+            border-bottom-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-body {
+            background-color: var(--card-bg);
+        }
+        
+        [data-theme="dark"] .modal-footer {
+            background-color: var(--bg-tertiary);
+            border-top-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-title {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .btn-close {
+            filter: invert(1);
         }
         
         /* Scrollbar dark mode */
@@ -572,6 +650,15 @@
                 display: block;
             }
             
+            /* Mobile sidebar dark mode */
+            [data-theme="dark"] .sidebar {
+                background: var(--sidebar-gradient);
+            }
+            
+            [data-theme="dark"] .sidebar-overlay {
+                background-color: rgba(0, 0, 0, 0.7);
+            }
+            
             .theme-toggle {
                 top: 10px;
                 left: 10px;
@@ -598,6 +685,11 @@
             
             .settings-panel.show {
                 transform: translateX(0);
+            }
+            
+            /* Mobile navbar dark mode */
+            [data-theme="dark"] .navbar {
+                background-color: var(--navbar-bg) !important;
             }
         }
     </style>
@@ -710,11 +802,29 @@
                         
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="/dashboard">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('لوحة التحكم')) || (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>" href="/dashboard">
                                     <i class="fas fa-tachometer-alt ms-2"></i>
                                     لوحة التحكم
                                 </a>
                             </li>
+                            
+                            <!-- Quick Create Invoice Button -->
+                            <% 
+                            const canCreateInvoices = currentUser.role === 'admin' || 
+                                                     currentUser.permissions.canCreateInvoices ||
+                                                     (currentUser.detailedPermissions && 
+                                                      currentUser.detailedPermissions.some(p => 
+                                                        p.module === 'invoices' && p.action === 'create'
+                                                      ));
+                            %>
+                            <% if (canCreateInvoices) { %>
+                            <li class="nav-item">
+                                <a class="nav-link quick-create-invoice" href="/invoices/new">
+                                    <i class="fas fa-plus-circle ms-2"></i>
+                                    إنشاء فاتورة جديدة
+                                </a>
+                            </li>
+                            <% } %>
                             
                             <!-- Reports - Check for view_own or view_all permission -->
                             <% 
@@ -728,7 +838,7 @@
                             %>
                             <% if (canViewReports) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/reports">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('تقارير')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/reports')) ? 'active' : '' %>" href="/reports">
                                     <i class="fas fa-chart-line ms-2"></i>
                                     تقارير الأرباح
                                 </a>
@@ -746,7 +856,7 @@
                             %>
                             <% if (canAccessClients) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/clients">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('العملاء')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/clients')) ? 'active' : '' %>" href="/clients">
                                     <i class="fas fa-users ms-2"></i>
                                     العملاء
                                 </a>
@@ -764,7 +874,7 @@
                             %>
                             <% if (canAccessDistributors) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/distributors">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('الموزعين')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/distributors')) ? 'active' : '' %>" href="/distributors">
                                     <i class="fas fa-user-tie ms-2"></i>
                                     الموزعين
                                 </a>
@@ -782,7 +892,7 @@
                             %>
                             <% if (canAccessCompanies) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/companies">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('الشركات')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/companies')) ? 'active' : '' %>" href="/companies">
                                     <i class="fas fa-building ms-2"></i>
                                     الشركات
                                 </a>
@@ -799,7 +909,7 @@
                             %>
                             <% if (canAccessFiles) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/files">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('الملفات')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/files')) ? 'active' : '' %>" href="/files">
                                     <i class="fas fa-folder ms-2"></i>
                                     الملفات
                                 </a>
@@ -825,7 +935,7 @@
                             %>
                             <% if (canAccessInvoices) { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/invoices">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('الفواتير')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/invoices')) ? 'active' : '' %>" href="/invoices">
                                     <i class="fas fa-file-invoice ms-2"></i>
                                     الفواتير
                                 </a>
@@ -843,7 +953,7 @@
                             <!-- Commission Tiers - Admin only -->
                             <% if (currentUser.role === 'admin') { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/commission-tiers">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('مستويات العمولة')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/commission-tiers')) ? 'active' : '' %>" href="/commission-tiers">
                                     <i class="fas fa-percentage ms-2"></i>
                                     مستويات العمولة
                                 </a>

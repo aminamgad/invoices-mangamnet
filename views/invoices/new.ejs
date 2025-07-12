@@ -36,7 +36,7 @@
                             <select class="form-select" id="client" name="client" required>
                                 <option value="">اختر العميل</option>
                                 ${clients.map(client => `
-                                    <option value="${client._id}">${client.fullName}</option>
+                                    <option value="${client._id}">${client.fullName}${client.invoiceCount > 0 ? ` (${client.invoiceCount} فاتورة)` : ''}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -46,7 +46,7 @@
                             <select class="form-select" id="file" name="file" required>
                                 <option value="">اختر الملف</option>
                                 ${files.map(file => `
-                                    <option value="${file._id}">${file.fileName} - ${file.company?.name || 'غير محدد'}</option>
+                                    <option value="${file._id}">${file.fileName} - ${file.company?.name || 'غير محدد'}${file.invoiceCount > 0 ? ` (${file.invoiceCount} فاتورة)` : ''}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -257,6 +257,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceDate').value = today;
+    
     const clientSelect = document.getElementById('client');
     const distributorSelect = document.getElementById('assignedDistributor');
     const fileSelect = document.getElementById('file');

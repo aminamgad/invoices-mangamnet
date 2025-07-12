@@ -403,6 +403,32 @@
     background: linear-gradient(135deg, #4a5568 0%, #553c9a 100%) !important;
 }
 
+/* Enhanced modal dark mode support */
+[data-theme="dark"] .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-title {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1);
+}
+
 /* Animation enhancements */
 .distributor-row {
     transition: all 0.3s ease;
@@ -702,32 +728,25 @@ function toggleDistributorStatus(distributorId, currentStatus) {
     const distributor = ${JSON.stringify(distributors)}.find(d => d._id === distributorId);
     
     if (confirm(\`هل أنت متأكد من \${action} الموزع "\${distributor?.username}"؟\`)) {
-        // Here you would typically make an AJAX call to update the status
-        // For now, we'll show a placeholder message
-        alert(\`سيتم \${action} الموزع. هذه الميزة تحتاج إلى تطوير endpoint في الخادم.\`);
-        
-        // Placeholder for actual implementation:
-        /*
         fetch(\`/distributors/\${distributorId}/toggle-status\`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({ isActive: !currentStatus })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        .then(response => {
+            if (response.ok) {
                 location.reload();
             } else {
-                alert('حدث خطأ أثناء تحديث حالة الموزع');
+                throw new Error('Network response was not ok');
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('حدث خطأ أثناء تحديث حالة الموزع');
         });
-        */
     }
 }
 

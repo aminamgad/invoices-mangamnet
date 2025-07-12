@@ -57,6 +57,7 @@ app.use(loadUserPermissions);
 // Global variables
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
+    res.locals.currentPath = req.path;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
@@ -66,6 +67,24 @@ app.use((req, res, next) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Application error:', err);
+  
+  // Handle specific error types
+  if (err.name === 'ReferenceError') {
+    console.error('Reference Error:', err.message);
+    req.flash('error', 'حدث خطأ في النظام. يرجى المحاولة مرة أخرى.');
+    return res.redirect('/dashboard');
+  }
+  
+  // Default error response
+  res.status(500).render('error', {
+    title: 'خطأ في النظام',
+    message: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
+});
 // Routes
 app.use('/auth', authRoutes);
 app.use('/dashboard', requireAuth, dashboardRoutes);
@@ -86,6 +105,14 @@ app.get('/', (req, res) => {
   }
 });
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).render('error', {
+    title: 'الصفحة غير موجودة',
+    message: 'الصفحة التي تبحث عنها غير موجودة.',
+    error: {}
+  });
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

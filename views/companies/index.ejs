@@ -179,14 +179,14 @@
                                 ${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? `
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewCompanyDetails('${company._id}')" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
                                             ${userPermissions.canUpdate ? `
                                                 <a href="/companies/${company._id}/edit" class="btn btn-sm btn-outline-primary" title="تعديل">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             ` : ''}
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewCompanyDetails('${company._id}')" title="عرض التفاصيل">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
                                             ${userPermissions.canDelete ? `
                                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteCompany('${company._id}', '${company.name}')" title="حذف">
                                                     <i class="fas fa-trash"></i>
@@ -220,7 +220,7 @@
 
 <!-- Company Details Modal -->
 <div class="modal fade" id="companyDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -263,6 +263,40 @@
     .btn-group .btn {
         padding: 0.25rem 0.5rem;
     }
+}
+
+/* Dark mode improvements */
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .company-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-title {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1);
 }
 </style>
 
@@ -352,10 +386,14 @@ function filterByCommission() {
     document.getElementById('companyCount').textContent = visibleCount;
 }
 
-// View company details
+// View company details in modal
 function viewCompanyDetails(companyId) {
-    document.getElementById('companyDetailsContent').innerHTML = \`
-        <div class="text-center">
+    const modal = new bootstrap.Modal(document.getElementById('companyDetailsModal'));
+    const content = document.getElementById('companyDetailsContent');
+    
+    // Show loading state
+    content.innerHTML = \`
+        <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">جاري التحميل...</span>
             </div>
@@ -363,18 +401,41 @@ function viewCompanyDetails(companyId) {
         </div>
     \`;
     
-    const modal = new bootstrap.Modal(document.getElementById('companyDetailsModal'));
     modal.show();
     
-    // Simulate loading
-    setTimeout(() => {
-        document.getElementById('companyDetailsContent').innerHTML = \`
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                تفاصيل الشركة ستظهر هنا. يمكن تطوير هذه الميزة لاحقاً.
-            </div>
-        \`;
-    }, 1000);
+    // Fetch company details
+    fetch(\`/companies/\${companyId}\`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('فشل في تحميل البيانات');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Extract the main content from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const mainContent = doc.querySelector('main');
+            
+            if (mainContent) {
+                // Remove navigation elements and keep only the content
+                const breadcrumb = mainContent.querySelector('.border-bottom');
+                if (breadcrumb) breadcrumb.remove();
+                
+                content.innerHTML = mainContent.innerHTML;
+            } else {
+                throw new Error('لم يتم العثور على المحتوى');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading company details:', error);
+            content.innerHTML = \`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    حدث خطأ أثناء تحميل تفاصيل الشركة: \${error.message}
+                </div>
+            \`;
+        });
 }
 
 // Delete company

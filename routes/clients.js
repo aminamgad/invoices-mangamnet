@@ -1,5 +1,6 @@
 import express from 'express';
 import Client from '../models/Client.js';
+import Invoice from '../models/Invoice.js';
 import { requireModuleAccess, requirePermission } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,12 +15,47 @@ router.get('/', requireModuleAccess('clients'), async (req, res) => {
       query.createdBy = req.session.user.id;
     }
     
-    const clients = await Client.find(query).populate('createdBy', 'username').sort({ createdAt: -1 });
+    // Get clients with invoice count for sorting
+    const clients = await Client.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'invoices',
+          localField: '_id',
+          foreignField: 'client',
+          as: 'invoices'
+        }
+      },
+      {
+        $addFields: {
+          invoiceCount: { $size: '$invoices' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'createdBy'
+        }
+      },
+      {
+        $unwind: {
+          path: '$createdBy',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $sort: { invoiceCount: -1, createdAt: -1 }
+      }
+    ]);
+    
     res.render('clients/index', { 
       clients,
-      userPermissions: req.userPermissionLevel
+      userPermissions: req.userPermissionLevel || {}
     });
   } catch (error) {
+    console.error('Clients list error:', error);
     req.flash('error', 'حدث خطأ أثناء تحميل العملاء');
     res.render('clients/index', { 
       clients: [],
@@ -130,6 +166,59 @@ router.delete('/:id', requirePermission('clients', 'delete'), async (req, res) =
     res.redirect('/clients');
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء حذف العميل');
+    res.redirect('/clients');
+  }
+});
+
+// View client details
+router.get('/:id', requireModuleAccess('clients'), async (req, res) => {
+  try {
+    let query = { _id: req.params.id };
+    
+    // If user can only view own, ensure they own this client
+    if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
+      query.createdBy = req.session.user.id;
+    }
+    
+    const client = await Client.findOne(query).populate('createdBy', 'username');
+    if (!client) {
+      req.flash('error', 'العميل غير موجود أو ليس لديك صلاحية للوصول إليه');
+      return res.redirect('/clients');
+    }
+    
+    // Get client's invoices
+    const invoices = await Invoice.find({ client: client._id })
+      .populate('file', 'fileName')
+      .populate('assignedDistributor', 'username')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    // Calculate statistics
+    const totalInvoices = await Invoice.countDocuments({ client: client._id });
+    const totalAmount = await Invoice.aggregate([
+      { $match: { client: client._id } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    const completedInvoices = await Invoice.countDocuments({ 
+      client: client._id, 
+      'paymentStatus.adminToCompany.isPaid': true 
+    });
+    
+    res.render('clients/details', { 
+      client,
+      invoices,
+      stats: {
+        totalInvoices,
+        totalAmount: totalAmount[0]?.total || 0,
+        completedInvoices,
+        pendingInvoices: totalInvoices - completedInvoices
+      },
+      userPermissions: req.userPermissionLevel
+    });
+  } catch (error) {
+    console.error('Client details error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحميل تفاصيل العميل');
     res.redirect('/clients');
   }
 });

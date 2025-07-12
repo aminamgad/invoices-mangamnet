@@ -11,6 +11,10 @@ router.get('/', async (req, res) => {
   try {
     const user = req.session.user;
     
+    if (!user) {
+      return res.redirect('/auth/login');
+    }
+    
     // Get dashboard statistics
     const stats = {
       totalInvoices: 0,
@@ -142,7 +146,7 @@ router.get('/', async (req, res) => {
       const clientsWithUnpaid = await Invoice.aggregate([
         {
           $match: {
-            assignedDistributor: user.id,
+            assignedDistributor: new mongoose.Types.ObjectId(user.id),
             'paymentStatus.clientToDistributor.isPaid': false
           }
         },
@@ -183,13 +187,19 @@ router.get('/', async (req, res) => {
     req.flash('error', 'حدث خطأ أثناء تحميل لوحة التحكم');
     res.render('dashboard/index', { 
       stats: {
+        totalInvoices: 0,
+        totalClients: 0,
+        totalCompanies: 0,
+        totalFiles: 0,
+        totalDistributors: 0,
+        recentInvoices: [],
         bulkPaymentData: {
           clients: [],
           distributors: [],
           companies: []
         }
       }, 
-      user: req.session.user 
+      user: req.session.user || {}
     });
   }
 });

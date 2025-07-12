@@ -210,4 +210,26 @@ router.put('/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Toggle distributor status
+router.post('/:id/toggle-status', requireAdmin, async (req, res) => {
+  try {
+    const distributor = await User.findById(req.params.id);
+    if (!distributor || distributor.role !== 'distributor') {
+      req.flash('error', 'الموزع غير موجود');
+      return res.redirect('/distributors');
+    }
+
+    distributor.isActive = !distributor.isActive;
+    await distributor.save();
+    
+    const action = distributor.isActive ? 'تم تفعيل' : 'تم إلغاء تفعيل';
+    req.flash('success', `${action} الموزع "${distributor.username}" بنجاح`);
+    res.redirect('/distributors');
+  } catch (error) {
+    console.error('Error toggling distributor status:', error);
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الموزع');
+    res.redirect('/distributors');
+  }
+});
+
 export default router;
