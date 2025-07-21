@@ -43,6 +43,35 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Custom commission rates (can be overridden by user)
+  customClientCommissionRate: {
+    type: Number,
+    default: null
+  },
+  customDistributorCommissionRate: {
+    type: Number,
+    default: null
+  },
+  // Discount amount
+  discountAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Approval status
+  isApproved: {
+    type: Boolean,
+    default: false
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  approvedAt: {
+    type: Date,
+    default: null
+  },
   // Multi-step payment tracking
   paymentStatus: {
     clientToDistributor: {

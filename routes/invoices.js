@@ -51,6 +51,7 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
       .populate('file', 'fileName')
       .populate('assignedDistributor', 'username')
       .populate('createdBy', 'username')
+      .populate('approvedBy', 'username')
       .populate('paymentStatus.clientToDistributor.markedBy', 'username')
       .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
       .populate('paymentStatus.adminToCompany.markedBy', 'username')
@@ -75,63 +76,9 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
 // New invoice form
 router.get('/new', requirePermission('invoices', 'create'), async (req, res) => {
   try {
-    // Get clients sorted by most used (invoice count)
-    const clients = await Client.aggregate([
-      {
-        $lookup: {
-          from: 'invoices',
-          localField: '_id',
-          foreignField: 'client',
-          as: 'invoices'
-        }
-      },
-      {
-        $addFields: {
-          invoiceCount: { $size: '$invoices' }
-        }
-      },
-      {
-        $sort: { invoiceCount: -1, fullName: 1 }
-      }
-    ]);
-    
-    // Get files sorted by most used (invoice count)
-    const files = await File.aggregate([
-      {
-        $lookup: {
-          from: 'invoices',
-          localField: '_id',
-          foreignField: 'file',
-          as: 'invoices'
-        }
-      },
-      {
-        $addFields: {
-          invoiceCount: { $size: '$invoices' }
-        }
-      },
-      {
-        $lookup: {
-          from: 'companies',
-          localField: 'company',
-          foreignField: '_id',
-          as: 'company'
-        }
-      },
-      {
-        $unwind: {
-          path: '$company',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $sort: { invoiceCount: -1, fileName: 1 }
-      }
-    ]);
-    
     const distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
     
-    res.render('invoices/new', { clients, files, distributors });
+    res.render('invoices/new', { distributors });
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء تحميل البيانات');
     res.redirect('/invoices');
@@ -141,17 +88,31 @@ router.get('/new', requirePermission('invoices', 'create'), async (req, res) => 
 // API endpoint to calculate commission rates
 router.post('/calculate-commission', requirePermission('invoices', 'create'), async (req, res) => {
   try {
-    const { clientId, distributorId, fileId, amount } = req.body;
+    const { clientId, distributorId, fileId, amount, customClientRate, customDistributorRate } = req.body;
     
     if (!amount || amount <= 0) {
       return res.json({ error: 'المبلغ غير صحيح' });
     }
     
-    const [clientRate, distributorRate, file] = await Promise.all([
-      calculateCommissionRate('client', clientId, amount),
-      calculateCommissionRate('distributor', distributorId, amount),
-      File.findById(fileId).populate('company')
-    ]);
+    // Use custom rates if provided, otherwise calculate from tiers
+    let clientRate, distributorRate;
+    let isCustomClientRate = false, isCustomDistributorRate = false;
+    
+    if (customClientRate && customClientRate > 0) {
+      clientRate = parseFloat(customClientRate);
+      isCustomClientRate = true;
+    } else {
+      clientRate = await calculateCommissionRate('client', clientId, amount);
+    }
+    
+    if (customDistributorRate && customDistributorRate > 0) {
+      distributorRate = parseFloat(customDistributorRate);
+      isCustomDistributorRate = true;
+    } else {
+      distributorRate = await calculateCommissionRate('distributor', distributorId, amount);
+    }
+    
+    const file = await File.findById(fileId).populate('company');
     
     let companyRate = 0;
     if (file && file.company) {
@@ -164,9 +125,12 @@ router.post('/calculate-commission', requirePermission('invoices', 'create'), as
       companyRate,
       clientCommission: (amount * clientRate / 100).toFixed(2),
       distributorCommission: (amount * distributorRate / 100).toFixed(2),
-      companyCommission: (amount * companyRate / 100).toFixed(2)
+      companyCommission: (amount * companyRate / 100).toFixed(2),
+      isCustomClientRate,
+      isCustomDistributorRate
     });
   } catch (error) {
+    console.error('Commission calculation error:', error);
     res.json({ error: 'حدث خطأ أثناء حساب العمولة' });
   }
 });
@@ -174,40 +138,96 @@ router.post('/calculate-commission', requirePermission('invoices', 'create'), as
 // Create invoice
 router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
   try {
-    const { invoiceCode, client, file, assignedDistributor, invoiceDate, amount } = req.body;
+    const { 
+      invoiceCode, 
+      client, 
+      file, 
+      assignedDistributor, 
+      invoiceDate, 
+      amount, 
+      discountAmount,
+      customClientCommissionRate,
+      customDistributorCommissionRate
+    } = req.body;
+    
+    // Check for duplicate invoice code
+    const existingInvoice = await Invoice.findOne({ invoiceCode: invoiceCode.trim() });
+    if (existingInvoice) {
+      req.flash('error', 'Invoice code already exists.');
+      return res.redirect('/invoices/new');
+    }
     
     const invoiceAmount = parseFloat(amount) || 0;
+    const discountAmountValue = parseFloat(discountAmount) || 0;
+    
+    console.log('Form data received:', { 
+      customClientCommissionRate, 
+      customDistributorCommissionRate, 
+      amount: invoiceAmount,
+      discountAmount: discountAmountValue 
+    });
     
     // Calculate commission rates based on amount
-    const [clientCommissionRate, distributorCommissionRate, fileData] = await Promise.all([
-      calculateCommissionRate('client', client, invoiceAmount),
-      calculateCommissionRate('distributor', assignedDistributor, invoiceAmount),
-      File.findById(file).populate('company')
-    ]);
+    let clientCommissionRate, distributorCommissionRate;
+    let customClientCommissionRateValue = null, customDistributorCommissionRateValue = null;
+    
+    if (customClientCommissionRate && customClientCommissionRate > 0) {
+      clientCommissionRate = parseFloat(customClientCommissionRate);
+      customClientCommissionRateValue = clientCommissionRate;
+      console.log('Using custom client rate:', clientCommissionRate);
+    } else {
+      clientCommissionRate = await calculateCommissionRate('client', client, invoiceAmount);
+      console.log('Using default client rate:', clientCommissionRate);
+    }
+    
+    if (customDistributorCommissionRate && customDistributorCommissionRate > 0) {
+      distributorCommissionRate = parseFloat(customDistributorCommissionRate);
+      customDistributorCommissionRateValue = distributorCommissionRate;
+      console.log('Using custom distributor rate:', distributorCommissionRate);
+    } else {
+      distributorCommissionRate = await calculateCommissionRate('distributor', assignedDistributor, invoiceAmount);
+      console.log('Using default distributor rate:', distributorCommissionRate);
+    }
+    
+    const fileData = await File.findById(file).populate('company');
     
     let companyCommissionRate = 0;
     if (fileData && fileData.company) {
       companyCommissionRate = await calculateCommissionRate('company', fileData.company._id, invoiceAmount);
     }
     
+    console.log('Saving invoice with custom rates:', {
+      customClientCommissionRate: customClientCommissionRateValue,
+      customDistributorCommissionRate: customDistributorCommissionRateValue
+    });
+    
     const invoice = new Invoice({
-      invoiceCode,
+      invoiceCode: invoiceCode.trim(),
       client,
       file,
       assignedDistributor,
       invoiceDate: new Date(invoiceDate),
       amount: invoiceAmount,
+      discountAmount: discountAmountValue,
       clientCommissionRate,
       distributorCommissionRate,
       companyCommissionRate,
+      customClientCommissionRate: customClientCommissionRateValue,
+      customDistributorCommissionRate: customDistributorCommissionRateValue,
       createdBy: req.session.user.id
     });
     
     await invoice.save();
+    console.log('Invoice saved successfully with ID:', invoice._id);
     req.flash('success', 'تم إنشاء الفاتورة بنجاح');
     res.redirect('/invoices');
   } catch (error) {
-    req.flash('error', 'حدث خطأ أثناء إنشاء الفاتورة');
+    console.error('Invoice creation error:', error);
+    if (error.code === 11000 && error.keyPattern?.invoiceCode) {
+      req.flash('error', 'Invoice code already exists.');
+    } else {
+      req.flash('error', 'حدث خطأ أثناء إنشاء الفاتورة');
+    }
     res.redirect('/invoices/new');
   }
 });
@@ -444,6 +464,53 @@ router.delete('/:id/payment/:step', requirePermission('invoices', 'update'), asy
   }
 });
 
+// Show invoice details
+router.get('/:id', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    let query = { _id: req.params.id };
+    
+    // If user can only view own, ensure they are assigned to this invoice
+    if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
+      query.assignedDistributor = req.session.user.id;
+    }
+    
+    const invoice = await Invoice.findOne(query)
+      .populate('client', 'fullName mobileNumber')
+      .populate('file', 'fileName')
+      .populate('assignedDistributor', 'username')
+      .populate('createdBy', 'username')
+      .populate('approvedBy', 'username')
+      .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+      .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+      .populate('paymentStatus.adminToCompany.markedBy', 'username');
+    
+    if (!invoice) {
+      req.flash('error', 'الفاتورة غير موجودة أو ليس لديك صلاحية للوصول إليها');
+      return res.redirect('/invoices');
+    }
+    
+    // Calculate commission amounts
+    const clientCommission = (invoice.amount * invoice.clientCommissionRate / 100);
+    const distributorCommission = (invoice.amount * invoice.distributorCommissionRate / 100);
+    const companyCommission = (invoice.amount * invoice.companyCommissionRate / 100);
+    const netProfit = invoice.amount - clientCommission - distributorCommission - companyCommission;
+    
+    res.render('invoices/details', { 
+      invoice, 
+      clientCommission, 
+      distributorCommission, 
+      companyCommission, 
+      netProfit,
+      userPermissions: req.userPermissionLevel || {},
+      currentUser: req.session.user || {}
+    });
+  } catch (error) {
+    console.error('Invoice details error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحميل تفاصيل الفاتورة');
+    res.redirect('/invoices');
+  }
+});
+
 // Edit invoice form
 router.get('/:id/edit', requirePermission('invoices', 'update'), async (req, res) => {
   try {
@@ -454,7 +521,8 @@ router.get('/:id/edit', requirePermission('invoices', 'update'), async (req, res
       query.assignedDistributor = req.session.user.id;
     }
     
-    const invoice = await Invoice.findOne(query);
+    const invoice = await Invoice.findOne(query)
+      .populate('approvedBy', 'username');
     const clients = await Client.find().sort({ fullName: 1 });
     const files = await File.find().populate('company', 'name').sort({ fileName: 1 });
     const distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
@@ -474,7 +542,18 @@ router.get('/:id/edit', requirePermission('invoices', 'update'), async (req, res
 // Update invoice
 router.put('/:id', requirePermission('invoices', 'update'), async (req, res) => {
   try {
-    const { invoiceCode, client, file, assignedDistributor, invoiceDate, amount, status } = req.body;
+    const { 
+      invoiceCode, 
+      client, 
+      file, 
+      assignedDistributor, 
+      invoiceDate, 
+      amount, 
+      discountAmount,
+      customClientCommissionRate,
+      customDistributorCommissionRate,
+      status 
+    } = req.body;
     
     let query = { _id: req.params.id };
     
@@ -483,14 +562,59 @@ router.put('/:id', requirePermission('invoices', 'update'), async (req, res) => 
       query.assignedDistributor = req.session.user.id;
     }
     
-    const invoiceAmount = parseFloat(amount) || 0;
+    // Get the current invoice to check approval status
+    const currentInvoice = await Invoice.findOne(query);
+    if (!currentInvoice) {
+      req.flash('error', 'الفاتورة غير موجودة أو ليس لديك صلاحية لتعديلها');
+      return res.redirect('/invoices');
+    }
     
-    // Recalculate commission rates based on new amount
-    const [clientCommissionRate, distributorCommissionRate, fileData] = await Promise.all([
-      calculateCommissionRate('client', client, invoiceAmount),
-      calculateCommissionRate('distributor', assignedDistributor, invoiceAmount),
-      File.findById(file).populate('company')
-    ]);
+    // Check if invoice is approved - restrict editing of sensitive fields
+    if (currentInvoice.isApproved) {
+      // Only allow editing non-sensitive fields when approved
+      const updateData = {
+        invoiceCode,
+        client,
+        file,
+        assignedDistributor,
+        invoiceDate: new Date(invoiceDate),
+        status
+      };
+      
+      const result = await Invoice.updateOne(query, updateData);
+      
+      if (result.matchedCount === 0) {
+        req.flash('error', 'الفاتورة غير موجودة أو ليس لديك صلاحية لتعديلها');
+        return res.redirect('/invoices');
+      }
+      
+      req.flash('success', 'تم تحديث الفاتورة بنجاح (الحقول المالية محمية بعد الموافقة)');
+      return res.redirect('/invoices');
+    }
+    
+    // If not approved, allow full editing
+    const invoiceAmount = parseFloat(amount) || 0;
+    const discountAmountValue = parseFloat(discountAmount) || 0;
+    
+    // Calculate commission rates based on amount
+    let clientCommissionRate, distributorCommissionRate;
+    let customClientCommissionRateValue = null, customDistributorCommissionRateValue = null;
+    
+    if (customClientCommissionRate && customClientCommissionRate > 0) {
+      clientCommissionRate = parseFloat(customClientCommissionRate);
+      customClientCommissionRateValue = clientCommissionRate;
+    } else {
+      clientCommissionRate = await calculateCommissionRate('client', client, invoiceAmount);
+    }
+    
+    if (customDistributorCommissionRate && customDistributorCommissionRate > 0) {
+      distributorCommissionRate = parseFloat(customDistributorCommissionRate);
+      customDistributorCommissionRateValue = distributorCommissionRate;
+    } else {
+      distributorCommissionRate = await calculateCommissionRate('distributor', assignedDistributor, invoiceAmount);
+    }
+    
+    const fileData = await File.findById(file).populate('company');
     
     let companyCommissionRate = 0;
     if (fileData && fileData.company) {
@@ -504,9 +628,12 @@ router.put('/:id', requirePermission('invoices', 'update'), async (req, res) => 
       assignedDistributor,
       invoiceDate: new Date(invoiceDate),
       amount: invoiceAmount,
+      discountAmount: discountAmountValue,
       clientCommissionRate,
       distributorCommissionRate,
       companyCommissionRate,
+      customClientCommissionRate: customClientCommissionRateValue,
+      customDistributorCommissionRate: customDistributorCommissionRateValue,
       status
     });
     
@@ -518,6 +645,7 @@ router.put('/:id', requirePermission('invoices', 'update'), async (req, res) => 
     req.flash('success', 'تم تحديث الفاتورة بنجاح');
     res.redirect('/invoices');
   } catch (error) {
+    console.error('Invoice update error:', error);
     req.flash('error', 'حدث خطأ أثناء تحديث الفاتورة');
     res.redirect('/invoices');
   }
@@ -693,6 +821,64 @@ router.post('/export-excel', requireModuleAccess('invoices'), async (req, res) =
   } catch (error) {
     console.error('Excel export error:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء تصدير البيانات' });
+  }
+});
+
+// Approve invoice (admin only)
+router.post('/:id/approve', requirePermission('invoices', 'update'), async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      req.flash('error', 'الفاتورة غير موجودة');
+      return res.redirect('/invoices');
+    }
+    
+    if (invoice.isApproved) {
+      req.flash('warning', 'الفاتورة موافق عليها بالفعل');
+      return res.redirect('/invoices');
+    }
+    
+    invoice.isApproved = true;
+    invoice.approvedBy = req.session.user.id;
+    invoice.approvedAt = new Date();
+    
+    await invoice.save();
+    
+    req.flash('success', 'تم الموافقة على الفاتورة بنجاح');
+    res.redirect('/invoices');
+  } catch (error) {
+    console.error('Invoice approval error:', error);
+    req.flash('error', 'حدث خطأ أثناء الموافقة على الفاتورة');
+    res.redirect('/invoices');
+  }
+});
+
+// Unapprove invoice (admin only)
+router.post('/:id/unapprove', requirePermission('invoices', 'update'), async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      req.flash('error', 'الفاتورة غير موجودة');
+      return res.redirect('/invoices');
+    }
+    
+    if (!invoice.isApproved) {
+      req.flash('warning', 'الفاتورة غير موافق عليها');
+      return res.redirect('/invoices');
+    }
+    
+    invoice.isApproved = false;
+    invoice.approvedBy = null;
+    invoice.approvedAt = null;
+    
+    await invoice.save();
+    
+    req.flash('success', 'تم إلغاء الموافقة على الفاتورة بنجاح');
+    res.redirect('/invoices');
+  } catch (error) {
+    console.error('Invoice unapproval error:', error);
+    req.flash('error', 'حدث خطأ أثناء إلغاء الموافقة على الفاتورة');
+    res.redirect('/invoices');
   }
 });
 

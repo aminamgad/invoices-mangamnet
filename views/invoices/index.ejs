@@ -315,6 +315,9 @@ function renderInvoicesTable() {
                         <th><i class="fas fa-file"></i> الملف</th>
                         <th><i class="fas fa-user-tie"></i> الموزع</th>
                         <th><i class="fas fa-money-bill"></i> المبلغ</th>
+                        <th><i class="fas fa-tag"></i> الخصم</th>
+                        <th><i class="fas fa-percentage"></i> العمولة</th>
+                        <th><i class="fas fa-check-circle"></i> الحالة</th>
                         <th><i class="fas fa-route"></i> مسار الدفع</th>
                         <th><i class="fas fa-calendar"></i> تاريخ الفاتورة</th>
                         \${userPermissions && (userPermissions.canUpdate || userPermissions.canDelete) ? \`
@@ -381,11 +384,46 @@ function generateInvoiceRow(invoice) {
                 <span class="badge bg-success fs-6">
                     \${invoice.amount.toLocaleString('ar-SA')} جنيه
                 </span>
-                <div class="commission-details mt-1">
-                    <small class="d-block">عميل: \${clientCommission.toFixed(2)} جنيه</small>
-                    <small class="d-block">موزع: \${distributorCommission.toFixed(2)} جنيه</small>
+                \${invoice.discountAmount > 0 ? \`
+                    <div class="mt-1">
+                        <small class="text-danger">خصم: \${invoice.discountAmount.toLocaleString('ar-SA')} جنيه</small>
+                    </div>
+                \` : ''}
+            </td>
+            <td>
+                \${invoice.discountAmount > 0 ? \`
+                    <span class="badge bg-warning text-dark">
+                        \${(invoice.amount - invoice.discountAmount).toLocaleString('ar-SA')} جنيه
+                    </span>
+                \` : \`
+                    <span class="badge bg-success">
+                        \${invoice.amount.toLocaleString('ar-SA')} جنيه
+                    </span>
+                \`}
+            </td>
+            <td>
+                <div class="commission-details">
+                    <small class="d-block">
+                        عميل: \${clientCommission.toFixed(2)} جنيه
+                        \${invoice.customClientCommissionRate ? '<span class="badge bg-warning text-dark ms-1">مخصص</span>' : ''}
+                    </small>
+                    <small class="d-block">
+                        موزع: \${distributorCommission.toFixed(2)} جنيه
+                        \${invoice.customDistributorCommissionRate ? '<span class="badge bg-warning text-dark ms-1">مخصص</span>' : ''}
+                    </small>
                     <small class="d-block">شركة: \${companyCommission.toFixed(2)} جنيه</small>
                 </div>
+            </td>
+            <td>
+                \${invoice.isApproved ? \`
+                    <span class="badge bg-success">
+                        <i class="fas fa-check"></i> موافق عليها
+                    </span>
+                \` : \`
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock"></i> في الانتظار
+                    </span>
+                \`}
             </td>
             <td>
                 \${generatePaymentFlow(invoice)}
@@ -476,10 +514,21 @@ function generateActionButtons(invoice) {
             <button class="btn btn-sm btn-outline-info" onclick="viewInvoiceDetails('\${invoice._id}')" title="عرض التفاصيل">
                 <i class="fas fa-eye"></i>
             </button>
-            \${userPermissions.canUpdate ? \`
+            \${userPermissions.canUpdate && !invoice.isApproved ? \`
                 <a href="/invoices/\${invoice._id}/edit" class="btn btn-sm btn-outline-primary" title="تعديل">
                     <i class="fas fa-edit"></i>
                 </a>
+            \` : ''}
+            \${currentUser.role === 'admin' && userPermissions.canUpdate ? \`
+                \${invoice.isApproved ? \`
+                    <button class="btn btn-sm btn-outline-warning" onclick="unapproveInvoice('\${invoice._id}')" title="إلغاء الموافقة">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                \` : \`
+                    <button class="btn btn-sm btn-outline-success" onclick="approveInvoice('\${invoice._id}')" title="الموافقة">
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                \`}
             \` : ''}
             \${userPermissions.canDelete ? \`
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteInvoice('\${invoice._id}', '\${invoice.invoiceCode}')" title="حذف">
@@ -1140,6 +1189,52 @@ function exportInvoices() {
         exportBtn.innerHTML = originalContent;
         exportBtn.disabled = false;
     });
+}
+
+// Approve invoice
+function approveInvoice(invoiceId) {
+    if (confirm('هل أنت متأكد من الموافقة على هذه الفاتورة؟')) {
+        fetch(\`/invoices/\${invoiceId}/approve\`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('فشل في الموافقة على الفاتورة');
+            }
+        })
+        .catch(error => {
+            console.error('Approval error:', error);
+            alert('حدث خطأ أثناء الموافقة على الفاتورة: ' + error.message);
+        });
+    }
+}
+
+// Unapprove invoice
+function unapproveInvoice(invoiceId) {
+    if (confirm('هل أنت متأكد من إلغاء الموافقة على هذه الفاتورة؟')) {
+        fetch(\`/invoices/\${invoiceId}/unapprove\`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('فشل في إلغاء الموافقة على الفاتورة');
+            }
+        })
+        .catch(error => {
+            console.error('Unapproval error:', error);
+            alert('حدث خطأ أثناء إلغاء الموافقة على الفاتورة: ' + error.message);
+        });
+    }
 }
 
 // Initialize tooltips

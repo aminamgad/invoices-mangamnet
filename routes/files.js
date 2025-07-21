@@ -232,4 +232,96 @@ router.delete('/:id', requirePermission('files', 'delete'), async (req, res) => 
   }
 });
 
+// API endpoint to search files (for dropdown)
+router.get('/api/search', requireModuleAccess('files'), async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = {};
+    
+    console.log('File search request:', { q, user: req.session.user.id });
+    
+    // If user can only view own, filter by creator
+    if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
+      query.createdBy = req.session.user.id;
+    }
+    
+    // Search by fileName or ID
+    if (q && q.trim()) {
+      const searchConditions = [
+        { fileName: { $regex: q, $options: 'i' } }
+      ];
+      
+      // Only add _id search if q looks like a valid ObjectId (24 hex characters)
+      if (/^[0-9a-fA-F]{24}$/.test(q)) {
+        searchConditions.push({ _id: q });
+      }
+      
+      query.$or = searchConditions;
+    }
+    
+    console.log('File search query:', query);
+    
+    const files = await File.find(query)
+      .populate('company', 'name')
+      .select('fileName company status')
+      .sort({ fileName: 1 })
+      .limit(20);
+    
+    console.log('File search results:', files);
+    
+    res.json(files);
+  } catch (error) {
+    console.error('File search error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء البحث: ' + error.message });
+  }
+});
+
+// API endpoint to create file via AJAX
+router.post('/api/create', requirePermission('files', 'create'), upload.single('file'), async (req, res) => {
+  try {
+    const { fileName, company, notes } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'يجب اختيار ملف PDF' });
+    }
+    
+    // Check if file with same name already exists
+    const existingFile = await File.findOne({ fileName: fileName.trim() });
+    if (existingFile) {
+      return res.status(400).json({ 
+        error: 'الملف موجود بالفعل',
+        existingFile: {
+          _id: existingFile._id,
+          fileName: existingFile.fileName
+        }
+      });
+    }
+    
+    const file = new File({
+      fileName: fileName.trim(),
+      pdfPath: req.file.filename,
+      company: company || null,
+      notes: notes?.trim() || '',
+      createdBy: req.session.user.id
+    });
+    
+    await file.save();
+    
+    // Populate company info for response
+    await file.populate('company', 'name');
+    
+    res.json({
+      success: true,
+      file: {
+        _id: file._id,
+        fileName: file.fileName,
+        company: file.company
+      }
+    });
+  } catch (error) {
+    console.error('File creation error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إضافة الملف' });
+  }
+});
+
 export default router;

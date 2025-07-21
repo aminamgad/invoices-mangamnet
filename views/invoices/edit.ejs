@@ -65,7 +65,35 @@
                         
                         <div class="col-md-6 mb-3">
                             <label for="amount" class="form-label">المبلغ (جنيه) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" value="${invoice.amount}" required>
+                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" value="${invoice.amount}" required ${invoice.isApproved ? 'readonly' : ''}>
+                            ${invoice.isApproved ? '<div class="form-text text-warning">لا يمكن تعديل المبلغ بعد الموافقة</div>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="discountAmount" class="form-label">الخصم (جنيه)</label>
+                            <input type="number" class="form-control" id="discountAmount" name="discountAmount" min="0" step="0.01" value="${invoice.discountAmount || 0}" ${invoice.isApproved ? 'readonly' : ''}>
+                            ${invoice.isApproved ? '<div class="form-text text-warning">لا يمكن تعديل الخصم بعد الموافقة</div>' : ''}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="finalAmount" class="form-label">المبلغ النهائي (جنيه)</label>
+                            <input type="text" class="form-control" id="finalAmount" value="${(invoice.amount - (invoice.discountAmount || 0)).toFixed(2)}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customClientCommissionRate" class="form-label">نسبة عمولة العميل (%)</label>
+                            <input type="number" class="form-control" id="customClientCommissionRate" name="customClientCommissionRate" min="0" max="100" step="0.01" value="${invoice.customClientCommissionRate || ''}" ${invoice.isApproved ? 'readonly' : ''}>
+                            ${invoice.isApproved ? '<div class="form-text text-warning">لا يمكن تعديل العمولة بعد الموافقة</div>' : ''}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="customDistributorCommissionRate" class="form-label">نسبة عمولة الموزع (%)</label>
+                            <input type="number" class="form-control" id="customDistributorCommissionRate" name="customDistributorCommissionRate" min="0" max="100" step="0.01" value="${invoice.customDistributorCommissionRate || ''}" ${invoice.isApproved ? 'readonly' : ''}>
+                            ${invoice.isApproved ? '<div class="form-text text-warning">لا يمكن تعديل العمولة بعد الموافقة</div>' : ''}
                         </div>
                     </div>
                     
@@ -77,6 +105,14 @@
                             <option value="cancelled" ${invoice.status === 'cancelled' ? 'selected' : ''}>ملغية</option>
                         </select>
                     </div>
+                    
+                    ${invoice.isApproved ? `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            هذه الفاتورة موافق عليها من قبل ${invoice.approvedBy?.username || 'غير محدد'} 
+                            في ${new Date(invoice.approvedAt).toLocaleDateString('ar-SA')}
+                        </div>
+                    ` : ''}
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-primary">

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الفاتورة - نظام إدارة الفواتير والعملاء</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts - Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --text-inverse: #ffffff;
+            --border-color: #e9ecef;
+            --shadow-color: rgba(0,0,0,0.1);
+            --sidebar-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-hover: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            --card-bg: #ffffff;
+            --table-bg: #ffffff;
+            --input-bg: #ffffff;
+            --input-border: #e9ecef;
+            --navbar-bg: #ffffff;
+            --number-color: #333333;
+            --badge-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --text-inverse: #333333;
+            --border-color: #404040;
+            --shadow-color: rgba(0,0,0,0.3);
+            --sidebar-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-gradient: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+            --primary-hover: linear-gradient(135deg, #3d4852 0%, #4c3085 100%);
+            --card-bg: #2d2d2d;
+            --table-bg: #2d2d2d;
+            --input-bg: #3d3d3d;
+            --input-border: #555555;
+            --navbar-bg: #1e1e1e;
+            --number-color: #ffffff;
+            --badge-text: #ffffff;
+        }
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: var(--sidebar-gradient);
+            box-shadow: 2px 0 10px var(--shadow-color);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: white !important;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            color: white !important;
+        }
+        
+        .table {
+            background: var(--table-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            color: var(--text-primary);
+        }
+        
+        .table th {
+            background: var(--primary-gradient);
+            color: white !important;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .table td {
+            border-color: var(--border-color);
+            background-color: var(--table-bg);
+            color: var(--text-primary) !important;
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .badge {
+            font-size: 0.75em;
+            border-radius: 6px;
+            color: white !important;
+        }
+        
+        .stats-card {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card i {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .border-bottom {
+            border-color: var(--border-color) !important;
+        }
+        
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1060;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-hover);
+        }
+        
+        .theme-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Enhanced dark mode text visibility */
+        [data-theme="dark"] .card-body p {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .card-body strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .text-body {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .badge {
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+        }
+        
+        /* Force text visibility in dark mode for all elements */
+        [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+        [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] div {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .text-primary {
+            color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .text-info {
+            color: #17a2b8 !important;
+        }
+        
+        [data-theme="dark"] .text-success {
+            color: #28a745 !important;
+        }
+        
+        [data-theme="dark"] .text-danger {
+            color: #dc3545 !important;
+        }
+        
+        [data-theme="dark"] .text-warning {
+            color: #ffc107 !important;
+        }
+        
+        /* Fix for specific elements */
+        [data-theme="dark"] .card {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .card-header {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+            border-bottom-color: #555555 !important;
+        }
+        
+        [data-theme="dark"] .card-body {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary {
+            color: #b0b0b0 !important;
+            border-color: #555555 !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-primary {
+            color: #667eea !important;
+            border-color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-primary:hover {
+            background-color: #667eea !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .progress {
+            background-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .progress-bar {
+            background-color: #28a745 !important;
+        }
+        
+        [data-theme="dark"] .border-bottom {
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] hr {
+            border-color: #404040 !important;
+        }
+        
+        /* Fix for financial summary */
+        [data-theme="dark"] .d-flex.justify-content-between {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .d-flex.justify-content-between strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .d-flex.justify-content-between span {
+            color: #e0e0e0 !important;
+        }
+        
+        /* Fix for payment status */
+        [data-theme="dark"] .mb-2 small {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .mb-2 .badge {
+            color: #ffffff !important;
+        }
+        
+        /* Fix for creation info */
+        [data-theme="dark"] .card-body p strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .card-body p {
+            color: #e0e0e0 !important;
+        }
+        
+        /* Additional fixes for better contrast */
+        [data-theme="dark"] .fs-5 {
+            color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .fs-6 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .fw-bold {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .col-md-6 {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .col-md-6 strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .col-md-6 .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .col-md-6 .text-info {
+            color: #17a2b8 !important;
+        }
+        
+        [data-theme="dark"] .col-md-6 .text-primary {
+            color: #667eea !important;
+        }
+        
+        /* Fix for badges */
+        [data-theme="dark"] .badge.bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+            color: #000000 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Fix for buttons */
+        [data-theme="dark"] .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .btn-success:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Fix for main content area */
+        [data-theme="dark"] main {
+            background-color: #1e1e1e !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .container-fluid {
+            background-color: #1e1e1e !important;
+        }
+        
+        [data-theme="dark"] .row {
+            background-color: transparent !important;
+        }
+        
+        /* Final contrast improvements */
+        [data-theme="dark"] .h2 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .h2 .text-primary {
+            color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .h5 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .h6 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .mb-3 {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .mb-3 strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .mb-3 .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .mb-3 .text-primary {
+            color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .mb-3 .text-info {
+            color: #17a2b8 !important;
+        }
+        
+        /* Fix for alert messages */
+        [data-theme="dark"] .alert {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .alert-success {
+            background-color: #1e3a1e !important;
+            border-color: #2d5a2d !important;
+            color: #90ee90 !important;
+        }
+        
+        [data-theme="dark"] .alert-danger {
+            background-color: #3a1e1e !important;
+            border-color: #5a2d2d !important;
+            color: #ffb3b3 !important;
+        }
+        
+        /* Fix for close button */
+        [data-theme="dark"] .btn-close {
+            filter: invert(1);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 80%;
+                height: 100vh;
+                z-index: 1050;
+                transition: right 0.3s ease;
+            }
+            
+            .sidebar.show {
+                right: 0;
+            }
+            
+            .theme-toggle {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="تبديل الوضع المظلم">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h5 class="text-white">نظام الفواتير</h5>
+                        <p class="text-white-50">مرحباً <%= currentUser.username %></p>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                لوحة التحكم
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/invoices/new">
+                                <i class="fas fa-plus me-2"></i>
+                                إنشاء فاتورة جديدة
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/reports">
+                                <i class="fas fa-chart-line me-2"></i>
+                                تقارير الأرباح
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/clients">
+                                <i class="fas fa-users me-2"></i>
+                                العملاء
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/distributors">
+                                <i class="fas fa-user-tie me-2"></i>
+                                الموزعين
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/companies">
+                                <i class="fas fa-building me-2"></i>
+                                الشركات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/files">
+                                <i class="fas fa-file-alt me-2"></i>
+                                الملفات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/invoices">
+                                <i class="fas fa-receipt me-2"></i>
+                                الفواتير
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/commission-tiers">
+                                <i class="fas fa-percentage me-2"></i>
+                                مستويات العمولة
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                تسجيل الخروج
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-receipt text-primary me-2"></i>
+                        تفاصيل الفاتورة
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="/invoices" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                العودة للفواتير
+                            </a>
+                            <% if (userPermissions && userPermissions.canUpdate) { %>
+                            <a href="/invoices/<%= invoice._id %>/edit" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>
+                                تعديل الفاتورة
+                            </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <% if (success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+                
+                <% if (error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Invoice Information -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    معلومات الفاتورة
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <strong>رقم الفاتورة:</strong>
+                                        <span class="badge bg-primary fs-6"><%= invoice.invoiceCode %></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>تاريخ الفاتورة:</strong>
+                                        <br>
+                                        <span class="text-muted"><%= new Date(invoice.invoiceDate).toLocaleDateString('ar-EG') %></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>مبلغ الفاتورة:</strong>
+                                        <br>
+                                        <span class="fs-5 text-primary fw-bold"><%= invoice.amount.toLocaleString('ar-EG') %> جنيه</span>
+                                        <% if (invoice.discountAmount > 0) { %>
+                                            <br>
+                                            <small class="text-danger">خصم: <%= invoice.discountAmount.toLocaleString('ar-EG') %> جنيه</small>
+                                            <br>
+                                            <span class="fs-6 text-success">المبلغ النهائي: <%= (invoice.amount - invoice.discountAmount).toLocaleString('ar-EG') %> جنيه</span>
+                                        <% } %>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>حالة الفاتورة:</strong>
+                                        <br>
+                                        <% if (invoice.status === 'completed') { %>
+                                            <span class="badge bg-success">مكتملة</span>
+                                        <% } else if (invoice.status === 'pending') { %>
+                                            <span class="badge bg-warning">معلقة</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">ملغية</span>
+                                        <% } %>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>حالة الموافقة:</strong>
+                                        <br>
+                                        <% if (invoice.isApproved) { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> موافق عليها
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">
+                                                بواسطة: <%= invoice.approvedBy?.username || 'غير محدد' %>
+                                                <br>
+                                                في: <%= new Date(invoice.approvedAt).toLocaleDateString('ar-EG') %>
+                                            </small>
+                                        <% } else { %>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock"></i> في الانتظار
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Related Parties -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-user me-2"></i>
+                                            معلومات العميل
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>اسم العميل:</strong> <%= invoice.client.fullName %></p>
+                                        <p><strong>رقم الجوال:</strong> <%= invoice.client.mobileNumber %></p>
+                                        <p><strong>نسبة العمولة:</strong> 
+                                            <%= invoice.clientCommissionRate %>%
+                                            <% if (invoice.customClientCommissionRate) { %>
+                                                <span class="badge bg-warning text-dark ms-2">مخصص</span>
+                                            <% } %>
+                                        </p>
+                                        <p><strong>مبلغ العمولة:</strong> <span class="text-info"><%= clientCommission.toLocaleString('ar-EG') %> جنيه</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-user-tie me-2"></i>
+                                            معلومات الموزع
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>اسم الموزع:</strong> <%= invoice.assignedDistributor.username %></p>
+                                        <p><strong>نسبة العمولة:</strong> 
+                                            <%= invoice.distributorCommissionRate %>%
+                                            <% if (invoice.customDistributorCommissionRate) { %>
+                                                <span class="badge bg-warning text-dark ms-2">مخصص</span>
+                                            <% } %>
+                                        </p>
+                                        <p><strong>مبلغ العمولة:</strong> <span class="text-info"><%= distributorCommission.toLocaleString('ar-EG') %> جنيه</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    معلومات الملف
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>اسم الملف:</strong> <%= invoice.file.fileName %></p>
+                                <p><strong>نسبة عمولة الشركة:</strong> <%= invoice.companyCommissionRate %>%</p>
+                                <p><strong>مبلغ عمولة الشركة:</strong> <span class="text-info"><%= companyCommission.toLocaleString('ar-EG') %> جنيه</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status and Summary -->
+                    <div class="col-md-4">
+                        <!-- Payment Progress -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    حالة الدفع
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>تقدم الدفع</span>
+                                        <span><%= invoice.getPaymentProgress() %>%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: <%= invoice.getPaymentProgress() %>%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">العميل → الموزع</small>
+                                    <% if (invoice.paymentStatus.clientToDistributor.isPaid) { %>
+                                        <span class="badge bg-success float-end">مدفوع</span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning float-end">معلق</span>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">الموزع → الإدارة</small>
+                                    <% if (invoice.paymentStatus.distributorToAdmin.isPaid) { %>
+                                        <span class="badge bg-success float-end">مدفوع</span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning float-end">معلق</span>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">الإدارة → الشركة</small>
+                                    <% if (invoice.paymentStatus.adminToCompany.isPaid) { %>
+                                        <span class="badge bg-success float-end">مدفوع</span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning float-end">معلق</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    الملخص المالي
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>إجمالي الفاتورة:</span>
+                                    <strong><%= invoice.amount.toLocaleString('ar-EG') %> جنيه</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>عمولة العميل:</span>
+                                    <span class="text-danger">-<%= clientCommission.toLocaleString('ar-EG') %> جنيه</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>عمولة الموزع:</span>
+                                    <span class="text-danger">-<%= distributorCommission.toLocaleString('ar-EG') %> جنيه</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>عمولة الشركة:</span>
+                                    <span class="text-danger">-<%= companyCommission.toLocaleString('ar-EG') %> جنيه</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>صافي الربح:</strong>
+                                    <strong class="<%= netProfit >= 0 ? 'text-success' : 'text-danger' %>">
+                                        <%= netProfit.toLocaleString('ar-EG') %> جنيه
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Creation Info -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    معلومات الإنشاء
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>تم الإنشاء بواسطة:</strong> <%= invoice.createdBy.username %></p>
+                                <p><strong>تاريخ الإنشاء:</strong> <%= new Date(invoice.createdAt).toLocaleDateString('ar-EG') %></p>
+                                <p><strong>آخر تحديث:</strong> <%= new Date(invoice.updatedAt).toLocaleDateString('ar-EG') %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Actions -->
+                <% if (userPermissions && userPermissions.canUpdate) { %>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-credit-card me-2"></i>
+                            إجراءات الدفع
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6>العميل → الموزع</h6>
+                                <% if (!invoice.paymentStatus.clientToDistributor.isPaid) { %>
+                                    <form action="/invoices/<%= invoice._id %>/payment/clientToDistributor" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check me-1"></i>
+                                            تم الدفع
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <span class="badge bg-success">تم الدفع في <%= new Date(invoice.paymentStatus.clientToDistributor.paidAt).toLocaleDateString('ar-EG') %></span>
+                                    <% if (invoice.paymentStatus.clientToDistributor.markedBy) { %>
+                                        <br><small class="text-muted">بواسطة: <%= invoice.paymentStatus.clientToDistributor.markedBy.username %></small>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h6>الموزع → الإدارة</h6>
+                                <% if (!invoice.paymentStatus.distributorToAdmin.isPaid) { %>
+                                    <form action="/invoices/<%= invoice._id %>/payment/distributorToAdmin" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check me-1"></i>
+                                            تم الدفع
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <span class="badge bg-success">تم الدفع في <%= new Date(invoice.paymentStatus.distributorToAdmin.paidAt).toLocaleDateString('ar-EG') %></span>
+                                    <% if (invoice.paymentStatus.distributorToAdmin.markedBy) { %>
+                                        <br><small class="text-muted">بواسطة: <%= invoice.paymentStatus.distributorToAdmin.markedBy.username %></small>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h6>الإدارة → الشركة</h6>
+                                <% if (!invoice.paymentStatus.adminToCompany.isPaid) { %>
+                                    <form action="/invoices/<%= invoice._id %>/payment/adminToCompany" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check me-1"></i>
+                                            تم الدفع
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <span class="badge bg-success">تم الدفع في <%= new Date(invoice.paymentStatus.adminToCompany.paidAt).toLocaleDateString('ar-EG') %></span>
+                                    <% if (invoice.paymentStatus.adminToCompany.markedBy) { %>
+                                        <br><small class="text-muted">بواسطة: <%= invoice.paymentStatus.adminToCompany.markedBy.username %></small>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Theme toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+            }
+        }
+    });
+    </script>
+</body>
+</html> 

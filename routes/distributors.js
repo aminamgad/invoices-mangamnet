@@ -232,4 +232,33 @@ router.post('/:id/toggle-status', requireAdmin, async (req, res) => {
   }
 });
 
+// API endpoint to search distributors (for dropdown)
+router.get('/api/search', requireAdmin, async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = { role: 'distributor', isActive: true };
+    
+    console.log('Distributor search request:', { q, user: req.session.user.id });
+    
+    // Search by username
+    if (q && q.trim()) {
+      query.username = { $regex: q, $options: 'i' };
+    }
+    
+    console.log('Distributor search query:', query);
+    
+    const distributors = await User.find(query)
+      .select('username commissionRate')
+      .sort({ username: 1 })
+      .limit(20);
+    
+    console.log('Distributor search results:', distributors);
+    
+    res.json(distributors);
+  } catch (error) {
+    console.error('Distributor search error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء البحث: ' + error.message });
+  }
+});
+
 export default router;

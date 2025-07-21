@@ -223,4 +223,89 @@ router.get('/:id', requireModuleAccess('clients'), async (req, res) => {
   }
 });
 
+// API endpoint to search clients (for dropdown)
+router.get('/api/search', requireModuleAccess('clients'), async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = {};
+    
+    console.log('Client search request:', { q, user: req.session.user.id });
+    
+    // If user can only view own, filter by creator
+    if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
+      query.createdBy = req.session.user.id;
+    }
+    
+    // Search by name or mobile number
+    if (q && q.trim()) {
+      query.$or = [
+        { fullName: { $regex: q, $options: 'i' } },
+        { mobileNumber: { $regex: q, $options: 'i' } }
+      ];
+    }
+    
+    console.log('Client search query:', query);
+    
+    const clients = await Client.find(query)
+      .select('fullName mobileNumber')
+      .sort({ fullName: 1 })
+      .limit(20);
+    
+    console.log('Client search results:', clients);
+    
+    res.json(clients);
+  } catch (error) {
+    console.error('Client search error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء البحث: ' + error.message });
+  }
+});
+
+// API endpoint to create client via AJAX
+router.post('/api/create', requirePermission('clients', 'create'), async (req, res) => {
+  try {
+    const { fullName, mobileNumber, notes, commissionRate } = req.body;
+    
+    // Check if client already exists
+    const existingClient = await Client.findOne({ 
+      $or: [
+        { fullName: fullName.trim() },
+        { mobileNumber: mobileNumber.trim() }
+      ]
+    });
+    
+    if (existingClient) {
+      return res.status(400).json({ 
+        error: 'العميل موجود بالفعل',
+        existingClient: {
+          _id: existingClient._id,
+          fullName: existingClient.fullName,
+          mobileNumber: existingClient.mobileNumber
+        }
+      });
+    }
+    
+    const client = new Client({
+      fullName: fullName.trim(),
+      mobileNumber: mobileNumber.trim(),
+      notes: notes?.trim() || '',
+      commissionRate: parseFloat(commissionRate) || 0,
+      createdBy: req.session.user.id
+    });
+    
+    await client.save();
+    
+    res.json({
+      success: true,
+      client: {
+        _id: client._id,
+        fullName: client.fullName,
+        mobileNumber: client.mobileNumber
+      }
+    });
+  } catch (error) {
+    console.error('Client creation error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إضافة العميل' });
+  }
+});
+
 export default router;

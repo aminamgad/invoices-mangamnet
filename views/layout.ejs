@@ -105,6 +105,310 @@
             color: var(--text-muted) !important;
         }
         
+        /* Enhanced Dark Mode Text Visibility */
+        [data-theme="dark"] {
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0e0;
+            --text-muted: #b0b0b0;
+        }
+        
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .modal-content,
+        [data-theme="dark"] .dropdown-menu {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .card-header,
+        [data-theme="dark"] .modal-header,
+        [data-theme="dark"] .table thead th {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .table tbody td {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: #353535 !important;
+        }
+        
+        [data-theme="dark"] .text-dark {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .text-secondary {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: #a0a0a0 !important;
+        }
+        
+        /* Force text visibility in dark mode for all elements */
+        [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+        [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] div {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .badge {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .btn {
+            color: inherit !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-primary {
+            color: #667eea !important;
+            border-color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-primary:hover {
+            background-color: #667eea !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary {
+            color: #b0b0b0 !important;
+            border-color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background-color: #b0b0b0 !important;
+            color: #2d2d2d !important;
+        }
+        
+        /* Specific fixes for client details modal */
+        [data-theme="dark"] .modal-body .row .col-md-6,
+        [data-theme="dark"] .modal-body .row .col-12 {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card-body .row .col-md-6 {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card-body .row .col-md-6 strong {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card-body .row .col-md-6 .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        /* Fix for invoice summary cards */
+        [data-theme="dark"] .modal-body .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal-body .stats-card h3,
+        [data-theme="dark"] .modal-body .stats-card h4,
+        [data-theme="dark"] .modal-body .stats-card h5 {
+            color: #ffffff !important;
+        }
+        
+        /* Fix for action buttons in tables */
+        [data-theme="dark"] .table .btn {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .table .btn-outline-primary {
+            color: #667eea !important;
+            border-color: #667eea !important;
+        }
+        
+        [data-theme="dark"] .table .btn-outline-primary:hover {
+            background-color: #667eea !important;
+            color: #ffffff !important;
+        }
+        
+        /* Additional fixes for better text visibility */
+        [data-theme="dark"] .list-group-item {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .list-group-item:hover {
+            background-color: #353535 !important;
+        }
+        
+        [data-theme="dark"] .alert {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .alert-success {
+            background-color: #1e3a1e !important;
+            color: #90ee90 !important;
+            border-color: #2d5a2d !important;
+        }
+        
+        [data-theme="dark"] .alert-danger {
+            background-color: #3a1e1e !important;
+            color: #ffb3b3 !important;
+            border-color: #5a2d2d !important;
+        }
+        
+        [data-theme="dark"] .alert-warning {
+            background-color: #3a3a1e !important;
+            color: #ffffb3 !important;
+            border-color: #5a5a2d !important;
+        }
+        
+        [data-theme="dark"] .alert-info {
+            background-color: #1e3a3a !important;
+            color: #b3ffff !important;
+            border-color: #2d5a5a !important;
+        }
+        
+        /* Fix for form elements in dark mode */
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background-color: #3d3d3d !important;
+            border-color: #555555 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus {
+            background-color: #3d3d3d !important;
+            border-color: #667eea !important;
+            color: #e0e0e0 !important;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        }
+        
+        [data-theme="dark"] .form-control::placeholder {
+            color: #a0a0a0 !important;
+        }
+        
+        [data-theme="dark"] .form-label {
+            color: #ffffff !important;
+        }
+        
+        /* Fix for dropdown menus */
+        [data-theme="dark"] .dropdown-menu {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .dropdown-item {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .dropdown-divider {
+            border-color: #404040 !important;
+        }
+        
+        /* Fix for pagination */
+        [data-theme="dark"] .pagination .page-link {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .pagination .page-link:hover {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .pagination .page-item.active .page-link {
+            background-color: #667eea !important;
+            border-color: #667eea !important;
+            color: #ffffff !important;
+        }
+        
+        /* Fix for tooltips and popovers */
+        [data-theme="dark"] .tooltip .tooltip-inner {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .popover {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .popover-header {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+            border-bottom-color: #555555 !important;
+        }
+        
+        [data-theme="dark"] .popover-body {
+            color: #e0e0e0 !important;
+        }
+        
+        /* Final comprehensive fixes for all text elements */
+        [data-theme="dark"] * {
+            color: inherit;
+        }
+        
+        [data-theme="dark"] body {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .main-content {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .container {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .row {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .col,
+        [data-theme="dark"] .col-md-6,
+        [data-theme="dark"] .col-md-4,
+        [data-theme="dark"] .col-md-3,
+        [data-theme="dark"] .col-12 {
+            color: #e0e0e0 !important;
+        }
+        
+        /* Override any Bootstrap text utilities that might interfere */
+        [data-theme="dark"] .text-body {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .text-reset {
+            color: #e0e0e0 !important;
+        }
+        
+        /* Ensure icons are visible */
+        [data-theme="dark"] .fas,
+        [data-theme="dark"] .far,
+        [data-theme="dark"] .fab {
+            color: inherit !important;
+        }
+        
+        /* Fix for any remaining dark text issues */
+        [data-theme="dark"] [class*="text-"]:not(.text-white):not(.text-light) {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .text-white,
+        [data-theme="dark"] .text-light {
+            color: #ffffff !important;
+        }
+        
         .sidebar {
             min-height: 100vh;
             background: var(--sidebar-gradient);
@@ -437,52 +741,39 @@
             transform: translateX(25px);
         }
         
-        /* Dark mode toggle button */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1060;
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            color: white;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 15px var(--shadow-color);
+        /* Sidebar theme and settings buttons */
+        .sidebar .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 500;
         }
         
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            background: var(--primary-hover);
-        }
-        
-        .theme-toggle:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-        }
-        
-        .settings-toggle {
-            position: fixed;
-            top: 80px;
-            left: 20px;
-            z-index: 1060;
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
+        .sidebar .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
             color: white;
-            font-size: 1rem;
-            box-shadow: 0 4px 15px var(--shadow-color);
-            transition: all 0.3s ease;
+            transform: translateX(-3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         
-        .settings-toggle:hover {
-            transform: scale(1.1);
-            background: var(--primary-hover);
+        .sidebar .btn-outline-light:active {
+            transform: translateX(-3px) scale(0.95);
+        }
+        
+        /* Sidebar bottom section styling */
+        .sidebar .mt-auto {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        /* Sidebar section title */
+        .sidebar .text-white-50 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         
         /* Dropdown menus */
@@ -583,6 +874,72 @@
             filter: invert(1);
         }
         
+        /* Client Details Modal - Enhanced Dark Mode Visibility */
+        [data-theme="dark"] .modal-body h5,
+        [data-theme="dark"] .modal-body h6,
+        [data-theme="dark"] .modal-body .card-title,
+        [data-theme="dark"] .modal-body .card-subtitle {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal-body p,
+        [data-theme="dark"] .modal-body span,
+        [data-theme="dark"] .modal-body div:not(.badge) {
+            color: #e0e0e0 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .badge {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal-body .table {
+            background-color: #2d2d2d !important;
+        }
+        
+        [data-theme="dark"] .modal-body .table th {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal-body .table td {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card-header {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+            border-bottom-color: #555555 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card-body {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+        }
+        
+        /* Ensure all text in modals is visible in dark mode */
+        [data-theme="dark"] .modal * {
+            color: inherit;
+        }
+        
+        [data-theme="dark"] .modal .text-dark {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .modal .text-secondary {
+            color: #b0b0b0 !important;
+        }
+        
         /* Scrollbar dark mode */
         [data-theme="dark"] ::-webkit-scrollbar {
             width: 8px;
@@ -659,21 +1016,7 @@
                 background-color: rgba(0, 0, 0, 0.7);
             }
             
-            .theme-toggle {
-                top: 10px;
-                left: 10px;
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-            
-            .settings-toggle {
-                top: 60px;
-                left: 10px;
-                width: 35px;
-                height: 35px;
-                font-size: 0.9rem;
-            }
+
             
             .settings-panel {
                 top: 100px;
@@ -687,23 +1030,96 @@
                 transform: translateX(0);
             }
             
-            /* Mobile navbar dark mode */
-            [data-theme="dark"] .navbar {
-                background-color: var(--navbar-bg) !important;
-            }
+                    /* Mobile navbar dark mode */
+        [data-theme="dark"] .navbar {
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 600;
+        }
+        
+        /* Light mode navbar */
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Improve navbar toggler visibility in dark mode */
+        [data-theme="dark"] .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        [data-theme="dark"] .navbar-toggler:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .navbar-toggler:focus {
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+        }
+        
+        [data-theme="dark"] .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+        }
+        
+        [data-theme="dark"] .navbar-toggler:hover .navbar-toggler-icon {
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+        }
+        
+        /* Light mode navbar toggler */
+        .navbar-toggler {
+            border-color: rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-toggler:hover {
+            border-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-toggler:focus {
+            border-color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+        }
+        
+        /* General navbar toggler improvements */
+        .navbar-toggler {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+        }
+        
+        .navbar-toggler-icon {
+            width: 1.2em;
+            height: 1.2em;
+        }
+        
+        /* Light mode toggler icon improvements */
+        .navbar-toggler-icon {
+            filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
+        }
+        
+        .navbar-toggler:hover .navbar-toggler-icon {
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+        }
         }
     </style>
 </head>
 <body>
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" id="themeToggle" title="تبديل الوضع المظلم">
-        <i class="fas fa-moon" id="themeIcon"></i>
-    </button>
 
-    <!-- Settings Toggle Button -->
-    <button class="settings-toggle" id="settingsToggle" title="الإعدادات المتقدمة">
-        <i class="fas fa-cog" id="settingsIcon"></i>
-    </button>
 
     <!-- Advanced Settings Panel -->
     <div class="settings-panel" id="settingsPanel">
@@ -961,13 +1377,33 @@
                             <% } %>
                         </ul>
                         
+                        <!-- Settings and Theme Controls -->
                         <div class="mt-auto pt-3">
-                            <form method="POST" action="/auth/logout" class="d-inline">
-                                <button type="submit" class="btn btn-outline-light btn-sm w-100">
-                                    <i class="fas fa-sign-out-alt ms-2"></i>
-                                    تسجيل الخروج
+                            <div class="d-flex flex-column gap-2">
+                                <small class="text-white-50 mb-2 text-center">الإعدادات والتحكم</small>
+                                
+                                <!-- Theme Toggle -->
+                                <button class="btn btn-outline-light btn-sm w-100" id="themeToggle" title="تبديل الوضع المظلم">
+                                    <i class="fas fa-moon ms-2" id="themeIcon"></i>
+                                    تبديل الوضع
                                 </button>
-                            </form>
+                                
+                                <!-- Settings Button -->
+                                <button class="btn btn-outline-light btn-sm w-100" id="settingsToggle" title="الإعدادات المتقدمة">
+                                    <i class="fas fa-cog ms-2"></i>
+                                    الإعدادات
+                                </button>
+                                
+                                <hr class="my-2" style="border-color: rgba(255, 255, 255, 0.2);">
+                                
+                                <!-- Logout Button -->
+                                <form method="POST" action="/auth/logout" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                                        <i class="fas fa-sign-out-alt ms-2"></i>
+                                        تسجيل الخروج
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </nav>
@@ -978,7 +1414,7 @@
                     <div class="d-md-none">
                         <nav class="navbar navbar-expand-lg navbar-light mb-3">
                             <div class="container-fluid">
-                                <button class="navbar-toggler" type="button" id="sidebarToggle">
+                                <button class="navbar-toggler" type="button" id="sidebarToggle" title="إظهار/إخفاء القائمة">
                                     <span class="navbar-toggler-icon"></span>
                                 </button>
                                 <span class="navbar-brand">نظام الفواتير</span>
@@ -1025,6 +1461,12 @@
                     animations: localStorage.getItem('animations') !== 'false',
                     language: localStorage.getItem('language') || 'ar'
                 };
+                
+                // Restore theme state from localStorage if available
+                const savedTheme = localStorage.getItem('currentTheme');
+                if (savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
                 
                 this.themeToggle = document.getElementById('themeToggle');
                 this.themeIcon = document.getElementById('themeIcon');
@@ -1256,6 +1698,10 @@
                 
                 // Apply animations
                 this.applyAnimations(this.settings.animations);
+                
+                // Save current theme state to localStorage for persistence
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                localStorage.setItem('currentTheme', currentTheme);
             }
             
             updateUI() {

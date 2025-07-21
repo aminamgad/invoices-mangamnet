@@ -1,0 +1,870 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">إنشاء فاتورة جديدة</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/invoices" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i>
+            العودة للفواتير
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">بيانات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/invoices" id="invoiceForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceCode" class="form-label">رقم الفاتورة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="invoiceCode" name="invoiceCode" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="invoiceDate" class="form-label">تاريخ الفاتورة <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="invoiceDate" name="invoiceDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="client" class="form-label">العميل <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select class="form-select searchable-select" id="client" name="client" required>
+                                    <option value="">اختر العميل</option>
+                                    <% clients.forEach(function(client) { %>
+                                        <option value="<%= client._id %>" data-phone="<%= client.mobileNumber %>">
+                                            <%= client.fullName %> - <%= client.mobileNumber %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <button class="btn btn-outline-primary" type="button" id="addClientBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="file" class="form-label">الملف <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select class="form-select searchable-select" id="file" name="file" required>
+                                    <option value="">اختر الملف</option>
+                                    <% files.forEach(function(file) { %>
+                                        <option value="<%= file._id %>" data-company="<%= file.company ? file.company.name : '' %>">
+                                            <%= file.fileName %> <% if (file.company) { %>- <%= file.company.name %><% } %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <button class="btn btn-outline-primary" type="button" id="addFileBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assignedDistributor" class="form-label">الموزع المكلف <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assignedDistributor" name="assignedDistributor" required>
+                                <option value="">اختر الموزع</option>
+                                <% distributors.forEach(function(distributor) { %>
+                                    <option value="<%= distributor._id %>"><%= distributor.username %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">المبلغ (جنيه) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            إنشاء الفاتورة
+                        </button>
+                        <a href="/invoices" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات العمولة</h5>
+            </div>
+            <div class="card-body">
+                <div id="commissionInfo">
+                    <p class="text-muted">أدخل جميع البيانات والمبلغ لعرض معلومات العمولة</p>
+                </div>
+                <button type="button" class="btn btn-outline-info btn-sm w-100" id="calculateBtn" disabled>
+                    <i class="fas fa-calculator"></i>
+                    حساب العمولة
+                </button>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">تعليمات</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-hashtag text-info"></i>
+                        رقم الفاتورة يجب أن يكون فريد
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-search text-warning"></i>
+                        اكتب في dropdown العميل أو الملف للبحث السريع
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-plus text-success"></i>
+                        اضغط على زر + لإضافة عميل أو ملف جديد
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-percentage text-warning"></i>
+                        نسب العمولة تحسب تلقائياً حسب المبلغ
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-calculator text-success"></i>
+                        اضغط على "حساب العمولة" لمراجعة النسب
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-keyboard text-info"></i>
+                        اكتب الحرف الأول للانتقال السريع للخيار
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Client Modal -->
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">إضافة عميل جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickAddClientForm">
+                    <div class="mb-3">
+                        <label for="quickClientName" class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quickClientName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickClientPhone" class="form-label">رقم الجوال <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="quickClientPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickClientCommission" class="form-label">نسبة العمولة (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="quickClientCommission" min="0" max="100" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickClientNotes" class="form-label">الملاحظات</label>
+                        <textarea class="form-control" id="quickClientNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveQuickClientBtn">
+                    <i class="fas fa-save"></i>
+                    حفظ العميل
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add File Modal -->
+<div class="modal fade" id="addFileModal" tabindex="-1" aria-labelledby="addFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFileModalLabel">إضافة ملف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickAddFileForm">
+                    <div class="mb-3">
+                        <label for="quickFileName" class="form-label">اسم الملف <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quickFileName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickFileCompany" class="form-label">الشركة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="quickFileCompany" required>
+                            <option value="">اختر الشركة</option>
+                            <% companies.forEach(function(company) { %>
+                                <option value="<%= company._id %>"><%= company.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickFileStatus" class="form-label">الحالة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="quickFileStatus" required>
+                            <option value="active">نشط</option>
+                            <option value="archived">مؤرشف</option>
+                            <option value="under_review">قيد المراجعة</option>
+                            <option value="completed">مكتمل</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickFilePdf" class="form-label">ملف PDF <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="quickFilePdf" accept=".pdf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quickFileNotes" class="form-label">الملاحظات</label>
+                        <textarea class="form-control" id="quickFileNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveQuickFileBtn">
+                    <i class="fas fa-save"></i>
+                    حفظ الملف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Dark mode form styling */
+.form-control, .form-select {
+    background-color: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-text {
+    color: var(--text-muted);
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.card-header {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-info {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    color: white;
+    border-color: #17a2b8;
+}
+
+.btn-outline-info:disabled {
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    background-color: transparent;
+}
+
+/* Input group styling */
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Modal styling for dark mode */
+[data-theme="dark"] .modal-content {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-header {
+    background-color: var(--bg-tertiary);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-footer {
+    background-color: var(--bg-tertiary);
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .text-info {
+    color: #74c0fc !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #ffd43b !important;
+}
+
+[data-theme="dark"] .text-success {
+    color: #51cf66 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .btn-outline-info {
+    color: #74c0fc;
+    border-color: #74c0fc;
+}
+
+[data-theme="dark"] .btn-outline-info:hover {
+    background-color: #74c0fc;
+    color: var(--text-inverse);
+    border-color: #74c0fc;
+}
+
+[data-theme="dark"] .btn-outline-info:disabled {
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    background-color: transparent;
+}
+
+/* Commission info styling */
+#commissionInfo {
+    min-height: 60px;
+}
+
+[data-theme="dark"] #commissionInfo .alert {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Enhanced dropdown styling */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+[data-theme="dark"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+/* Search results styling */
+#clientSearchResults, #fileSearchResults {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#clientSearchResults .list-group-item,
+#fileSearchResults .list-group-item {
+    background-color: var(--card-bg);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#clientSearchResults .list-group-item:hover,
+#fileSearchResults .list-group-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+#clientSearchResults .list-group-item:last-child,
+#fileSearchResults .list-group-item:last-child {
+    border-bottom: none;
+}
+
+#clientSearchResults .list-group-item strong,
+#fileSearchResults .list-group-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+#clientSearchResults .list-group-item small,
+#fileSearchResults .list-group-item small {
+    color: var(--text-muted);
+    font-size: 0.875em;
+}
+
+/* Searchable select styling */
+.searchable-select {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.searchable-select:focus {
+    background-color: var(--input-bg);
+    border-color: #667eea;
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-1px);
+}
+
+.searchable-select:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom dropdown styling for search */
+.searchable-select option {
+    padding: 10px 15px;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.searchable-select option:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.searchable-select option:checked {
+    background-color: #667eea;
+    color: white;
+}
+
+/* Dark mode for searchable select */
+[data-theme="dark"] .searchable-select option {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .searchable-select option:hover {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .searchable-select option:checked {
+    background-color: #667eea;
+    color: white;
+}
+
+/* Enhanced input group styling */
+.input-group .searchable-select {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.input-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceDate').value = today;
+    
+    const clientSelect = document.getElementById('client');
+    const fileSelect = document.getElementById('file');
+    const addClientBtn = document.getElementById('addClientBtn');
+    const addFileBtn = document.getElementById('addFileBtn');
+    
+    const distributorSelect = document.getElementById('assignedDistributor');
+    const amountInput = document.getElementById('amount');
+    const commissionInfo = document.getElementById('commissionInfo');
+    const calculateBtn = document.getElementById('calculateBtn');
+    
+    // Make selects searchable
+    function makeSelectSearchable(selectElement) {
+        let searchTimeout;
+        let searchString = '';
+        
+        // Add search functionality to select
+        selectElement.addEventListener('keydown', function(e) {
+            // Clear search string after 1 second of no typing
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchString = '';
+            }, 1000);
+            
+            if (e.key.length === 1) {
+                // User typed a character, add to search string
+                searchString += e.key.toLowerCase();
+                
+                // Search for options that match the search string
+                const options = Array.from(this.options);
+                let found = false;
+                
+                // First try to find exact match at the beginning
+                for (let i = 0; i < options.length; i++) {
+                    const option = options[i];
+                    if (option.text.toLowerCase().startsWith(searchString)) {
+                        this.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // If no exact match, try to find partial match
+                if (!found) {
+                    for (let i = 0; i < options.length; i++) {
+                        const option = options[i];
+                        if (option.text.toLowerCase().includes(searchString)) {
+                            this.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Show visual feedback
+                if (found) {
+                    this.style.backgroundColor = 'var(--input-bg)';
+                    this.style.borderColor = '#28a745';
+                    setTimeout(() => {
+                        this.style.borderColor = '#667eea';
+                    }, 200);
+                }
+            } else if (e.key === 'Backspace') {
+                // Remove last character from search string
+                searchString = searchString.slice(0, -1);
+            } else if (e.key === 'Escape') {
+                // Clear search string
+                searchString = '';
+                this.blur();
+            }
+        });
+        
+        // Add visual feedback for focus
+        selectElement.addEventListener('focus', function() {
+            this.style.backgroundColor = 'var(--input-bg)';
+            this.style.borderColor = '#667eea';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(102, 126, 234, 0.25)';
+        });
+        
+        selectElement.addEventListener('blur', function() {
+            this.style.backgroundColor = '';
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+            searchString = '';
+        });
+        
+        // Add change event to trigger form completion check
+        selectElement.addEventListener('change', function() {
+            checkFormCompletion();
+        });
+    }
+    
+    // Apply searchable functionality to both selects
+    makeSelectSearchable(clientSelect);
+    makeSelectSearchable(fileSelect);
+    
+    // Quick add client functionality
+    addClientBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
+        modal.show();
+    });
+    
+    // Quick add file functionality
+    addFileBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addFileModal'));
+        modal.show();
+    });
+    
+    // Save quick client
+    document.getElementById('saveQuickClientBtn').addEventListener('click', async function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        
+        const formData = new FormData();
+        formData.append('fullName', document.getElementById('quickClientName').value);
+        formData.append('mobileNumber', document.getElementById('quickClientPhone').value);
+        formData.append('commissionRate', document.getElementById('quickClientCommission').value);
+        formData.append('notes', document.getElementById('quickClientNotes').value);
+        
+        try {
+            const response = await fetch('/clients/api', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add new client to dropdown
+                const option = document.createElement('option');
+                option.value = data.client._id;
+                option.textContent = data.client.fullName + ' - ' + data.client.mobileNumber;
+                option.dataset.phone = data.client.mobileNumber;
+                clientSelect.appendChild(option);
+                
+                // Auto-select the new client
+                clientSelect.value = data.client._id;
+                
+                // Close modal and reset form
+                bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
+                document.getElementById('quickAddClientForm').reset();
+                
+                // Show success message
+                showAlert('تم إضافة العميل بنجاح', 'success');
+                checkFormCompletion();
+            } else {
+                showAlert(data.error || 'حدث خطأ أثناء إضافة العميل', 'danger');
+            }
+        } catch (error) {
+            console.error('Error adding client:', error);
+            showAlert('حدث خطأ أثناء إضافة العميل', 'danger');
+        } finally {
+            // Reset button state
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+    
+    // Save quick file
+    document.getElementById('saveQuickFileBtn').addEventListener('click', async function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        
+        const formData = new FormData();
+        formData.append('fileName', document.getElementById('quickFileName').value);
+        formData.append('company', document.getElementById('quickFileCompany').value);
+        formData.append('status', document.getElementById('quickFileStatus').value);
+        formData.append('pdf', document.getElementById('quickFilePdf').files[0]);
+        formData.append('notes', document.getElementById('quickFileNotes').value);
+        
+        try {
+            const response = await fetch('/files/api', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add new file to dropdown
+                const option = document.createElement('option');
+                option.value = data.file._id;
+                const displayName = data.file.fileName + (data.file.company ? ' - ' + data.file.company.name : '');
+                option.textContent = displayName;
+                option.dataset.company = data.file.company ? data.file.company.name : '';
+                fileSelect.appendChild(option);
+                
+                // Auto-select the new file
+                fileSelect.value = data.file._id;
+                
+                // Close modal and reset form
+                bootstrap.Modal.getInstance(document.getElementById('addFileModal')).hide();
+                document.getElementById('quickAddFileForm').reset();
+                
+                // Show success message
+                showAlert('تم إضافة الملف بنجاح', 'success');
+                checkFormCompletion();
+            } else {
+                showAlert(data.error || 'حدث خطأ أثناء إضافة الملف', 'danger');
+            }
+        } catch (error) {
+            console.error('Error adding file:', error);
+            showAlert('حدث خطأ أثناء إضافة الملف', 'danger');
+        } finally {
+            // Reset button state
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+    
+    // Show alert function
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
+        alertDiv.innerHTML = 
+            message +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        
+        document.querySelector('.card-body').insertBefore(alertDiv, document.getElementById('invoiceForm'));
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    function checkFormCompletion() {
+        const isComplete = clientSelect.value && distributorSelect.value && fileSelect.value && amountInput.value && parseFloat(amountInput.value) > 0;
+        calculateBtn.disabled = !isComplete;
+    }
+    
+    function calculateCommission() {
+        if (!clientSelect.value || !distributorSelect.value || !fileSelect.value || !amountInput.value) {
+            return;
+        }
+        
+        const amount = parseFloat(amountInput.value);
+        if (amount <= 0) {
+            return;
+        }
+        
+        calculateBtn.disabled = true;
+        calculateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحساب...';
+        
+        fetch('/invoices/calculate-commission', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                clientId: clientSelect.value,
+                distributorId: distributorSelect.value,
+                fileId: fileSelect.value,
+                amount: amount
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                commissionInfo.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+            } else {
+                commissionInfo.innerHTML = 
+                    '<div class="row">' +
+                        '<div class="col-12 mb-2">' +
+                            '<strong>عمولة العميل:</strong> %' + data.clientRate +
+                            '<br><small class="text-muted">' + data.clientCommission + ' جنيه</small>' +
+                        '</div>' +
+                        '<div class="col-12 mb-2">' +
+                            '<strong>عمولة الموزع:</strong> %' + data.distributorRate +
+                            '<br><small class="text-muted">' + data.distributorCommission + ' جنيه</small>' +
+                        '</div>' +
+                        '<div class="col-12 mb-2">' +
+                            '<strong>عمولة الشركة:</strong> %' + data.companyRate +
+                            '<br><small class="text-muted">' + data.companyCommission + ' جنيه</small>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="alert alert-info mt-2">' +
+                        '<small>ستحفظ هذه النسب مع الفاتورة</small>' +
+                    '</div>';
+            }
+        })
+        .catch(error => {
+            commissionInfo.innerHTML = '<div class="alert alert-danger">حدث خطأ أثناء حساب العمولة</div>';
+        })
+        .finally(() => {
+            calculateBtn.disabled = false;
+            calculateBtn.innerHTML = '<i class="fas fa-calculator"></i> حساب العمولة';
+            checkFormCompletion();
+        });
+    }
+    
+    clientSelect.addEventListener('change', checkFormCompletion);
+    distributorSelect.addEventListener('change', checkFormCompletion);
+    fileSelect.addEventListener('change', checkFormCompletion);
+    amountInput.addEventListener('input', checkFormCompletion);
+    calculateBtn.addEventListener('click', calculateCommission);
+    
+    // Form validation before submission
+    document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+        if (!clientSelect.value) {
+            e.preventDefault();
+            showAlert('يرجى اختيار العميل', 'danger');
+            clientSearch.focus();
+            return false;
+        }
+        
+        if (!fileSelect.value) {
+            e.preventDefault();
+            showAlert('يرجى اختيار الملف', 'danger');
+            fileSearch.focus();
+            return false;
+        }
+        
+        if (!distributorSelect.value) {
+            e.preventDefault();
+            showAlert('يرجى اختيار الموزع', 'danger');
+            distributorSelect.focus();
+            return false;
+        }
+        
+        if (!amountInput.value || parseFloat(amountInput.value) <= 0) {
+            e.preventDefault();
+            showAlert('يرجى إدخال مبلغ صحيح', 'danger');
+            amountInput.focus();
+            return false;
+        }
+    });
+});
+</script> 

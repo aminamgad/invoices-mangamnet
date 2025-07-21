@@ -217,4 +217,97 @@ router.get('/:id', requireModuleAccess('companies'), async (req, res) => {
   }
 });
 
+// API endpoint to get companies (for dropdown)
+router.get('/api/list', requireModuleAccess('companies'), async (req, res) => {
+  try {
+    let query = {};
+    
+    // If user can only view own, filter by creator
+    if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
+      query.createdBy = req.session.user.id;
+    }
+    
+    const companies = await Company.find(query)
+      .select('name')
+      .sort({ name: 1 });
+    
+    res.json(companies);
+  } catch (error) {
+    console.error('Companies list error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تحميل الشركات' });
+  }
+});
+
+// API endpoint to search companies (for dropdown)
+router.get('/api/search', requireModuleAccess('companies'), async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = {};
+    
+    console.log('Company search request:', { q, user: req.session.user.id });
+    
+    // If user can only view own, filter by creator
+    if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
+      query.createdBy = req.session.user.id;
+    }
+    
+    // Search by name
+    if (q && q.trim()) {
+      query.name = { $regex: q, $options: 'i' };
+    }
+    
+    console.log('Company search query:', query);
+    
+    const companies = await Company.find(query)
+      .select('name')
+      .sort({ name: 1 })
+      .limit(20);
+    
+    console.log('Company search results:', companies);
+    
+    res.json(companies);
+  } catch (error) {
+    console.error('Company search error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء البحث: ' + error.message });
+  }
+});
+
+// API endpoint to create company via AJAX
+router.post('/api/create', requirePermission('companies', 'create'), async (req, res) => {
+  try {
+    const { name, notes } = req.body;
+    
+    // Check if company with same name already exists
+    const existingCompany = await Company.findOne({ name: name.trim() });
+    if (existingCompany) {
+      return res.status(400).json({ 
+        error: 'الشركة موجودة بالفعل',
+        existingCompany: {
+          _id: existingCompany._id,
+          name: existingCompany.name
+        }
+      });
+    }
+    
+    const company = new Company({
+      name: name.trim(),
+      notes: notes?.trim() || '',
+      createdBy: req.session.user.id
+    });
+    
+    await company.save();
+    
+    res.json({
+      success: true,
+      company: {
+        _id: company._id,
+        name: company.name
+      }
+    });
+  } catch (error) {
+    console.error('Company creation error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إضافة الشركة' });
+  }
+});
+
 export default router;
