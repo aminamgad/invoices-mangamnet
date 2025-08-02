@@ -72,11 +72,15 @@ router.get('/new', requirePermission('clients', 'create'), (req, res) => {
 // Create client
 router.post('/', requirePermission('clients', 'create'), async (req, res) => {
   try {
-    const { fullName, mobileNumber, notes, commissionRate } = req.body;
+    const { fullName, mobileNumber, whatsappNumber, notes, commissionRate } = req.body;
+    
+    // Add +20 prefix to WhatsApp number if provided
+    const formattedWhatsappNumber = whatsappNumber ? `+20${whatsappNumber.replace(/^\+20/, '')}` : '';
     
     const client = new Client({
       fullName,
       mobileNumber,
+      whatsappNumber: formattedWhatsappNumber,
       notes,
       commissionRate: parseFloat(commissionRate) || 0,
       createdBy: req.session.user.id
@@ -116,7 +120,10 @@ router.get('/:id/edit', requirePermission('clients', 'update'), async (req, res)
 // Update client
 router.put('/:id', requirePermission('clients', 'update'), async (req, res) => {
   try {
-    const { fullName, mobileNumber, notes, commissionRate } = req.body;
+    const { fullName, mobileNumber, whatsappNumber, notes, commissionRate } = req.body;
+    
+    // Add +20 prefix to WhatsApp number if provided
+    const formattedWhatsappNumber = whatsappNumber ? `+20${whatsappNumber.replace(/^\+20/, '')}` : '';
     
     let query = { _id: req.params.id };
     
@@ -128,6 +135,7 @@ router.put('/:id', requirePermission('clients', 'update'), async (req, res) => {
     const result = await Client.updateOne(query, {
       fullName,
       mobileNumber,
+      whatsappNumber: formattedWhatsappNumber,
       notes,
       commissionRate: parseFloat(commissionRate) || 0
     });
@@ -263,7 +271,7 @@ router.get('/api/search', requireModuleAccess('clients'), async (req, res) => {
 // API endpoint to create client via AJAX
 router.post('/api/create', requirePermission('clients', 'create'), async (req, res) => {
   try {
-    const { fullName, mobileNumber, notes, commissionRate } = req.body;
+    const { fullName, mobileNumber, whatsappNumber, notes, commissionRate } = req.body;
     
     // Check if client already exists
     const existingClient = await Client.findOne({ 
@@ -284,9 +292,13 @@ router.post('/api/create', requirePermission('clients', 'create'), async (req, r
       });
     }
     
+    // Add +20 prefix to WhatsApp number if provided
+    const formattedWhatsappNumber = whatsappNumber ? `+20${whatsappNumber.replace(/^\+20/, '')}` : '';
+    
     const client = new Client({
       fullName: fullName.trim(),
       mobileNumber: mobileNumber.trim(),
+      whatsappNumber: formattedWhatsappNumber,
       notes: notes?.trim() || '',
       commissionRate: parseFloat(commissionRate) || 0,
       createdBy: req.session.user.id

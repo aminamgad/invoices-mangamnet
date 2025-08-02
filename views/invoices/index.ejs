@@ -24,7 +24,7 @@
 <!-- Statistics Cards -->
 <div class="row mb-4">
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-primary text-white">
+        <div class="stats-card bg-primary text-white">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -38,7 +38,7 @@
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-success text-white">
+        <div class="stats-card bg-success text-white">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -52,7 +52,7 @@
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-warning text-white">
+        <div class="stats-card bg-warning text-white">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -66,7 +66,7 @@
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-info text-white">
+        <div class="stats-card bg-info text-white">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -627,13 +627,26 @@ function markPaymentStep(invoiceId, step) {
         adminToCompany: 'الإدارة → الشركة'
     };
     
-    if (confirm(\`هل أنت متأكد من تحديد "\${stepNames[step]}" كمدفوع؟\`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = \`/invoices/\${invoiceId}/payment/\${step}\`;
-        document.body.appendChild(form);
-        form.submit();
-    }
+    Swal.fire({
+        title: 'تأكيد الدفع',
+        text: \`هل أنت متأكد من تحديد "\${stepNames[step]}" كمدفوع؟\`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، تأكيد',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = \`/invoices/\${invoiceId}/payment/\${step}\`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 // Unmark payment step (admin only)
@@ -644,20 +657,33 @@ function unmarkPaymentStep(invoiceId, step) {
         adminToCompany: 'الإدارة → الشركة'
     };
     
-    if (confirm(\`هل أنت متأكد من إلغاء حالة الدفع "\${stepNames[step]}"؟\`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = \`/invoices/\${invoiceId}/payment/\${step}?_method=DELETE\`;
-        
-        const methodInput = document.createElement('input');
-        methodInput.type = 'hidden';
-        methodInput.name = '_method';
-        methodInput.value = 'DELETE';
-        form.appendChild(methodInput);
-        
-        document.body.appendChild(form);
-        form.submit();
-    }
+    Swal.fire({
+        title: 'إلغاء حالة الدفع',
+        text: \`هل أنت متأكد من إلغاء حالة الدفع "\${stepNames[step]}"؟\`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، إلغاء',
+        cancelButtonText: 'تراجع',
+        customClass: {
+            confirmButton: 'btn btn-warning',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = \`/invoices/\${invoiceId}/payment/\${step}?_method=DELETE\`;
+            
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 // View invoice details
@@ -1083,13 +1109,26 @@ function viewInvoiceDetails(invoiceId) {
 
 // Delete invoice
 function deleteInvoice(invoiceId, invoiceCode) {
-    if (confirm(\`هل أنت متأكد من حذف الفاتورة "\${invoiceCode}"؟\\n\\nهذا الإجراء لا يمكن التراجع عنه.\`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = \`/invoices/\${invoiceId}?_method=DELETE\`;
-        document.body.appendChild(form);
-        form.submit();
-    }
+    Swal.fire({
+        title: 'حذف الفاتورة',
+        text: \`هل أنت متأكد من حذف الفاتورة "\${invoiceCode}"؟\\n\\nهذا الإجراء لا يمكن التراجع عنه.\`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، حذف',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = \`/invoices/\${invoiceId}?_method=DELETE\`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 // Export invoices
@@ -1098,7 +1137,12 @@ function exportInvoices() {
     const visibleRows = document.querySelectorAll('.invoice-row:not([style*="display: none"])');
     
     if (visibleRows.length === 0) {
-        alert('لا توجد فواتير لتصديرها');
+        Swal.fire({
+            title: 'لا توجد فواتير',
+            text: 'لا توجد فواتير لتصديرها',
+            icon: 'info',
+            confirmButtonText: 'حسناً'
+        });
         return;
     }
     
@@ -1182,7 +1226,12 @@ function exportInvoices() {
     })
     .catch(error => {
         console.error('Export error:', error);
-        alert('حدث خطأ أثناء تصدير البيانات: ' + error.message);
+        Swal.fire({
+            title: 'خطأ في التصدير',
+            text: 'حدث خطأ أثناء تصدير البيانات: ' + error.message,
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+        });
     })
     .finally(() => {
         // Restore button state
@@ -1193,48 +1242,84 @@ function exportInvoices() {
 
 // Approve invoice
 function approveInvoice(invoiceId) {
-    if (confirm('هل أنت متأكد من الموافقة على هذه الفاتورة؟')) {
-        fetch(\`/invoices/\${invoiceId}/approve\`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                throw new Error('فشل في الموافقة على الفاتورة');
-            }
-        })
-        .catch(error => {
-            console.error('Approval error:', error);
-            alert('حدث خطأ أثناء الموافقة على الفاتورة: ' + error.message);
-        });
-    }
+    Swal.fire({
+        title: 'الموافقة على الفاتورة',
+        text: 'هل أنت متأكد من الموافقة على هذه الفاتورة؟',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، موافقة',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(\`/invoices/\${invoiceId}/approve\`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('فشل في الموافقة على الفاتورة');
+                }
+            })
+            .catch(error => {
+                console.error('Approval error:', error);
+                Swal.fire({
+                    title: 'خطأ',
+                    text: 'حدث خطأ أثناء الموافقة على الفاتورة: ' + error.message,
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+            });
+        }
+    });
 }
 
 // Unapprove invoice
 function unapproveInvoice(invoiceId) {
-    if (confirm('هل أنت متأكد من إلغاء الموافقة على هذه الفاتورة؟')) {
-        fetch(\`/invoices/\${invoiceId}/unapprove\`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                throw new Error('فشل في إلغاء الموافقة على الفاتورة');
-            }
-        })
-        .catch(error => {
-            console.error('Unapproval error:', error);
-            alert('حدث خطأ أثناء إلغاء الموافقة على الفاتورة: ' + error.message);
-        });
-    }
+    Swal.fire({
+        title: 'إلغاء الموافقة',
+        text: 'هل أنت متأكد من إلغاء الموافقة على هذه الفاتورة؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، إلغاء',
+        cancelButtonText: 'تراجع',
+        customClass: {
+            confirmButton: 'btn btn-warning',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(\`/invoices/\${invoiceId}/unapprove\`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('فشل في إلغاء الموافقة على الفاتورة');
+                }
+            })
+            .catch(error => {
+                console.error('Unapproval error:', error);
+                Swal.fire({
+                    title: 'خطأ',
+                    text: 'حدث خطأ أثناء إلغاء الموافقة على الفاتورة: ' + error.message,
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+            });
+        }
+    });
 }
 
 // Initialize tooltips

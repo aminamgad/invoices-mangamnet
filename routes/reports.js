@@ -57,6 +57,10 @@ router.get('/', requireModuleAccess('reports'), async (req, res) => {
     // Role-based filtering
     if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
 
     // Month filter (always applied)
@@ -268,6 +272,10 @@ router.get('/export', requireModuleAccess('reports'), async (req, res) => {
     
     if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
 
     // Month filter (always applied)

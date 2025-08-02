@@ -93,7 +93,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form method="POST" action="/commission-tiers/${tier._id}?_method=DELETE" style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد من حذف مستوى العمولة هذا؟')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirmDelete()">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -155,5 +155,26 @@ function updateEntityOptions() {
 document.addEventListener('DOMContentLoaded', function() {
     updateEntityOptions();
 });
+
+// Confirm delete function
+function confirmDelete() {
+    return Swal.fire({
+        title: 'حذف مستوى العمولة',
+        text: 'هل أنت متأكد من حذف مستوى العمولة هذا؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، حذف',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            return true;
+        }
+        return false;
+    });
+}
 </script>
 ` }) %>

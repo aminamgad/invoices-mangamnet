@@ -748,22 +748,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Show alert function
-    function showAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
-        alertDiv.innerHTML = 
-            message +
-            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-        
-        document.querySelector('.card-body').insertBefore(alertDiv, document.getElementById('invoiceForm'));
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 5000);
-    }
+            function showAlert(message, type) {
+            const iconMap = {
+                'success': 'success',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+            
+            Swal.fire({
+                title: type === 'success' ? 'نجح' : type === 'danger' ? 'خطأ' : type === 'warning' ? 'تحذير' : 'معلومات',
+                text: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonText: 'حسناً',
+                customClass: {
+                    confirmButton: type === 'success' ? 'btn btn-success' : 
+                                  type === 'danger' ? 'btn btn-danger' : 
+                                  type === 'warning' ? 'btn btn-warning' : 'btn btn-info'
+                }
+            });
+        }
     
     function checkFormCompletion() {
         const isComplete = clientSelect.value && distributorSelect.value && fileSelect.value && amountInput.value && parseFloat(amountInput.value) > 0;

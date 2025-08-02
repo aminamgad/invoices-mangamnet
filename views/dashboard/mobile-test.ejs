@@ -1,0 +1,354 @@
+<% const title = 'اختبار الجوال'; %>
+<%- include('../layout', { title, body: `
+<!-- Mobile Responsive Test Cards -->
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table text-primary"></i>
+                    الجداول المتجاوبة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>العمود الأول</th>
+                                <th>العمود الثاني</th>
+                                <th>العمود الثالث</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td data-label="العمود الأول">بيانات 1</td>
+                                <td data-label="العمود الثاني">بيانات 2</td>
+                                <td data-label="العمود الثالث">بيانات 3</td>
+                                <td data-label="الإجراءات">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary">تعديل</button>
+                                        <button class="btn btn-sm btn-outline-danger">حذف</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-label="العمود الأول">بيانات 4</td>
+                                <td data-label="العمود الثاني">بيانات 5</td>
+                                <td data-label="العمود الثالث">بيانات 6</td>
+                                <td data-label="الإجراءات">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary">تعديل</button>
+                                        <button class="btn btn-sm btn-outline-danger">حذف</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-form text-success"></i>
+                    النماذج المتجاوبة
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الاسم الأول</label>
+                            <input type="text" class="form-control" placeholder="أدخل الاسم الأول">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الاسم الأخير</label>
+                            <input type="text" class="form-control" placeholder="أدخل الاسم الأخير">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" placeholder="أدخل البريد الإلكتروني">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الاختيار</label>
+                        <select class="form-select">
+                            <option>اختر خياراً</option>
+                            <option>الخيار الأول</option>
+                            <option>الخيار الثاني</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">إرسال</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell text-warning"></i>
+                    التنبيهات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    تم حفظ البيانات بنجاح
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    هذه رسالة معلومات
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تحذير: يرجى مراجعة البيانات
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i>
+                    خطأ: حدث خطأ أثناء الحفظ
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar text-info"></i>
+                    الإحصائيات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="stats-card mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0">150</h3>
+                            <p class="mb-0">إجمالي الفواتير</p>
+                        </div>
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                </div>
+                <div class="stats-card mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0">25</h3>
+                            <p class="mb-0">العملاء النشطون</p>
+                        </div>
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Navigation Test -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bars text-primary"></i>
+                    اختبار التنقل
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-primary w-100" onclick="showMobileModal()">
+                            <i class="fas fa-window-maximize"></i>
+                            فتح نافذة منبثقة
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-success w-100" onclick="showBottomSheet()">
+                            <i class="fas fa-arrow-up"></i>
+                            ورقة من الأسفل
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-warning w-100" onclick="showLoading()">
+                            <i class="fas fa-spinner"></i>
+                            عرض التحميل
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-info w-100" onclick="testTouch()">
+                            <i class="fas fa-hand-pointer"></i>
+                            اختبار اللمس
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Modal Test -->
+<div class="modal fade" id="mobileTestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">اختبار النافذة المنبثقة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هذه نافذة منبثقة لاختبار الاستجابة على الجوال.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    على الجوال، ستظهر هذه النافذة بملء الشاشة
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Bottom Sheet -->
+<div class="bottom-sheet" id="mobileBottomSheet">
+    <div class="bottom-sheet-handle"></div>
+    <div class="p-3">
+        <h5>ورقة من الأسفل</h5>
+        <p>هذه ورقة تظهر من أسفل الشاشة على الجوال.</p>
+        <div class="row">
+            <div class="col-6 mb-2">
+                <button class="btn btn-outline-primary w-100">خيار 1</button>
+            </div>
+            <div class="col-6 mb-2">
+                <button class="btn btn-outline-success w-100">خيار 2</button>
+            </div>
+        </div>
+        <button class="btn btn-secondary w-100" onclick="hideBottomSheet()">إغلاق</button>
+    </div>
+</div>
+
+<!-- Mobile Loading Overlay -->
+<div class="loading-overlay" id="mobileLoadingOverlay" style="display: none;">
+    <div class="text-center">
+        <div class="loading-spinner"></div>
+        <p class="loading-text mt-3">جاري التحميل...</p>
+    </div>
+</div>
+
+<!-- Mobile Floating Action Button -->
+<button class="fab d-md-none" onclick="showFabMenu()" id="mobileFab">
+    <i class="fas fa-plus"></i>
+</button>
+
+<script>
+function testMobileFeatures() {
+    if (window.innerWidth <= 768) {
+        Swal.fire({
+            title: 'اختبار الميزات',
+            text: 'تم تفعيل جميع ميزات الجوال بنجاح!',
+            icon: 'success',
+            confirmButtonText: 'حسناً'
+        });
+    } else {
+        Swal.fire({
+            title: 'اختبار الميزات',
+            text: 'هذه الميزات مصممة للجوال. جرب على شاشة أصغر.',
+            icon: 'info',
+            confirmButtonText: 'حسناً'
+        });
+    }
+}
+
+function showMobileModal() {
+    const modal = new bootstrap.Modal(document.getElementById('mobileTestModal'));
+    modal.show();
+}
+
+function showBottomSheet() {
+    document.getElementById('mobileBottomSheet').classList.add('show');
+}
+
+function hideBottomSheet() {
+    document.getElementById('mobileBottomSheet').classList.remove('show');
+}
+
+function showLoading() {
+    const overlay = document.getElementById('mobileLoadingOverlay');
+    overlay.style.display = 'flex';
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        Swal.fire({
+            title: 'تم التحميل',
+            text: 'تم تحميل البيانات بنجاح!',
+            icon: 'success',
+            confirmButtonText: 'حسناً'
+        });
+    }, 2000);
+}
+
+function testTouch() {
+    const button = event.target;
+    button.style.transform = 'scale(0.95)';
+    
+    setTimeout(() => {
+        button.style.transform = '';
+        Swal.fire({
+            title: 'اختبار اللمس',
+            text: 'تم تسجيل اللمس بنجاح!',
+            icon: 'success',
+            confirmButtonText: 'حسناً'
+        });
+    }, 150);
+}
+
+function showFabMenu() {
+    Swal.fire({
+        title: 'زر العائمة',
+        text: 'هذا زر عائم يظهر فقط على الجوال',
+        icon: 'info',
+        confirmButtonText: 'حسناً'
+    });
+}
+
+// Close bottom sheet when clicking outside
+document.addEventListener('click', function(e) {
+    const bottomSheet = document.getElementById('mobileBottomSheet');
+    if (bottomSheet && !bottomSheet.contains(e.target) && bottomSheet.classList.contains('show')) {
+        hideBottomSheet();
+    }
+});
+
+// Mobile-specific features
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth <= 768) {
+        // Add mobile-specific classes
+        document.body.classList.add('mobile-view');
+        
+        // Show mobile-specific elements
+        const fab = document.getElementById('mobileFab');
+        if (fab) {
+            fab.style.display = 'flex';
+        }
+        
+        // Add touch feedback to all buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.98)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+    }
+});
+</script>
+` }) %> 

@@ -11,6 +11,10 @@ const clientSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  whatsappNumber: {
+    type: String,
+    trim: true
+  },
   notes: {
     type: String,
     trim: true

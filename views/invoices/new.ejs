@@ -1238,20 +1238,24 @@
         
         // Show alert function
         function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
-            alertDiv.innerHTML = 
-                message +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            const iconMap = {
+                'success': 'success',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
             
-            document.querySelector('.card-body').insertBefore(alertDiv, document.getElementById('invoiceForm'));
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
+            Swal.fire({
+                title: type === 'success' ? 'نجح' : type === 'danger' ? 'خطأ' : type === 'warning' ? 'تحذير' : 'معلومات',
+                text: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonText: 'حسناً',
+                customClass: {
+                    confirmButton: type === 'success' ? 'btn btn-success' : 
+                                  type === 'danger' ? 'btn btn-danger' : 
+                                  type === 'warning' ? 'btn btn-warning' : 'btn btn-info'
                 }
-            }, 5000);
+            });
         }
     
     // Calculate final amount when discount changes

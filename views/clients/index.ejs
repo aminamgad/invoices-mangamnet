@@ -18,57 +18,49 @@
 <!-- Statistics Cards -->
 <div class="row mb-4">
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h4 class="mb-0">${clients ? clients.length : 0}</h4>
-                        <p class="mb-0">إجمالي العملاء</p>
-                    </div>
-                    <i class="fas fa-users fa-2x opacity-75"></i>
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h4 class="mb-0">${clients ? clients.length : 0}</h4>
+                    <p class="mb-0">إجمالي العملاء</p>
                 </div>
+                <i class="fas fa-users"></i>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h4 class="mb-0">${clients ? clients.filter(c => c.commissionRate > 0).length : 0}</h4>
-                        <p class="mb-0">عملاء بعمولة</p>
-                    </div>
-                    <i class="fas fa-percentage fa-2x opacity-75"></i>
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h4 class="mb-0">${clients ? clients.filter(c => c.commissionRate > 0).length : 0}</h4>
+                    <p class="mb-0">عملاء بعمولة</p>
                 </div>
+                <i class="fas fa-percentage"></i>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h4 class="mb-0">${clients && clients.length > 0 ? (clients.reduce((sum, c) => sum + c.commissionRate, 0) / clients.length).toFixed(1) : 0}%</h4>
-                        <p class="mb-0">متوسط العمولة</p>
-                    </div>
-                    <i class="fas fa-chart-bar fa-2x opacity-75"></i>
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h4 class="mb-0">${clients && clients.length > 0 ? (clients.reduce((sum, c) => sum + c.commissionRate, 0) / clients.length).toFixed(1) : 0}%</h4>
+                    <p class="mb-0">متوسط العمولة</p>
                 </div>
+                <i class="fas fa-chart-bar"></i>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 col-sm-6 mb-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h4 class="mb-0">${clients ? clients.filter(c => new Date(c.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length : 0}</h4>
-                        <p class="mb-0">جدد هذا الشهر</p>
-                    </div>
-                    <i class="fas fa-calendar fa-2x opacity-75"></i>
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h4 class="mb-0">${clients ? clients.filter(c => new Date(c.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length : 0}</h4>
+                    <p class="mb-0">جدد هذا الشهر</p>
                 </div>
+                <i class="fas fa-calendar"></i>
             </div>
         </div>
     </div>
@@ -206,6 +198,11 @@
                                                 <a href="/clients/${client._id}/edit" class="btn btn-sm btn-outline-primary" title="تعديل">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                            ` : ''}
+                                            ${client.whatsappNumber ? `
+                                                <button class="btn btn-sm btn-outline-success" onclick="sendWhatsAppMessage('${client.fullName}', '${client.whatsappNumber}')" title="إرسال واتساب">
+                                                    <i class="fab fa-whatsapp"></i>
+                                                </button>
                                             ` : ''}
                                             ${userPermissions.canDelete ? `
                                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteClient('${client._id}', '${client.fullName}')" title="حذف">
@@ -358,7 +355,7 @@ function clearSearch() {
     document.querySelectorAll('.client-row').forEach(row => {
         row.style.display = '';
     });
-    document.getElementById('clientCount').textContent = ${clients ? clients.length : 0};
+    document.getElementById('clientCount').textContent = '${clients ? clients.length : 0}';
 }
 
 // Sort functionality
@@ -423,19 +420,12 @@ function viewClientDetails(clientId) {
     const content = document.getElementById('clientDetailsContent');
     
     // Show loading state
-    content.innerHTML = \`
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">جاري التحميل...</span>
-            </div>
-            <p class="mt-2">جاري تحميل تفاصيل العميل...</p>
-        </div>
-    \`;
+    content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div><p class="mt-2">جاري تحميل تفاصيل العميل...</p></div>';
     
     modal.show();
     
     // Fetch client details
-    fetch(\`/clients/\${clientId}\`)
+    fetch('/clients/' + clientId)
         .then(response => {
             if (!response.ok) {
                 throw new Error('فشل في تحميل البيانات');
@@ -460,24 +450,47 @@ function viewClientDetails(clientId) {
         })
         .catch(error => {
             console.error('Error loading client details:', error);
-            content.innerHTML = \`
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    حدث خطأ أثناء تحميل تفاصيل العميل: \${error.message}
-                </div>
-            \`;
+            content.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>حدث خطأ أثناء تحميل تفاصيل العميل: ' + error.message + '</div>';
         });
+}
+
+// Send WhatsApp message 
+function sendWhatsAppMessage(clientName, whatsappNumber) {
+    // Create the message
+    const message = 'مرحبًا ' + clientName + '، المبلغ المستحق عليك هو 540 جنيه. رقم فودافون كاش: 01007522586 رابط الدفع: https://ipn.eg/S/abdallaelgar7e/instapay/8pgbLl يُرجى السداد في أقرب وقت. شكرًا.';
+    
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Create WhatsApp URL (number already has +20 prefix)
+    const whatsappUrl = 'https://wa.me/' + whatsappNumber.replace(/[^0-9]/g, '') + '?text=' + encodedMessage;
+    
+    // Open WhatsApp in new tab
+    window.open(whatsappUrl, '_blank');
 }
 
 // Delete client
 function deleteClient(clientId, clientName) {
-    if (confirm(\`هل أنت متأكد من حذف العميل "\${clientName}"؟\\n\\nهذا الإجراء لا يمكن التراجع عنه.\`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = \`/clients/\${clientId}?_method=DELETE\`;
-        document.body.appendChild(form);
-        form.submit();
-    }
+    Swal.fire({
+        title: 'حذف العميل',
+        text: 'هل أنت متأكد من حذف العميل "' + clientName + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، حذف',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/clients/' + clientId + '?_method=DELETE';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 // Initialize tooltips

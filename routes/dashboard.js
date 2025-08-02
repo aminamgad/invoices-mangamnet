@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Invoice from '../models/Invoice.js';
 import Client from '../models/Client.js';
 import Company from '../models/Company.js';
@@ -13,6 +14,14 @@ router.get('/', async (req, res) => {
     
     if (!user) {
       return res.redirect('/auth/login');
+    }
+    
+    // Mobile test route
+    if (req.query.test === 'mobile') {
+      return res.render('dashboard/mobile-test', {
+        title: 'اختبار الجوال',
+        user: user
+      });
     }
     
     // Get dashboard statistics
@@ -31,13 +40,15 @@ router.get('/', async (req, res) => {
     };
 
     if (user.role === 'admin') {
-      stats.totalInvoices = await Invoice.countDocuments();
+      // Count only invoices created by admin
+      stats.totalInvoices = await Invoice.countDocuments({ createdBy: user.id });
       stats.totalClients = await Client.countDocuments();
       stats.totalCompanies = await Company.countDocuments();
       stats.totalFiles = await File.countDocuments();
       stats.totalDistributors = await User.countDocuments({ role: 'distributor' });
       
-      stats.recentInvoices = await Invoice.find()
+      // Show only recent invoices created by admin
+      stats.recentInvoices = await Invoice.find({ createdBy: user.id })
         .populate('client', 'fullName')
         .populate('file', 'fileName')
         .populate('assignedDistributor', 'username')
@@ -46,11 +57,19 @@ router.get('/', async (req, res) => {
 
       // Get bulk payment data for admin
       // Distributors with unpaid invoices (ready for distributorToAdmin payment)
+      // Show only unpaid admin-created invoices
       const distributorsWithUnpaid = await Invoice.aggregate([
         {
           $match: {
-            'paymentStatus.clientToDistributor.isPaid': true,
-            'paymentStatus.distributorToAdmin.isPaid': false
+            createdBy: new mongoose.Types.ObjectId(user.id), // Only invoices created by admin
+            'paymentStatus.distributorToAdmin.isPaid': false, // Only unpaid invoices
+            // Ensure it's not created by distributors
+            $expr: {
+              $eq: [
+                { $type: "$createdBy" },
+                "objectId"
+              ]
+            }
           }
         },
         {
@@ -82,11 +101,19 @@ router.get('/', async (req, res) => {
       ]);
 
       // Companies with unpaid invoices (ready for adminToCompany payment)
+      // Show only unpaid admin-created invoices
       const companiesWithUnpaid = await Invoice.aggregate([
         {
           $match: {
-            'paymentStatus.distributorToAdmin.isPaid': true,
-            'paymentStatus.adminToCompany.isPaid': false
+            createdBy: new mongoose.Types.ObjectId(user.id), // Only invoices created by admin
+            'paymentStatus.adminToCompany.isPaid': false, // Only unpaid invoices
+            // Ensure it's not created by distributors
+            $expr: {
+              $eq: [
+                { $type: "$createdBy" },
+                "objectId"
+              ]
+            }
           }
         },
         {
@@ -132,10 +159,30 @@ router.get('/', async (req, res) => {
       stats.bulkPaymentData.distributors = distributorsWithUnpaid;
       stats.bulkPaymentData.companies = companiesWithUnpaid;
 
+      // Get all admin-created invoices for management
+      const allAdminInvoices = await Invoice.find({ createdBy: user.id })
+        .populate('client', 'fullName')
+        .populate('file', 'fileName')
+        .populate('assignedDistributor', 'username')
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+      stats.allAdminInvoices = allAdminInvoices || [];
+
     } else {
-      // Distributor dashboard
-      stats.totalInvoices = await Invoice.countDocuments({ assignedDistributor: user.id });
-      stats.recentInvoices = await Invoice.find({ assignedDistributor: user.id })
+      // Distributor dashboard - exclude invoices created by admin
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      
+      stats.totalInvoices = await Invoice.countDocuments({ 
+        assignedDistributor: user.id,
+        createdBy: { $nin: adminIds } // Exclude admin-created invoices
+      });
+      
+      stats.recentInvoices = await Invoice.find({ 
+        assignedDistributor: user.id,
+        createdBy: { $nin: adminIds } // Exclude admin-created invoices
+      })
         .populate('client', 'fullName')
         .populate('file', 'fileName')
         .sort({ createdAt: -1 })
@@ -147,7 +194,8 @@ router.get('/', async (req, res) => {
         {
           $match: {
             assignedDistributor: new mongoose.Types.ObjectId(user.id),
-            'paymentStatus.clientToDistributor.isPaid': false
+            'paymentStatus.clientToDistributor.isPaid': false,
+            createdBy: { $nin: adminIds } // Exclude admin-created invoices
           }
         },
         {
@@ -193,6 +241,7 @@ router.get('/', async (req, res) => {
         totalFiles: 0,
         totalDistributors: 0,
         recentInvoices: [],
+        allAdminInvoices: [],
         bulkPaymentData: {
           clients: [],
           distributors: [],

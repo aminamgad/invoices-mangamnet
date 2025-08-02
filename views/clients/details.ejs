@@ -621,6 +621,12 @@
                                     تعديل العميل
                                 </a>
                             <% } %>
+                            <% if (client.whatsappNumber) { %>
+                                <button type="button" class="btn btn-success" onclick="sendWhatsAppMessage()">
+                                    <i class="fab fa-whatsapp"></i>
+                                    إرسال رسالة واتساب
+                                </button>
+                            <% } %>
                         </div>
                         <a href="/clients" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-right"></i>
@@ -648,6 +654,18 @@
                                         </a>
                                     </div>
                                 </div>
+
+                                <% if (client.whatsappNumber) { %>
+                                <div class="detail-item">
+                                    <div class="detail-label">رقم الواتساب</div>
+                                    <div class="detail-value">
+                                        <a href="https://wa.me/<%= client.whatsappNumber.replace(/[^0-9]/g, '') %>" target="_blank" class="contact-link text-decoration-none">
+                                            <i class="fab fa-whatsapp text-success me-2"></i>
+                                            <span class="text-body"><%= client.whatsappNumber %></span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <% } %>
 
                                 <div class="detail-item">
                                     <div class="detail-label">نسبة العمولة</div>
@@ -906,6 +924,28 @@
                 document.getElementById('themeToggle').click();
             }
         });
+        
+        // WhatsApp message function
+        function sendWhatsAppMessage() {
+            const clientName = '<%= client.fullName %>';
+            const whatsappNumber = '<%= client.whatsappNumber %>';
+            const totalAmount = <%= stats.totalAmount %>;
+            
+            // Create the message
+            const message = `مرحبًا ${clientName}، المبلغ المستحق عليك هو ${totalAmount.toLocaleString('ar-SA')} جنيه.
+رقم فودافون كاش: 01007522586
+رابط الدفع: https://ipn.eg/S/abdallaelgar7e/instapay/8pgbLl
+يُرجى السداد في أقرب وقت. شكرًا.`;
+            
+            // Encode the message for URL
+            const encodedMessage = encodeURIComponent(message);
+            
+            // Create WhatsApp URL (number already has +20 prefix)
+            const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`;
+            
+            // Open WhatsApp in new tab
+            window.open(whatsappUrl, '_blank');
+        }
     </script>
 </body>
 </html>

@@ -30,10 +30,20 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="commissionRate" class="form-label">نسبة العمولة (%) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="commissionRate" name="commissionRate" min="0" max="100" step="0.01" required>
-                        <div class="form-text">أدخل نسبة العمولة للعميل (مثال: 5 تعني 5%)</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="whatsappNumber" class="form-label">رقم الواتساب</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+20</span>
+                                <input type="tel" class="form-control" id="whatsappNumber" name="whatsappNumber" placeholder="10xxxxxxxxx">
+                            </div>
+                            <div class="form-text">أدخل رقم الجوال بدون رمز الدولة (مثال: 1012345678)</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="commissionRate" class="form-label">نسبة العمولة (%) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="commissionRate" name="commissionRate" min="0" max="100" step="0.01" required>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -63,6 +73,10 @@
                     <li class="mb-2">
                         <i class="fas fa-info-circle text-info"></i>
                         تأكد من إدخال رقم الجوال بشكل صحيح
+                    </li>
+                    <li class="mb-2">
+                        <i class="fab fa-whatsapp text-success"></i>
+                        رقم الواتساب اختياري ويستخدم لإرسال رسائل الدفع
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-percentage text-warning"></i>

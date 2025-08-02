@@ -44,18 +44,41 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
     // If user can only view own, filter by assigned distributor
     if (!req.userPermissionLevel.canViewAll && req.userPermissionLevel.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      query.createdBy = { $ne: null }; // Only show invoices that have a creator
+      // Exclude invoices created by admin users
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
     
-    const invoices = await Invoice.find(query)
-      .populate('client', 'fullName')
-      .populate('file', 'fileName')
-      .populate('assignedDistributor', 'username')
-      .populate('createdBy', 'username')
-      .populate('approvedBy', 'username')
-      .populate('paymentStatus.clientToDistributor.markedBy', 'username')
-      .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
-      .populate('paymentStatus.adminToCompany.markedBy', 'username')
-      .sort({ createdAt: -1 });
+    // For admin, show all invoices but prioritize their own created invoices
+    let invoices;
+    if (req.session.user.role === 'admin') {
+      // Get all invoices for admin
+      invoices = await Invoice.find({})
+        .populate('client', 'fullName')
+        .populate('file', 'fileName')
+        .populate('assignedDistributor', 'username')
+        .populate('createdBy', 'username')
+        .populate('approvedBy', 'username')
+        .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+        .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+        .populate('paymentStatus.adminToCompany.markedBy', 'username')
+        .sort({ createdAt: -1 });
+    } else {
+      // For distributors, use the filtered query
+      invoices = await Invoice.find(query)
+        .populate('client', 'fullName')
+        .populate('file', 'fileName')
+        .populate('assignedDistributor', 'username')
+        .populate('createdBy', 'username')
+        .populate('approvedBy', 'username')
+        .populate('paymentStatus.clientToDistributor.markedBy', 'username')
+        .populate('paymentStatus.distributorToAdmin.markedBy', 'username')
+        .populate('paymentStatus.adminToCompany.markedBy', 'username')
+        .sort({ createdAt: -1 });
+    }
       
     res.render('invoices/index', { 
       invoices,
@@ -76,7 +99,23 @@ router.get('/', requireModuleAccess('invoices'), async (req, res) => {
 // New invoice form
 router.get('/new', requirePermission('invoices', 'create'), async (req, res) => {
   try {
-    const distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
+    let distributorsQuery = { role: 'distributor', isActive: true };
+    
+    // Check if user has permission to view all distributors
+    const { default: User } = await import('../models/User.js');
+    const currentUser = await User.findById(req.session.user.id);
+    const hasViewAllPermission = await currentUser.hasPermission('distributors', 'view_all') || 
+                                req.session.user.role === 'admin';
+    
+    // If user doesn't have view_all permission, show only themselves or distributors they created
+    if (!hasViewAllPermission) {
+      distributorsQuery.$or = [
+        { _id: req.session.user.id }, // Themselves
+        { createdBy: req.session.user.id } // Distributors they created
+      ];
+    }
+    
+    const distributors = await User.find(distributorsQuery).sort({ username: 1 });
     
     res.render('invoices/new', { distributors });
   } catch (error) {
@@ -280,6 +319,12 @@ router.post('/:id/payment/:step', requireModuleAccess('invoices'), async (req, r
     };
     
     req.flash('success', `تم تحديث حالة الدفع: ${stepNames[step]}`);
+    
+    // Redirect back to dashboard if coming from dashboard
+    if (req.headers.referer && req.headers.referer.includes('/dashboard')) {
+      return res.redirect('/dashboard');
+    }
+    
     res.redirect('/invoices');
   } catch (error) {
     req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
@@ -339,28 +384,36 @@ router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoice
       return res.redirect('/dashboard');
     }
     
-    // Find all unpaid invoices for this distributor
+    // Find all unpaid invoices for this distributor that admin created manually
     const invoices = await Invoice.find({
       assignedDistributor: distributorId,
-      'paymentStatus.clientToDistributor.isPaid': true,
-      'paymentStatus.distributorToAdmin.isPaid': false
+      createdBy: req.session.user.id, // Only invoices created by admin
+      'paymentStatus.distributorToAdmin.isPaid': false // Only unpaid invoices
     }).populate('assignedDistributor', 'username');
     
-    if (invoices.length === 0) {
-      req.flash('error', 'لا توجد فواتير جاهزة للدفع لهذا الموزع');
+    // Additional check to ensure these are admin-created invoices
+    const adminInvoices = invoices.filter(invoice => 
+      invoice.createdBy && 
+      invoice.createdBy.toString() === req.session.user.id
+    );
+    
+    if (adminInvoices.length === 0) {
+      req.flash('error', 'لا توجد فواتير غير مدفوعة لهذا الموزع');
       return res.redirect('/dashboard');
     }
     
-    // Mark all as paid
+    // Mark all as paid (distributor to admin)
     let updatedCount = 0;
-    for (const invoice of invoices) {
+    for (const invoice of adminInvoices) {
+      // Mark as distributor to admin paid
+      invoice.markPaymentStep('clientToDistributor', req.session.user.id);
       invoice.markPaymentStep('distributorToAdmin', req.session.user.id);
       await invoice.save();
       updatedCount++;
     }
     
     const distributorName = invoices[0].assignedDistributor?.username || 'الموزع';
-    req.flash('success', `تم تحديث ${updatedCount} فاتورة للموزع "${distributorName}" كمدفوعة`);
+    req.flash('success', `تم تحديث جميع الفواتير (${updatedCount} فاتورة) للموزع "${distributorName}" كمدفوعة`);
     res.redirect('/dashboard');
   } catch (error) {
     console.error('Bulk payment error:', error);
@@ -380,10 +433,10 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
       return res.redirect('/dashboard');
     }
     
-    // Find all unpaid invoices for this company
+    // Find all unpaid invoices for this company that admin created manually
     const invoices = await Invoice.find({
-      'paymentStatus.distributorToAdmin.isPaid': true,
-      'paymentStatus.adminToCompany.isPaid': false
+      createdBy: req.session.user.id, // Only invoices created by admin
+      'paymentStatus.adminToCompany.isPaid': false // Only unpaid invoices
     }).populate({
       path: 'file',
       populate: {
@@ -392,28 +445,35 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
       }
     });
     
+    // Additional check to ensure these are admin-created invoices
+    const adminInvoices = invoices.filter(invoice => 
+      invoice.createdBy && 
+      invoice.createdBy.toString() === req.session.user.id
+    );
+    
     // Filter by company
-    const companyInvoices = invoices.filter(invoice => 
+    const companyInvoices = adminInvoices.filter(invoice => 
       invoice.file && 
       invoice.file.company && 
       invoice.file.company._id.toString() === companyId
     );
     
     if (companyInvoices.length === 0) {
-      req.flash('error', 'لا توجد فواتير جاهزة للدفع لهذه الشركة');
+      req.flash('error', 'لا توجد فواتير غير مدفوعة لهذه الشركة');
       return res.redirect('/dashboard');
     }
     
-    // Mark all as paid
+    // Mark all as paid (admin to company)
     let updatedCount = 0;
     for (const invoice of companyInvoices) {
+      // Mark as admin to company paid
       invoice.markPaymentStep('adminToCompany', req.session.user.id);
       await invoice.save();
       updatedCount++;
     }
     
     const companyName = companyInvoices[0].file?.company?.name || 'الشركة';
-    req.flash('success', `تم تحديث ${updatedCount} فاتورة للشركة "${companyName}" كمدفوعة`);
+    req.flash('success', `تم تحديث جميع الفواتير (${updatedCount} فاتورة) للشركة "${companyName}" كمدفوعة`);
     res.redirect('/dashboard');
   } catch (error) {
     console.error('Bulk payment error:', error);
@@ -472,6 +532,10 @@ router.get('/:id', requireModuleAccess('invoices'), async (req, res) => {
     // If user can only view own, ensure they are assigned to this invoice
     if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
     
     const invoice = await Invoice.findOne(query)
@@ -525,7 +589,25 @@ router.get('/:id/edit', requirePermission('invoices', 'update'), async (req, res
       .populate('approvedBy', 'username');
     const clients = await Client.find().sort({ fullName: 1 });
     const files = await File.find().populate('company', 'name').sort({ fileName: 1 });
-    const distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
+    
+    // Apply distributor filtering based on permissions
+    let distributorsQuery = { role: 'distributor', isActive: true };
+    
+    // Check if user has permission to view all distributors
+    const { default: User } = await import('../models/User.js');
+    const currentUser = await User.findById(req.session.user.id);
+    const hasViewAllPermission = await currentUser.hasPermission('distributors', 'view_all') || 
+                                req.session.user.role === 'admin';
+    
+    // If user doesn't have view_all permission, show only themselves or distributors they created
+    if (!hasViewAllPermission) {
+      distributorsQuery.$or = [
+        { _id: req.session.user.id }, // Themselves
+        { createdBy: req.session.user.id } // Distributors they created
+      ];
+    }
+    
+    const distributors = await User.find(distributorsQuery).sort({ username: 1 });
     
     if (!invoice) {
       req.flash('error', 'الفاتورة غير موجودة أو ليس لديك صلاحية للوصول إليها');
@@ -560,6 +642,10 @@ router.put('/:id', requirePermission('invoices', 'update'), async (req, res) => 
     // If user can only view own, ensure they are assigned to this invoice
     if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
     
     // Get the current invoice to check approval status
@@ -659,6 +745,10 @@ router.delete('/:id', requirePermission('invoices', 'delete'), async (req, res) 
     // If user can only view own, ensure they are assigned to this invoice
     if (!req.userPermissionLevel?.canViewAll && req.userPermissionLevel?.canViewOwn) {
       query.assignedDistributor = req.session.user.id;
+      // For distributors, exclude invoices created by admin (admin invoices are private)
+      const adminUsers = await User.find({ role: 'admin' }).select('_id');
+      const adminIds = adminUsers.map(user => user._id);
+      query.createdBy = { $nin: adminIds };
     }
     
     const result = await Invoice.deleteOne(query);

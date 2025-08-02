@@ -101,7 +101,8 @@ router.post('/', requireAdmin, async (req, res) => {
       role: 'distributor',
       roles: [role._id],
       commissionRate: parseFloat(commissionRate) || 0,
-      permissions: legacyPermissions
+      permissions: legacyPermissions,
+      createdBy: req.session.user.id
     });
     
     await distributor.save();
@@ -240,9 +241,32 @@ router.get('/api/search', requireAdmin, async (req, res) => {
     
     console.log('Distributor search request:', { q, user: req.session.user.id });
     
+    // Check if user has permission to view all distributors
+    const currentUser = await User.findById(req.session.user.id);
+    const hasViewAllPermission = await currentUser.hasPermission('distributors', 'view_all') || 
+                                req.session.user.role === 'admin';
+    
+    // If user doesn't have view_all permission, show only themselves or distributors they created
+    if (!hasViewAllPermission) {
+      query.$or = [
+        { _id: req.session.user.id }, // Themselves
+        { createdBy: req.session.user.id } // Distributors they created
+      ];
+    }
+    
     // Search by username
     if (q && q.trim()) {
-      query.username = { $regex: q, $options: 'i' };
+      if (query.$or) {
+        // If we already have $or condition, we need to use $and
+        query = {
+          $and: [
+            query,
+            { username: { $regex: q, $options: 'i' } }
+          ]
+        };
+      } else {
+        query.username = { $regex: q, $options: 'i' };
+      }
     }
     
     console.log('Distributor search query:', query);
