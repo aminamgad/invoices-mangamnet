@@ -26,37 +26,95 @@ const invoiceSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
-  amount: {
+  // Basic invoice total (before any taxes or deductions)
+  total: {
     type: Number,
     required: true,
     default: 0
   },
-  clientCommissionRate: {
+  
+  // Tax system
+  taxPercentage: {
     type: Number,
-    required: true
+    required: true,
+    default: 0,
+    min: 0,
+    max: 100
   },
-  distributorCommissionRate: {
+  taxAmount: {
     type: Number,
-    required: true
-  },
-  companyCommissionRate: {
-    type: Number,
+    required: true,
     default: 0
   },
-  // Custom commission rates (can be overridden by user)
-  customClientCommissionRate: {
+  
+  // Management tax (fixed by management, cannot be modified by distributors)
+  managementTaxPercentage: {
     type: Number,
-    default: null
+    required: true,
+    default: 0,
+    min: 0,
+    max: 100
   },
-  customDistributorCommissionRate: {
+  managementTaxAmount: {
     type: Number,
-    default: null
+    required: true,
+    default: 0
   },
-  // Discount amount
+  
+  // Corporate tax (company tax)
+  corporateTaxPercentage: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  corporateTaxAmount: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  
+  // Profit system
+  profitPercentage: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  profitAmount: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  
+  // Final amount after all calculations
+  finalAmount: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  
+  // Discount amount (if any)
   discountAmount: {
     type: Number,
     default: 0,
     min: 0
+  },
+  
+  // Commission rates (for backward compatibility)
+  clientCommissionRate: {
+    type: Number,
+    default: 0
+  },
+  distributorCommissionRate: {
+    type: Number,
+    default: 0
+  },
+  companyCommissionRate: {
+    type: Number,
+    default: 0
   },
   // Approval status
   isApproved: {

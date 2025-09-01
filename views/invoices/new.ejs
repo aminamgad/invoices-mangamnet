@@ -565,7 +565,7 @@
                         <div class="col-md-6 mb-3">
                                             <label for="clientSearch" class="form-label">العميل <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="clientSearch" placeholder="ابحث عن العميل بالاسم أو رقم الهاتف..." autocomplete="off">
+                                                <input type="text" class="form-control" id="clientSearch" placeholder="انقر للبحث أو اكتب للتصفية..." autocomplete="off">
                                                 <input type="hidden" id="client" name="client" required>
                                                 <button type="button" class="btn btn-outline-primary" id="addClientBtn" title="إضافة عميل جديد">
                                                     <i class="fas fa-plus"></i>
@@ -577,7 +577,7 @@
                         <div class="col-md-6 mb-3">
                                             <label for="fileSearch" class="form-label">الملف <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="fileSearch" placeholder="ابحث عن الملف بالاسم أو المعرف..." autocomplete="off">
+                                                <input type="text" class="form-control" id="fileSearch" placeholder="انقر للبحث أو اكتب للتصفية..." autocomplete="off">
                                                 <input type="hidden" id="file" name="file" required>
                                                 <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateFiles || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'files' && p.action === 'create'))) { %>
                                                 <button type="button" class="btn btn-outline-primary" id="addFileBtn" title="إضافة ملف جديد">
@@ -601,22 +601,97 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="amount" class="form-label">المبلغ (جنيه) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" required>
+                            <label for="total" class="form-label">إجمالي الفاتورة (جنيه) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="total" name="total" min="0" step="0.01" required>
+                            <div class="form-text">المبلغ الأساسي للفاتورة قبل الضرائب والخصومات</div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="discountAmount" class="form-label">الخصم (جنيه)</label>
-                            <input type="number" class="form-control" id="discountAmount" name="discountAmount" min="0" step="0.01" value="0">
-                            <div class="form-text">مبلغ الخصم (اختياري)</div>
+                    <!-- Tax and Profit Calculation Section -->
+                    <div class="card mt-3 mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">حساب الضرائب والأرباح</h6>
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="finalAmount" class="form-label">المبلغ النهائي (جنيه)</label>
-                            <input type="text" class="form-control" id="finalAmount" readonly>
-                            <div class="form-text">المبلغ بعد الخصم</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Tax Percentage -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="taxPercentage" class="form-label">نسبة الضريبة (%) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="taxPercentage" name="taxPercentage" min="0" max="100" step="0.01" required>
+                                    <div class="form-text">الضريبة التي يأخذها الموزع من العميل</div>
+                                </div>
+                                
+                                <!-- Tax Amount (Calculated) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="taxAmount" class="form-label">قيمة الضريبة (جنيه)</label>
+                                    <input type="text" class="form-control" id="taxAmount" name="taxAmount" readonly>
+                                    <div class="form-text">تحسب تلقائياً</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Management Tax Percentage -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="managementTaxPercentage" class="form-label">نسبة ضريبة الإدارة (%) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="managementTaxPercentage" name="managementTaxPercentage" min="0" max="100" step="0.01" required>
+                                    <div class="form-text">ضريبة الإدارة (لا يمكن تعديلها إلا من الإدارة)</div>
+                                </div>
+                                
+                                <!-- Management Tax Amount (Calculated) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="managementTaxAmount" class="form-label">قيمة ضريبة الإدارة (جنيه)</label>
+                                    <input type="text" class="form-control" id="managementTaxAmount" name="managementTaxAmount" readonly>
+                                    <div class="form-text">تحسب تلقائياً</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Corporate Tax Percentage -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="corporateTaxPercentage" class="form-label">نسبة الضريبة المؤسسية (%) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="corporateTaxPercentage" name="corporateTaxPercentage" min="0" max="100" step="0.01" required>
+                                    <div class="form-text">الضريبة التي تأخذها الشركة من الإدارة</div>
+                                </div>
+                                
+                                <!-- Corporate Tax Amount (Calculated) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="corporateTaxAmount" class="form-label">قيمة الضريبة المؤسسية (جنيه)</label>
+                                    <input type="text" class="form-control" id="corporateTaxAmount" name="corporateTaxAmount" readonly>
+                                    <div class="form-text">تحسب تلقائياً</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Profit Percentage -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="profitPercentage" class="form-label">نسبة الربح (%) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="profitPercentage" name="profitPercentage" min="0" max="100" step="0.01" required>
+                                    <div class="form-text">الربح الإضافي للموزع أو الإدارة</div>
+                                </div>
+                                
+                                <!-- Profit Amount (Calculated) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="profitAmount" class="form-label">قيمة الربح (جنيه)</label>
+                                    <input type="text" class="form-control" id="profitAmount" name="profitAmount" readonly>
+                                    <div class="form-text">تحسب تلقائياً</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Discount Amount -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="discountAmount" class="form-label">الخصم (جنيه)</label>
+                                    <input type="number" class="form-control" id="discountAmount" name="discountAmount" min="0" step="0.01" value="0">
+                                    <div class="form-text">مبلغ الخصم (اختياري)</div>
+                                </div>
+                                
+                                <!-- Final Amount (Calculated) -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="finalAmount" class="form-label">المبلغ النهائي (جنيه)</label>
+                                    <input type="text" class="form-control" id="finalAmount" name="finalAmount" readonly>
+                                    <div class="form-text">المبلغ النهائي بعد جميع الحسابات</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -700,7 +775,11 @@
                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-search text-primary"></i>
-                                        يمكن البحث في العملاء والملفات
+                                        انقر على حقل العميل أو الملف لعرض جميع الخيارات فوراً
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-filter text-info"></i>
+                                        اكتب للتصفية السريعة من النتائج
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-plus text-success"></i>
@@ -881,68 +960,54 @@
         let clientSearchTimeout;
         let fileSearchTimeout;
         
-        // Client search functionality
+        // Client search functionality - Immediate search
         clientSearch.addEventListener('input', function() {
             clearTimeout(clientSearchTimeout);
             const query = this.value.trim();
             
-            if (query.length < 2) {
-                clientDropdown.classList.remove('show');
-                return;
+            // Show results immediately for any input
+            if (query.length === 0) {
+                searchClients(''); // Show all clients
+            } else {
+                clientSearchTimeout = setTimeout(() => {
+                    searchClients(query);
+                }, 100); // Reduced delay for faster response
             }
-            
-            clientSearchTimeout = setTimeout(() => {
-                searchClients(query);
-            }, 300);
         });
         
         clientSearch.addEventListener('focus', function() {
-            const query = this.value.trim();
-            if (query.length >= 2) {
-                searchClients(query);
-            } else {
-                // Show all clients when focusing on empty field
-                searchClients('');
-            }
+            // Always show results when focusing
+            searchClients(this.value.trim());
         });
 
-        // Add click to show all clients
+        // Show all clients when clicking
         clientSearch.addEventListener('click', function() {
-            if (this.value.trim().length < 2) {
-                searchClients('');
-            }
+            searchClients(this.value.trim());
         });
         
-        // File search functionality
+        // File search functionality - Immediate search
         fileSearch.addEventListener('input', function() {
             clearTimeout(fileSearchTimeout);
             const query = this.value.trim();
             
-            if (query.length < 2) {
-                fileDropdown.classList.remove('show');
-                return;
+            // Show results immediately for any input
+            if (query.length === 0) {
+                searchFiles(''); // Show all files
+            } else {
+                fileSearchTimeout = setTimeout(() => {
+                    searchFiles(query);
+                }, 100); // Reduced delay for faster response
             }
-            
-            fileSearchTimeout = setTimeout(() => {
-                searchFiles(query);
-            }, 300);
         });
         
         fileSearch.addEventListener('focus', function() {
-            const query = this.value.trim();
-            if (query.length >= 2) {
-                searchFiles(query);
-            } else {
-                // Show all files when focusing on empty field
-                searchFiles('');
-            }
+            // Always show results when focusing
+            searchFiles(this.value.trim());
         });
 
-        // Add click to show all files
+        // Show all files when clicking
         fileSearch.addEventListener('click', function() {
-            if (this.value.trim().length < 2) {
-                searchFiles('');
-            }
+            searchFiles(this.value.trim());
         });
         
         // Hide dropdowns when clicking outside
@@ -1262,17 +1327,36 @@
             });
         }
     
-    // Calculate final amount when discount changes
-    function calculateFinalAmount() {
-        const amount = parseFloat(amountInput.value) || 0;
-        const discount = parseFloat(discountAmountInput.value) || 0;
-        const finalAmount = Math.max(0, amount - discount);
-        finalAmountInput.value = finalAmount.toFixed(2);
+    // Calculate tax and profit amounts
+    function calculateTaxAndProfit() {
+        const total = parseFloat(document.getElementById('total').value) || 0;
+        const taxPercentage = parseFloat(document.getElementById('taxPercentage').value) || 0;
+        const managementTaxPercentage = parseFloat(document.getElementById('managementTaxPercentage').value) || 0;
+        const corporateTaxPercentage = parseFloat(document.getElementById('corporateTaxPercentage').value) || 0;
+        const profitPercentage = parseFloat(document.getElementById('profitPercentage').value) || 0;
+        const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+        
+        // Calculate tax amounts
+        const taxAmount = (total * taxPercentage / 100);
+        const managementTaxAmount = (total * managementTaxPercentage / 100);
+        const corporateTaxAmount = (total * corporateTaxPercentage / 100);
+        const profitAmount = (total * profitPercentage / 100);
+        
+        // Calculate final amount
+        const finalAmount = total + taxAmount + managementTaxAmount + corporateTaxAmount + profitAmount - discount;
+        
+        // Update calculated fields
+        document.getElementById('taxAmount').value = taxAmount.toFixed(2);
+        document.getElementById('managementTaxAmount').value = managementTaxAmount.toFixed(2);
+        document.getElementById('corporateTaxAmount').value = corporateTaxAmount.toFixed(2);
+        document.getElementById('profitAmount').value = profitAmount.toFixed(2);
+        document.getElementById('finalAmount').value = finalAmount.toFixed(2);
     }
     
     // Show custom commission section when form is complete
     function showCustomCommissionSection() {
-        const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && amountInput.value && parseFloat(amountInput.value) > 0;
+        const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && 
+                          document.getElementById('total').value && parseFloat(document.getElementById('total').value) > 0;
         const customSection = document.getElementById('customCommissionSection');
         if (isComplete) {
             customSection.style.display = 'block';
@@ -1282,7 +1366,8 @@
     }
     
     function checkFormCompletion() {
-        const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && amountInput.value && parseFloat(amountInput.value) > 0;
+        const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && 
+                          document.getElementById('total').value && parseFloat(document.getElementById('total').value) > 0;
         calculateBtn.disabled = !isComplete;
         showCustomCommissionSection();
     }
@@ -1365,14 +1450,22 @@
     }
     
     // Add event listeners for new fields
+    const totalInput = document.getElementById('total');
+    const taxPercentageInput = document.getElementById('taxPercentage');
+    const managementTaxPercentageInput = document.getElementById('managementTaxPercentage');
+    const corporateTaxPercentageInput = document.getElementById('corporateTaxPercentage');
+    const profitPercentageInput = document.getElementById('profitPercentage');
     const discountAmountInput = document.getElementById('discountAmount');
-    const finalAmountInput = document.getElementById('finalAmount');
     const customClientCommissionRateInput = document.getElementById('customClientCommissionRate');
     const customDistributorCommissionRateInput = document.getElementById('customDistributorCommissionRate');
     
-    // Calculate final amount when discount or amount changes
-    discountAmountInput.addEventListener('input', calculateFinalAmount);
-    amountInput.addEventListener('input', calculateFinalAmount);
+    // Calculate tax and profit when any input changes
+    totalInput.addEventListener('input', calculateTaxAndProfit);
+    taxPercentageInput.addEventListener('input', calculateTaxAndProfit);
+    managementTaxPercentageInput.addEventListener('input', calculateTaxAndProfit);
+    corporateTaxPercentageInput.addEventListener('input', calculateTaxAndProfit);
+    profitPercentageInput.addEventListener('input', calculateTaxAndProfit);
+    discountAmountInput.addEventListener('input', calculateTaxAndProfit);
     
     // Recalculate commission when custom rates change
     customClientCommissionRateInput.addEventListener('input', function() {

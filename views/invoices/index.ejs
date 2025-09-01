@@ -336,9 +336,9 @@ function renderInvoicesTable() {
 }
 
 function generateInvoiceRow(invoice) {
-    const clientCommission = (invoice.amount * invoice.clientCommissionRate) / 100;
-    const distributorCommission = (invoice.amount * invoice.distributorCommissionRate) / 100;
-    const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
+    const clientCommission = (invoice.total * invoice.clientCommissionRate) / 100;
+    const distributorCommission = (invoice.total * invoice.distributorCommissionRate) / 100;
+    const companyCommission = (invoice.total * invoice.companyCommissionRate) / 100;
     
     // Determine payment status
     let paymentStatus = 'client_pending';
@@ -356,7 +356,7 @@ function generateInvoiceRow(invoice) {
             data-client="\${invoice.client?.fullName || ''}" 
             data-distributor="\${invoice.assignedDistributor?.username || ''}"
             data-payment-status="\${paymentStatus}"
-            data-amount="\${invoice.amount}">
+            data-amount="\${invoice.total}">
             <td>
                 <div class="d-flex align-items-center">
                     <div class="invoice-icon bg-primary text-white me-2">
@@ -382,7 +382,7 @@ function generateInvoiceRow(invoice) {
             </td>
             <td>
                 <span class="badge bg-success fs-6">
-                    \${invoice.amount.toLocaleString('ar-SA')} جنيه
+                    \${invoice.total.toLocaleString('ar-SA')} جنيه
                 </span>
                 \${invoice.discountAmount > 0 ? \`
                     <div class="mt-1">
@@ -393,11 +393,11 @@ function generateInvoiceRow(invoice) {
             <td>
                 \${invoice.discountAmount > 0 ? \`
                     <span class="badge bg-warning text-dark">
-                        \${(invoice.amount - invoice.discountAmount).toLocaleString('ar-SA')} جنيه
+                        \${(invoice.finalAmount || (invoice.total - invoice.discountAmount)).toLocaleString('ar-SA')} جنيه
                     </span>
                 \` : \`
                     <span class="badge bg-success">
-                        \${invoice.amount.toLocaleString('ar-SA')} جنيه
+                        \${invoice.total.toLocaleString('ar-SA')} جنيه
                     </span>
                 \`}
             </td>
@@ -717,10 +717,10 @@ function viewInvoiceDetails(invoiceId) {
     }
     
     // Calculate commission details
-    const clientCommission = (invoice.amount * invoice.clientCommissionRate) / 100;
-    const distributorCommission = (invoice.amount * invoice.distributorCommissionRate) / 100;
-    const companyCommission = (invoice.amount * invoice.companyCommissionRate) / 100;
-    const netProfit = invoice.amount - clientCommission - distributorCommission - companyCommission;
+    const clientCommission = (invoice.total * invoice.clientCommissionRate) / 100;
+    const distributorCommission = (invoice.total * invoice.distributorCommissionRate) / 100;
+    const companyCommission = (invoice.total * invoice.companyCommissionRate) / 100;
+    const netProfit = invoice.total - clientCommission - distributorCommission - companyCommission;
     
     // Determine payment status
     let paymentStatus = 'client_pending';
@@ -797,7 +797,7 @@ function viewInvoiceDetails(invoiceId) {
                                 <div class="info-item">
                                     <label class="info-label">مبلغ الفاتورة</label>
                                     <div class="info-value">
-                                        <span class="badge bg-success fs-6">\${invoice.amount.toLocaleString('ar-SA')} جنيه</span>
+                                        <span class="badge bg-success fs-6">\${invoice.total.toLocaleString('ar-SA')} جنيه</span>
                                     </div>
                                 </div>
                                 

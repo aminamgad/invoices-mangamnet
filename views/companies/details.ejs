@@ -608,7 +608,7 @@
                                                         <td><%= invoice.client?.fullName || 'غير محدد' %></td>
                                                         <td><%= invoice.file?.fileName || 'غير محدد' %></td>
                                                         <td><%= invoice.assignedDistributor?.username || 'غير محدد' %></td>
-                                                        <td><span class="badge bg-primary"><%= invoice.amount.toLocaleString('ar-SA') %> جنيه</span></td>
+                                                        <td><span class="badge bg-primary"><%= invoice.total.toLocaleString('ar-SA') %> جنيه</span></td>
                                                         <td><%= new Date(invoice.invoiceDate).toLocaleDateString('ar-SA') %></td>
                                                         <td>
                                                             <a href="/invoices/<%= invoice._id %>" class="btn btn-sm btn-outline-info">

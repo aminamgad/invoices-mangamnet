@@ -184,7 +184,16 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
       file, 
       assignedDistributor, 
       invoiceDate, 
-      amount, 
+      total,
+      taxPercentage,
+      taxAmount,
+      managementTaxPercentage,
+      managementTaxAmount,
+      corporateTaxPercentage,
+      corporateTaxAmount,
+      profitPercentage,
+      profitAmount,
+      finalAmount,
       discountAmount,
       customClientCommissionRate,
       customDistributorCommissionRate
@@ -197,17 +206,35 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
       return res.redirect('/invoices/new');
     }
     
-    const invoiceAmount = parseFloat(amount) || 0;
+    const invoiceTotal = parseFloat(total) || 0;
+    const taxPercentageValue = parseFloat(taxPercentage) || 0;
+    const taxAmountValue = parseFloat(taxAmount) || 0;
+    const managementTaxPercentageValue = parseFloat(managementTaxPercentage) || 0;
+    const managementTaxAmountValue = parseFloat(managementTaxAmount) || 0;
+    const corporateTaxPercentageValue = parseFloat(corporateTaxPercentage) || 0;
+    const corporateTaxAmountValue = parseFloat(corporateTaxAmount) || 0;
+    const profitPercentageValue = parseFloat(profitPercentage) || 0;
+    const profitAmountValue = parseFloat(profitAmount) || 0;
+    const finalAmountValue = parseFloat(finalAmount) || 0;
     const discountAmountValue = parseFloat(discountAmount) || 0;
     
     console.log('Form data received:', { 
       customClientCommissionRate, 
       customDistributorCommissionRate, 
-      amount: invoiceAmount,
+      total: invoiceTotal,
+      taxPercentage: taxPercentageValue,
+      taxAmount: taxAmountValue,
+      managementTaxPercentage: managementTaxPercentageValue,
+      managementTaxAmount: managementTaxAmountValue,
+      corporateTaxPercentage: corporateTaxPercentageValue,
+      corporateTaxAmount: corporateTaxAmountValue,
+      profitPercentage: profitPercentageValue,
+      profitAmount: profitAmountValue,
+      finalAmount: finalAmountValue,
       discountAmount: discountAmountValue 
     });
     
-    // Calculate commission rates based on amount
+    // Calculate commission rates based on total
     let clientCommissionRate, distributorCommissionRate;
     let customClientCommissionRateValue = null, customDistributorCommissionRateValue = null;
     
@@ -216,7 +243,7 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
       customClientCommissionRateValue = clientCommissionRate;
       console.log('Using custom client rate:', clientCommissionRate);
     } else {
-      clientCommissionRate = await calculateCommissionRate('client', client, invoiceAmount);
+      clientCommissionRate = await calculateCommissionRate('client', client, invoiceTotal);
       console.log('Using default client rate:', clientCommissionRate);
     }
     
@@ -225,7 +252,7 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
       customDistributorCommissionRateValue = distributorCommissionRate;
       console.log('Using custom distributor rate:', distributorCommissionRate);
     } else {
-      distributorCommissionRate = await calculateCommissionRate('distributor', assignedDistributor, invoiceAmount);
+      distributorCommissionRate = await calculateCommissionRate('distributor', assignedDistributor, invoiceTotal);
       console.log('Using default distributor rate:', distributorCommissionRate);
     }
     
@@ -233,7 +260,7 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
     
     let companyCommissionRate = 0;
     if (fileData && fileData.company) {
-      companyCommissionRate = await calculateCommissionRate('company', fileData.company._id, invoiceAmount);
+      companyCommissionRate = await calculateCommissionRate('company', fileData.company._id, invoiceTotal);
     }
     
     console.log('Saving invoice with custom rates:', {
@@ -247,7 +274,16 @@ router.post('/', requirePermission('invoices', 'create'), async (req, res) => {
       file,
       assignedDistributor,
       invoiceDate: new Date(invoiceDate),
-      amount: invoiceAmount,
+      total: invoiceTotal,
+      taxPercentage: taxPercentageValue,
+      taxAmount: taxAmountValue,
+      managementTaxPercentage: managementTaxPercentageValue,
+      managementTaxAmount: managementTaxAmountValue,
+      corporateTaxPercentage: corporateTaxPercentageValue,
+      corporateTaxAmount: corporateTaxAmountValue,
+      profitPercentage: profitPercentageValue,
+      profitAmount: profitAmountValue,
+      finalAmount: finalAmountValue,
       discountAmount: discountAmountValue,
       clientCommissionRate,
       distributorCommissionRate,

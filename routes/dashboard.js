@@ -113,9 +113,9 @@ router.get('/', async (req, res) => {
       
       console.log('Total invoices (with filter):', stats.totalInvoices);
       
-      // Calculate total invoices amount
-      const invoicesForAmount = await Invoice.find(invoiceQuery).select('amount');
-      stats.totalInvoicesAmount = invoicesForAmount.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+          // Calculate total invoices amount
+    const invoicesForAmount = await Invoice.find(invoiceQuery).select('total');
+    stats.totalInvoicesAmount = invoicesForAmount.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
       
       // Calculate total tax (assuming 14% VAT)
       stats.totalTax = stats.totalInvoicesAmount * 0.14;
@@ -268,7 +268,7 @@ router.get('/', async (req, res) => {
           $group: {
             _id: '$assignedDistributor',
             count: { $sum: 1 },
-            totalAmount: { $sum: '$amount' }
+            totalAmount: { $sum: '$total' }
           }
         },
         {
@@ -342,7 +342,7 @@ router.get('/', async (req, res) => {
             _id: '$company._id',
             companyName: { $first: '$company.name' },
             count: { $sum: 1 },
-            totalAmount: { $sum: '$amount' }
+            totalAmount: { $sum: '$total' }
           }
         },
         {
@@ -393,8 +393,8 @@ router.get('/', async (req, res) => {
       stats.totalInvoices = await Invoice.countDocuments(distributorInvoiceQuery);
       
       // Calculate total invoices amount for distributor
-      const distributorInvoicesForAmount = await Invoice.find(distributorInvoiceQuery).select('amount');
-      stats.totalInvoicesAmount = distributorInvoicesForAmount.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+      const distributorInvoicesForAmount = await Invoice.find(distributorInvoiceQuery).select('total');
+      stats.totalInvoicesAmount = distributorInvoicesForAmount.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
       
       // Calculate total tax (assuming 14% VAT)
       stats.totalTax = stats.totalInvoicesAmount * 0.14;
@@ -428,7 +428,7 @@ router.get('/', async (req, res) => {
           $group: {
             _id: '$client',
             count: { $sum: 1 },
-            totalAmount: { $sum: '$amount' }
+            totalAmount: { $sum: '$total' }
           }
         },
         {
@@ -508,10 +508,10 @@ router.get('/', async (req, res) => {
         clientName: invoice.client?.fullName || 'غير محدد',
         distributorName: invoice.assignedDistributor?.username || 'غير محدد',
         companyName: 'غير محدد', // Company field not available in Invoice schema
-        totalAmount: invoice.amount,
-        taxAmount: invoice.amount * 0.14,
-        companyAmount: invoice.amount * 0.86,
-        profitAmount: invoice.amount * 0.025,
+        totalAmount: invoice.total,
+        taxAmount: invoice.total * 0.14,
+        companyAmount: invoice.total * 0.86,
+        profitAmount: invoice.total * 0.025,
         status: status,
         statusClass: statusClass,
         createdAt: invoice.createdAt

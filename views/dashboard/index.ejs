@@ -464,7 +464,7 @@ ${currentUser.role === 'admin' ? `
                                             <td><strong>${invoice.invoiceCode}</strong></td>
                                             <td>${invoice.client?.fullName || 'غير محدد'}</td>
                                             <td>${invoice.assignedDistributor?.username || 'غير محدد'}</td>
-                                            <td><span class="badge bg-info">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
+                                            <td><span class="badge bg-info">${invoice.total.toLocaleString('ar-SA')} جنيه</span></td>
                                             <td>
                                                 ${(() => {
                                                     const clientToDistributor = invoice.paymentStatus?.clientToDistributor?.isPaid || false;
@@ -547,7 +547,7 @@ ${currentUser.role === 'admin' ? `
                                         <td>${invoice.client.fullName}</td>
                                         <td>${invoice.file.fileName}</td>
                                                                                  ${currentUser.role === 'admin' ? '<td>' + invoice.assignedDistributor.username + '</td>' : ''}
-                                        <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
+                                        <td><span class="badge bg-primary">${invoice.total.toLocaleString('ar-SA')} جنيه</span></td>
                                         <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
                                         <td>
                                             ${invoice.status === 'pending' ? '<span class="badge bg-warning">قيد الانتظار</span>' : 
@@ -1567,6 +1567,7 @@ ${currentUser.role === 'admin' ? `
     }
 }
 </style>
+` }) %>
 
 <script>
 // Test function to verify JavaScript is working
@@ -1813,4 +1814,3 @@ function sendWhatsAppToCompany(companyId, companyName) {
     });
 }
 </script>
-` }) %>
