@@ -30,7 +30,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-in
         canCreateCompanies: true,
         canCreateInvoices: true,
         canManageClients: true,
-        canViewReports: true
+        canViewReports: true,
+        canCreateFiles: true
       };
       await existingAdmin.save();
       console.log('Admin user permissions updated');
@@ -70,7 +71,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arabic-in
         canCreateCompanies: true,
         canCreateInvoices: true,
         canManageClients: true,
-        canViewReports: true
+        canViewReports: true,
+        canCreateFiles: true
       }
     });
 

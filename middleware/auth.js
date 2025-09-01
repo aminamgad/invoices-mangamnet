@@ -71,8 +71,17 @@ export const loadUserPermissions = async (req, res, next) => {
   if (req.session.user) {
     // SUPER ADMIN BYPASS: If user is admin, they have all permissions
     if (req.session.user.role === 'admin') {
-      req.session.user.detailedPermissions = 'ALL'; // Special marker for admin
-      req.session.user.hasAllPermissions = true;
+      // For admin users, we need to load all permissions as objects for template compatibility
+      try {
+        const { default: Permission } = await import('../models/Permission.js');
+        const allPermissions = await Permission.find();
+        req.session.user.detailedPermissions = allPermissions;
+        req.session.user.hasAllPermissions = true;
+      } catch (error) {
+        console.error('Error loading admin permissions:', error);
+        req.session.user.detailedPermissions = [];
+        req.session.user.hasAllPermissions = true;
+      }
       return next();
     }
     
@@ -88,6 +97,15 @@ export const loadUserPermissions = async (req, res, next) => {
           
           // Update legacy permissions based on new permissions
           await updateLegacyPermissions(req.session.user, user);
+          
+
+          
+          // Force session save to ensure permissions are persisted
+          req.session.save((err) => {
+            if (err) {
+              console.error('Error saving session:', err);
+            }
+          });
         }
       } catch (error) {
         console.error('Error loading user permissions:', error);
@@ -98,7 +116,8 @@ export const loadUserPermissions = async (req, res, next) => {
           canCreateCompanies: false,
           canCreateInvoices: false,
           canManageClients: false,
-          canViewReports: false
+          canViewReports: false,
+          canCreateFiles: false
         };
       }
     }
@@ -109,16 +128,18 @@ export const loadUserPermissions = async (req, res, next) => {
 // Helper function to update legacy permissions
 async function updateLegacyPermissions(sessionUser, user) {
   try {
-    const hasCompanyPermission = await user.hasPermission('companies', 'view_all') || await user.hasPermission('companies', 'create');
-    const hasInvoicePermission = await user.hasPermission('invoices', 'view_own') || await user.hasPermission('invoices', 'create');
-    const hasClientPermission = await user.hasPermission('clients', 'view_own') || await user.hasPermission('clients', 'create');
+    const hasCompanyPermission = await user.hasPermission('companies', 'create');
+    const hasInvoicePermission = await user.hasPermission('invoices', 'create');
+    const hasClientPermission = await user.hasPermission('clients', 'create');
     const hasReportPermission = await user.hasPermission('reports', 'view_own') || await user.hasPermission('reports', 'view_all');
+    const hasFilePermission = await user.hasPermission('files', 'create');
     
     sessionUser.permissions = {
       canCreateCompanies: hasCompanyPermission,
       canCreateInvoices: hasInvoicePermission,
       canManageClients: hasClientPermission,
-      canViewReports: hasReportPermission
+      canViewReports: hasReportPermission,
+      canCreateFiles: hasFilePermission
     };
   } catch (error) {
     console.error('Error updating legacy permissions:', error);

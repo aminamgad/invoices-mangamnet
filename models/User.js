@@ -30,11 +30,16 @@ const userSchema = new mongoose.Schema({
     canCreateCompanies: { type: Boolean, default: false },
     canCreateInvoices: { type: Boolean, default: false },
     canManageClients: { type: Boolean, default: false },
-    canViewReports: { type: Boolean, default: false }
+    canViewReports: { type: Boolean, default: false },
+    canCreateFiles: { type: Boolean, default: false }
   },
   isActive: {
     type: Boolean,
     default: true
+  },
+  whatsappNumber: {
+    type: String,
+    trim: true
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -93,7 +98,9 @@ userSchema.methods.getAllPermissions = async function() {
     });
   });
   
-  return Array.from(permissions);
+  // Return the actual permission objects instead of just IDs
+  const Permission = mongoose.model('Permission');
+  return await Permission.find({ _id: { $in: Array.from(permissions) } });
 };
 
 export default mongoose.model('User', userSchema);

@@ -92,7 +92,8 @@ router.post('/', requireAdmin, async (req, res) => {
       canCreateCompanies: selectedPermissions.some(p => p.module === 'companies' && p.action === 'create'),
       canCreateInvoices: selectedPermissions.some(p => p.module === 'invoices' && p.action === 'create'),
       canManageClients: selectedPermissions.some(p => p.module === 'clients' && ['create', 'update', 'delete'].includes(p.action)),
-      canViewReports: selectedPermissions.some(p => p.module === 'reports' && ['view_own', 'view_all'].includes(p.action))
+      canViewReports: selectedPermissions.some(p => p.module === 'reports' && ['view_own', 'view_all'].includes(p.action)),
+      canCreateFiles: selectedPermissions.some(p => p.module === 'files' && p.action === 'create')
     };
 
     const distributor = new User({
@@ -101,6 +102,7 @@ router.post('/', requireAdmin, async (req, res) => {
       role: 'distributor',
       roles: [role._id],
       commissionRate: parseFloat(commissionRate) || 0,
+      whatsappNumber: req.body.whatsappNumber,
       permissions: legacyPermissions,
       createdBy: req.session.user.id
     });
@@ -166,6 +168,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { username, commissionRate, permissions, isActive } = req.body;
     
+
+    
     const distributor = await User.findById(req.params.id).populate('roles');
     if (!distributor) {
       req.flash('error', 'الموزع غير موجود');
@@ -174,8 +178,12 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
     // Update distributor's custom role permissions
     if (distributor.roles.length > 0) {
+      
+      
       const customRole = distributor.roles.find(role => !role.isSystemRole);
       if (customRole) {
+
+        
         customRole.permissions = Array.isArray(permissions) ? permissions : (permissions ? [permissions] : []);
         await customRole.save();
 
@@ -188,8 +196,45 @@ router.put('/:id', requireAdmin, async (req, res) => {
           canCreateCompanies: selectedPermissions.some(p => p.module === 'companies' && p.action === 'create'),
           canCreateInvoices: selectedPermissions.some(p => p.module === 'invoices' && p.action === 'create'),
           canManageClients: selectedPermissions.some(p => p.module === 'clients' && ['create', 'update', 'delete'].includes(p.action)),
-          canViewReports: selectedPermissions.some(p => p.module === 'reports' && ['view_own', 'view_all'].includes(p.action))
+          canViewReports: selectedPermissions.some(p => p.module === 'reports' && ['view_own', 'view_all'].includes(p.action)),
+          canCreateFiles: selectedPermissions.some(p => p.module === 'files' && p.action === 'create')
         };
+
+
+
+        distributor.permissions = legacyPermissions;
+      } else {
+
+        
+        // Create a new custom role for this distributor
+        const roleName = `distributor_${distributor.username}_${Date.now()}`;
+        const newRole = new Role({
+          name: roleName,
+          displayName: `دور ${distributor.username}`,
+          description: `دور مخصص للموزع ${distributor.username}`,
+          permissions: Array.isArray(permissions) ? permissions : (permissions ? [permissions] : []),
+          createdBy: req.session.user.id
+        });
+
+        await newRole.save();
+        
+        // Update distributor to use the new role
+        distributor.roles = [newRole._id];
+        
+        // Update legacy permissions
+        const selectedPermissions = await Permission.find({
+          _id: { $in: newRole.permissions }
+        });
+
+        const legacyPermissions = {
+          canCreateCompanies: selectedPermissions.some(p => p.module === 'companies' && p.action === 'create'),
+          canCreateInvoices: selectedPermissions.some(p => p.module === 'invoices' && p.action === 'create'),
+          canManageClients: selectedPermissions.some(p => p.module === 'clients' && ['create', 'update', 'delete'].includes(p.action)),
+          canViewReports: selectedPermissions.some(p => p.module === 'reports' && ['view_own', 'view_all'].includes(p.action)),
+          canCreateFiles: selectedPermissions.some(p => p.module === 'files' && p.action === 'create')
+        };
+
+
 
         distributor.permissions = legacyPermissions;
       }
@@ -198,9 +243,12 @@ router.put('/:id', requireAdmin, async (req, res) => {
     // Update distributor basic info
     distributor.username = username;
     distributor.commissionRate = parseFloat(commissionRate) || 0;
+    distributor.whatsappNumber = req.body.whatsappNumber;
     distributor.isActive = isActive === 'on';
 
     await distributor.save();
+    
+
     
     req.flash('success', 'تم تحديث بيانات الموزع بنجاح');
     res.redirect('/distributors');

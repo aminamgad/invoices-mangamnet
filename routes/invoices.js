@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Invoice from '../models/Invoice.js';
 import Client from '../models/Client.js';
 import File from '../models/File.js';
@@ -375,8 +376,20 @@ router.post('/bulk-pay/client/:clientId', requireModuleAccess('invoices'), async
 
 // Bulk payment for distributor (admin only)
 router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoices'), async (req, res) => {
+  console.log('=== BULK PAYMENT DISTRIBUTOR ROUTE CALLED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  console.log('Session user:', req.session.user);
   try {
     const { distributorId } = req.params;
+    
+    console.log('Bulk payment for distributor called:', {
+      distributorId,
+      userId: req.session.user.id,
+      userRole: req.session.user.role
+    });
     
     // Only admin can use this endpoint
     if (req.session.user.role !== 'admin') {
@@ -391,11 +404,19 @@ router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoice
       'paymentStatus.distributorToAdmin.isPaid': false // Only unpaid invoices
     }).populate('assignedDistributor', 'username');
     
+    console.log('Found invoices for bulk payment:', {
+      totalInvoices: invoices.length,
+      distributorId,
+      adminId: req.session.user.id
+    });
+    
     // Additional check to ensure these are admin-created invoices
     const adminInvoices = invoices.filter(invoice => 
       invoice.createdBy && 
       invoice.createdBy.toString() === req.session.user.id
     );
+    
+    console.log('Filtered admin invoices:', adminInvoices.length);
     
     if (adminInvoices.length === 0) {
       req.flash('error', 'لا توجد فواتير غير مدفوعة لهذا الموزع');
@@ -405,14 +426,20 @@ router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoice
     // Mark all as paid (distributor to admin)
     let updatedCount = 0;
     for (const invoice of adminInvoices) {
-      // Mark as distributor to admin paid
-      invoice.markPaymentStep('clientToDistributor', req.session.user.id);
+      console.log('Processing invoice:', invoice._id);
+      // Only mark distributorToAdmin as paid (admin is paying the distributor)
+      // Don't mark clientToDistributor as paid since that's a separate step
       invoice.markPaymentStep('distributorToAdmin', req.session.user.id);
       await invoice.save();
       updatedCount++;
     }
     
     const distributorName = invoices[0].assignedDistributor?.username || 'الموزع';
+    console.log('Bulk payment completed:', {
+      updatedCount,
+      distributorName
+    });
+    
     req.flash('success', `تم تحديث جميع الفواتير (${updatedCount} فاتورة) للموزع "${distributorName}" كمدفوعة`);
     res.redirect('/dashboard');
   } catch (error) {
@@ -424,8 +451,20 @@ router.post('/bulk-pay/distributor/:distributorId', requireModuleAccess('invoice
 
 // Bulk payment for company (admin only)
 router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), async (req, res) => {
+  console.log('=== BULK PAYMENT COMPANY ROUTE CALLED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  console.log('Session user:', req.session.user);
   try {
     const { companyId } = req.params;
+    
+    console.log('Bulk payment for company called:', {
+      companyId,
+      userId: req.session.user.id,
+      userRole: req.session.user.role
+    });
     
     // Only admin can use this endpoint
     if (req.session.user.role !== 'admin') {
@@ -445,6 +484,12 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
       }
     });
     
+    console.log('Found invoices for company bulk payment:', {
+      totalInvoices: invoices.length,
+      companyId,
+      adminId: req.session.user.id
+    });
+    
     // Additional check to ensure these are admin-created invoices
     const adminInvoices = invoices.filter(invoice => 
       invoice.createdBy && 
@@ -458,6 +503,11 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
       invoice.file.company._id.toString() === companyId
     );
     
+    console.log('Filtered company invoices:', {
+      adminInvoices: adminInvoices.length,
+      companyInvoices: companyInvoices.length
+    });
+    
     if (companyInvoices.length === 0) {
       req.flash('error', 'لا توجد فواتير غير مدفوعة لهذه الشركة');
       return res.redirect('/dashboard');
@@ -466,6 +516,7 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
     // Mark all as paid (admin to company)
     let updatedCount = 0;
     for (const invoice of companyInvoices) {
+      console.log('Processing company invoice:', invoice._id);
       // Mark as admin to company paid
       invoice.markPaymentStep('adminToCompany', req.session.user.id);
       await invoice.save();
@@ -473,6 +524,11 @@ router.post('/bulk-pay/company/:companyId', requireModuleAccess('invoices'), asy
     }
     
     const companyName = companyInvoices[0].file?.company?.name || 'الشركة';
+    console.log('Company bulk payment completed:', {
+      updatedCount,
+      companyName
+    });
+    
     req.flash('success', `تم تحديث جميع الفواتير (${updatedCount} فاتورة) للشركة "${companyName}" كمدفوعة`);
     res.redirect('/dashboard');
   } catch (error) {
@@ -969,6 +1025,456 @@ router.post('/:id/unapprove', requirePermission('invoices', 'update'), async (re
     console.error('Invoice unapproval error:', error);
     req.flash('error', 'حدث خطأ أثناء إلغاء الموافقة على الفاتورة');
     res.redirect('/invoices');
+  }
+});
+
+// Mass Payment Form
+router.get('/mass-payment', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const user = req.session.user;
+    let clients = [];
+    let distributors = [];
+    let companies = [];
+
+    if (user.role === 'admin') {
+      // Admin can see all entities
+      clients = await Client.find({ isActive: true }).sort({ fullName: 1 });
+      distributors = await User.find({ role: 'distributor', isActive: true }).sort({ username: 1 });
+      companies = await Company.find({ isActive: true }).sort({ name: 1 });
+    } else if (user.role === 'distributor') {
+      // Distributors can only see their assigned clients
+      const invoices = await Invoice.find({ 
+        assignedDistributor: user.id,
+        'paymentStatus.clientToDistributor.isPaid': false
+      }).populate('client');
+      
+      const clientIds = [...new Set(invoices.map(inv => inv.client._id.toString()))];
+      clients = await Client.find({ 
+        _id: { $in: clientIds },
+        isActive: true 
+      }).sort({ fullName: 1 });
+    }
+
+    res.render('invoices/mass-payment', {
+      clients,
+      distributors,
+      companies,
+      currentUser: user
+    });
+  } catch (error) {
+    console.error('Mass payment form error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحميل نموذج الدفع الجماعي');
+    res.redirect('/dashboard');
+  }
+});
+
+// API endpoint to get unpaid data for entities
+router.get('/api/invoices/unpaid-data/:entityType', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { entityType } = req.params;
+    const user = req.session.user;
+    
+    let data = [];
+    
+    switch (entityType) {
+      case 'client':
+        if (user.role === 'distributor') {
+          const clientData = await Invoice.aggregate([
+            {
+              $match: {
+                assignedDistributor: new mongoose.Types.ObjectId(user.id),
+                'paymentStatus.clientToDistributor.isPaid': false
+              }
+            },
+            {
+              $group: {
+                _id: '$client',
+                invoiceCount: { $sum: 1 },
+                totalAmount: { $sum: '$amount' }
+              }
+            }
+          ]);
+          
+          data = clientData.map(item => ({
+            entityId: item._id.toString(),
+            invoiceCount: item.invoiceCount,
+            totalAmount: item.totalAmount
+          }));
+        }
+        break;
+        
+      case 'distributor':
+        if (user.role === 'admin') {
+          const distributorData = await Invoice.aggregate([
+            {
+              $match: {
+                createdBy: new mongoose.Types.ObjectId(user.id),
+                'paymentStatus.distributorToAdmin.isPaid': false
+              }
+            },
+            {
+              $group: {
+                _id: '$assignedDistributor',
+                invoiceCount: { $sum: 1 },
+                totalAmount: { $sum: '$amount' }
+              }
+            }
+          ]);
+          
+          data = distributorData.map(item => ({
+            entityId: item._id.toString(),
+            invoiceCount: item.invoiceCount,
+            totalAmount: item.totalAmount
+          }));
+        }
+        break;
+        
+      case 'company':
+        if (user.role === 'admin') {
+          const companyData = await Invoice.aggregate([
+            {
+              $match: {
+                createdBy: new mongoose.Types.ObjectId(user.id),
+                'paymentStatus.adminToCompany.isPaid': false
+              }
+            },
+            {
+              $lookup: {
+                from: 'files',
+                localField: 'file',
+                foreignField: '_id',
+                as: 'fileData'
+              }
+            },
+            {
+              $unwind: '$fileData'
+            },
+            {
+              $group: {
+                _id: '$fileData.company',
+                invoiceCount: { $sum: 1 },
+                totalAmount: { $sum: '$amount' }
+              }
+            }
+          ]);
+          
+          data = companyData.map(item => ({
+            entityId: item._id.toString(),
+            invoiceCount: item.invoiceCount,
+            totalAmount: item.totalAmount
+          }));
+        }
+        break;
+    }
+    
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('API error:', error);
+    res.status(500).json({ success: false, error: 'حدث خطأ في الخادم' });
+  }
+});
+
+// Process Mass Payment
+router.post('/mass-payment', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { entityType, entityIds, paymentMethod, notes } = req.body;
+    const user = req.session.user;
+    
+    if (!entityType || !entityIds || entityIds.length === 0) {
+      req.flash('error', 'يرجى تحديد نوع الكيان والكيانات المطلوبة');
+      return res.redirect('/invoices/mass-payment');
+    }
+
+    let processedCount = 0;
+    let totalAmount = 0;
+    const errors = [];
+
+    for (const entityId of entityIds) {
+      try {
+        let invoices = [];
+        
+        switch (entityType) {
+          case 'client':
+            if (user.role === 'distributor') {
+              invoices = await Invoice.find({
+                client: entityId,
+                assignedDistributor: user.id,
+                'paymentStatus.clientToDistributor.isPaid': false
+              });
+            }
+            break;
+            
+          case 'distributor':
+            if (user.role === 'admin') {
+              invoices = await Invoice.find({
+                assignedDistributor: entityId,
+                createdBy: user.id,
+                'paymentStatus.distributorToAdmin.isPaid': false
+              });
+            }
+            break;
+            
+          case 'company':
+            if (user.role === 'admin') {
+              const companyInvoices = await Invoice.find({
+                createdBy: user.id,
+                'paymentStatus.adminToCompany.isPaid': false
+              }).populate({
+                path: 'file',
+                populate: { path: 'company' }
+              });
+              
+              invoices = companyInvoices.filter(invoice => 
+                invoice.file && 
+                invoice.file.company && 
+                invoice.file.company._id.toString() === entityId
+              );
+            }
+            break;
+        }
+
+        if (invoices.length > 0) {
+          for (const invoice of invoices) {
+            switch (entityType) {
+              case 'client':
+                invoice.markPaymentStep('clientToDistributor', user.id);
+                break;
+              case 'distributor':
+                invoice.markPaymentStep('clientToDistributor', user.id);
+                invoice.markPaymentStep('distributorToAdmin', user.id);
+                break;
+              case 'company':
+                invoice.markPaymentStep('adminToCompany', user.id);
+                break;
+            }
+            
+            // Add payment notes if provided
+            if (notes) {
+              invoice.paymentNotes = notes;
+            }
+            
+            await invoice.save();
+            totalAmount += invoice.amount;
+          }
+          processedCount += invoices.length;
+        }
+      } catch (error) {
+        errors.push(`خطأ في معالجة الكيان ${entityId}: ${error.message}`);
+      }
+    }
+
+    if (processedCount > 0) {
+      req.flash('success', `تم معالجة ${processedCount} فاتورة بنجاح. إجمالي المبلغ: ${totalAmount.toLocaleString('ar-SA')} جنيه`);
+    }
+    
+    if (errors.length > 0) {
+      req.flash('warning', `تم معالجة ${processedCount} فاتورة مع ${errors.length} أخطاء`);
+    }
+
+    res.redirect('/invoices/mass-payment');
+  } catch (error) {
+    console.error('Mass payment processing error:', error);
+    req.flash('error', 'حدث خطأ أثناء معالجة الدفع الجماعي');
+    res.redirect('/invoices/mass-payment');
+  }
+});
+
+// API endpoint for customer debts data
+router.get('/api/invoices/customer-debts', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    // Get all unpaid invoices grouped by customer
+    const customerDebts = await Invoice.aggregate([
+      {
+        $match: {
+          'paymentStatus.clientToDistributor.status': { $ne: 'paid' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'clients',
+          localField: 'client',
+          foreignField: '_id',
+          as: 'clientInfo'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'assignedDistributor',
+          foreignField: '_id',
+          as: 'distributorInfo'
+        }
+      },
+      {
+        $unwind: '$clientInfo'
+      },
+      {
+        $unwind: '$distributorInfo'
+      },
+      {
+        $group: {
+          _id: '$client',
+          customerId: { $first: '$client' },
+          customerName: { $first: '$clientInfo.fullName' },
+          phoneNumber: { $first: '$clientInfo.mobileNumber' },
+          distributorId: { $first: '$assignedDistributor' },
+          distributorName: { $first: '$distributorInfo.username' },
+          distributorWhatsapp: { $first: '$distributorInfo.whatsappNumber' },
+          invoiceCount: { $sum: 1 },
+          totalAmount: { $sum: '$totalAmount' },
+          totalTax: { $sum: '$taxAmount' },
+          totalProfit: { $sum: '$profitAmount' },
+          totalDue: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $sort: { totalDue: -1 }
+      }
+    ]);
+
+    // Format the data for the frontend
+    const formattedData = customerDebts.map(customer => ({
+      customerId: customer.customerId,
+      customerName: customer.customerName,
+      phoneNumber: customer.phoneNumber,
+      distributorId: customer.distributorId,
+      distributorName: customer.distributorName,
+      distributorWhatsapp: customer.distributorWhatsapp,
+      invoiceCount: customer.invoiceCount,
+      totalAmount: customer.totalAmount,
+      totalTax: customer.totalTax,
+      totalProfit: customer.totalProfit,
+      totalDue: customer.totalDue
+    }));
+
+    res.json({
+      success: true,
+      data: formattedData
+    });
+  } catch (error) {
+    console.error('Error fetching customer debts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء تحميل بيانات مديونية العملاء'
+    });
+  }
+});
+
+// API endpoint for processing payment
+router.post('/api/invoices/process-payment', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { customerId, paymentMethod, paymentDate, paymentNotes } = req.body;
+
+    if (!customerId || !paymentMethod || !paymentDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'جميع الحقول مطلوبة'
+      });
+    }
+
+    // Find all unpaid invoices for this customer
+    const unpaidInvoices = await Invoice.find({
+      client: customerId,
+      'paymentStatus.clientToDistributor.status': { $ne: 'paid' }
+    });
+
+    if (unpaidInvoices.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'لا توجد فواتير غير مدفوعة لهذا العميل'
+      });
+    }
+
+    // Update all invoices as paid
+    const updatePromises = unpaidInvoices.map(invoice => {
+      return Invoice.findByIdAndUpdate(invoice._id, {
+        'paymentStatus.clientToDistributor.status': 'paid',
+        'paymentStatus.clientToDistributor.paidAt': new Date(paymentDate),
+        'paymentStatus.clientToDistributor.paymentMethod': paymentMethod,
+        'paymentStatus.clientToDistributor.notes': paymentNotes,
+        'paymentStatus.clientToDistributor.markedBy': req.session.user.id
+      });
+    });
+
+    await Promise.all(updatePromises);
+
+    res.json({
+      success: true,
+      message: 'تم معالجة الدفع بنجاح',
+      processedInvoices: unpaidInvoices.length
+    });
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء معالجة الدفع'
+    });
+  }
+});
+
+// Bulk mark invoices as paid
+router.post('/bulk-mark-paid', requireModuleAccess('invoices'), async (req, res) => {
+  try {
+    const { invoiceIds } = req.body;
+    
+    if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+      req.flash('error', 'لم يتم تحديد أي فواتير للدفع');
+      return res.redirect('/dashboard');
+    }
+
+    console.log('Bulk mark paid - Invoice IDs:', invoiceIds);
+    console.log('User:', req.session.user);
+
+    let updatedCount = 0;
+    const userRole = req.session.user.role;
+
+    for (const invoiceId of invoiceIds) {
+      try {
+        const invoice = await Invoice.findById(invoiceId);
+        
+        if (!invoice) {
+          console.log(`Invoice not found: ${invoiceId}`);
+          continue;
+        }
+
+        // Determine which payment step to mark based on user role
+        let paymentStep = '';
+        if (userRole === 'distributor') {
+          // Distributor can mark clientToDistributor as paid
+          if (!invoice.paymentStatus.clientToDistributor.isPaid) {
+            paymentStep = 'clientToDistributor';
+          }
+        } else if (userRole === 'admin') {
+          // Admin can mark distributorToAdmin or adminToCompany as paid
+          if (!invoice.paymentStatus.adminToCompany.isPaid) {
+            paymentStep = 'adminToCompany';
+          } else if (!invoice.paymentStatus.distributorToAdmin.isPaid) {
+            paymentStep = 'distributorToAdmin';
+          }
+        }
+
+        if (paymentStep) {
+          invoice.markPaymentStep(paymentStep, req.session.user.id);
+          await invoice.save();
+          updatedCount++;
+          console.log(`Marked invoice ${invoiceId} as paid for step: ${paymentStep}`);
+        }
+      } catch (error) {
+        console.error(`Error processing invoice ${invoiceId}:`, error);
+      }
+    }
+
+    if (updatedCount > 0) {
+      req.flash('success', `تم تحديث ${updatedCount} فاتورة كمدفوعة بنجاح`);
+    } else {
+      req.flash('warning', 'لم يتم تحديث أي فواتير');
+    }
+
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Bulk mark paid error:', error);
+    req.flash('error', 'حدث خطأ أثناء تحديث حالة الدفع');
+    res.redirect('/dashboard');
   }
 });
 

@@ -68,9 +68,9 @@ const systemRoles = [
     isSystemRole: true,
     permissions: [
       'companies.view_own', 'companies.view_all',
-      'clients.view_own', 'clients.view_all', 'clients.create', 'clients.update', 'clients.delete',
-      'files.view_own', 'files.view_all', 'files.create', 'files.update', 'files.delete',
-      'invoices.view_own', 'invoices.view_all', 'invoices.create', 'invoices.update', 'invoices.delete',
+      'clients.view_own', 'clients.view_all',
+      'files.view_own', 'files.view_all',
+      'invoices.view_own', 'invoices.view_all',
       'distributors.view_own',
       'reports.view_own'
     ]

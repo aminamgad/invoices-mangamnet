@@ -3243,7 +3243,7 @@
                 <div class="quick-actions-content">
                     <div class="quick-actions-title">
                                 <i class="fas fa-bolt"></i>
-                        <span class="title-text">إجراءات سريعة</span>
+                        <span class="title-text"> الرئيسيه </span>
                     </div>
                     <div class="quick-actions-buttons" id="quickActionsButtons">
                                 <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateInvoices || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'invoices' && p.action === 'create'))) { %>
@@ -3253,24 +3253,33 @@
                         </a>
                                 <% } %>
                                 
-                                <% if (currentUser.role === 'admin' || currentUser.permissions.canManageClients || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'clients'))) { %>
+                                <!-- <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateInvoices || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'invoices' && p.action === 'create'))) { %>
+                        <a href="/invoices/mass-payment" class="quick-action-btn">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>الدفع الجماعي</span>
+                        </a>
+                                <% } %> -->
+                                
+                                <% if (currentUser.role === 'admin' || currentUser.permissions.canManageClients || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'clients' && p.action === 'create'))) { %>
                         <a href="/clients/new" class="quick-action-btn">
                                     <i class="fas fa-user-plus"></i>
                             <span>عميل جديد</span>
                         </a>
                                 <% } %>
                                 
-                                <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateCompanies || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'companies'))) { %>
+                                <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateCompanies || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'companies' && p.action === 'create'))) { %>
                         <a href="/companies/new" class="quick-action-btn">
                                     <i class="fas fa-building"></i>
                             <span>شركة جديدة</span>
                         </a>
                                 <% } %>
                                 
+                        <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateFiles || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'files' && p.action === 'create'))) { %>
                         <a href="/files/new" class="quick-action-btn">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span>ملف جديد</span>
                         </a>
+                        <% } %>
                         </div>
                     </div>
                 <button class="quick-actions-toggle" id="quickActionsToggle" title="إظهار/إخفاء الإجراءات السريعة">
@@ -3434,6 +3443,12 @@
                                     الفواتير
                                 </a>
                             </li>
+                            <!-- <li class="nav-item">
+                                <a class="nav-link <%= (typeof title !== 'undefined' && title.includes('الدفع الجماعي')) || (typeof currentPath !== 'undefined' && currentPath.startsWith('/invoices/mass-payment')) ? 'active' : '' %>" href="/invoices/mass-payment">
+                                    <i class="fas fa-money-bill-wave ms-2"></i>
+                                    الدفع الجماعي
+                                </a>
+                            </li> -->
                             <% } else { %>
                             <li class="nav-item">
                                 <a class="nav-link disabled" href="#" title="ليس لديك صلاحية للوصول">
@@ -3441,6 +3456,13 @@
                                     الفواتير
                                     <i class="fas fa-lock ms-1" style="font-size: 0.8em;"></i>
                                 </a>
+                            </li>
+                            <li class="nav-item">
+                                <!-- <a class="nav-link disabled" href="#" title="ليس لديك صلاحية للوصول">
+                                    <i class="fas fa-money-bill-wave ms-2"></i>
+                                    الدفع الجماعي
+                                    <i class="fas fa-lock ms-1" style="font-size: 0.8em;"></i>
+                                </a> -->
                             </li>
                             <% } %>
                             

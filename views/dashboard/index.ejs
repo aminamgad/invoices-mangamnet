@@ -1,67 +1,69 @@
 <% const title = 'لوحة التحكم'; %>
+
+
 <%- include('../layout', { title, body: `
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">لوحة التحكم</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group ms-2">
-            ${user.role === 'admin' || user.permissions.canViewReports ? `
-                <a href="/reports" class="btn btn-outline-primary">
-                    <i class="fas fa-chart-line"></i>
-                    تقارير الأرباح
-                </a>
-            ` : ''}
-            <button type="button" class="btn btn-outline-secondary">
-                <i class="fas fa-download"></i>
-                تصدير
+          <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="d-flex align-items-center">
+              <label for="dateFilter" class="form-label me-2 mb-0">فترة العرض:</label>
+              <select class="form-select me-2" id="dateFilter" style="width: auto;">
+                <option value="current_month" ${filter === 'current_month' ? 'selected' : ''}>الشهر الحالي</option>
+                <option value="previous_month" ${filter === 'previous_month' ? 'selected' : ''}>الشهر السابق</option>
+                <option value="last_4_months" ${filter === 'last_4_months' ? 'selected' : ''}>آخر 4 أشهر</option>
+            </select>
+            <button type="button" class="btn btn-primary" onclick="applyDateFilter()">
+                <i class="fas fa-filter"></i>
+                تطبيق
             </button>
         </div>
     </div>
 </div>
 
-${user.role === 'admin' ? `
+${currentUser.role === 'admin' ? `
     <!-- Admin Dashboard -->
     <div class="row">
-        <div class="col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h3 class="mb-0">${stats.totalInvoices}</h3>
-                        <p class="mb-0">إجمالي الفواتير</p>
+                        <p class="mb-0">عدد الفواتير</p>
                     </div>
                     <i class="fas fa-file-invoice"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">${stats.totalClients}</h3>
-                        <p class="mb-0">إجمالي العملاء</p>
+                        <h3 class="mb-0">${stats.totalInvoicesAmount.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">إجمالي الفواتير</p>
                     </div>
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-money-bill-wave"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">${stats.totalCompanies}</h3>
-                        <p class="mb-0">إجمالي الشركات</p>
+                        <h3 class="mb-0">${stats.totalTax.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">إجمالي الضريبة</p>
                     </div>
-                    <i class="fas fa-building"></i>
+                    <i class="fas fa-percentage"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">${stats.totalDistributors}</h3>
-                        <p class="mb-0">إجمالي الموزعين</p>
+                        <h3 class="mb-0">${stats.managementProfitTax.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">ضريبة الإدارة والأرباح</p>
                     </div>
-                    <i class="fas fa-user-tie"></i>
+                    <i class="fas fa-chart-line"></i>
                 </div>
             </div>
         </div>
@@ -69,87 +71,154 @@ ${user.role === 'admin' ? `
 
     <!-- Admin Bulk Payment Section -->
     <div class="row mt-4">
-        <!-- Distributors Bulk Payment -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-user-tie text-primary"></i>
-                        دفع جماعي للموزعين
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="mb-4">
+                <h2 class="fw-bold text-dark mb-2">مدفوعات الموزعين والشركات</h2>
+                <p class="text-muted mb-0">نظرة مجمعة على المدفوعات المستحقة للموزعين والشركات.</p>
+            </div>
+        </div>
+    </div>
+    
+
+
+    <!-- Distributors Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-user-tie text-primary me-2"></i>
+                        مدفوعات الموزعين
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     ${stats.bulkPaymentData.distributors && stats.bulkPaymentData.distributors.length > 0 ? `
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>الموزع</th>
-                                        <th>عدد الفواتير</th>
-                                        <th>المبلغ الإجمالي</th>
-                                        <th>الإجراء</th>
+                                        <th class="text-center fw-bold text-dark py-3">الموزع</th>
+                                        <th class="text-center fw-bold text-dark py-3">عدد الفواتير</th>
+                                        <th class="text-center fw-bold text-dark py-3">إجمالي الضريبة</th>
+                                        <th class="text-center fw-bold text-dark py-3">إجمالي الربح</th>
+                                        <th class="text-center fw-bold text-dark py-3">الإجمالي المستحق</th>
+                                        <th class="text-center fw-bold text-dark py-3">الإجراء</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${stats.bulkPaymentData.distributors.map(dist => `
-                                        <tr>
-                                            <td><strong>${dist.distributorName}</strong></td>
-                                            <td><span class="badge bg-warning">${dist.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${dist.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success" onclick="bulkPayDistributor('${dist.distributorId}', '${dist.distributorName}', ${dist.unpaidCount})">
-                                                    <i class="fas fa-money-bill-wave"></i>
-                                                    تحديد الكل كمدفوع
-                                                </button>
+                                        <tr data-distributor-id="${dist.distributorId}">
+                                            <td class="text-center">
+                                                <span class="distributor-name">${dist.distributorName}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="invoice-count">${dist.unpaidCount}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="amount-value">${(dist.totalAmount * 0.14).toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="amount-value">${(dist.totalAmount * 0.86).toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="total-due">${dist.totalAmount.toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-pay" onclick="console.log('Button clicked!'); bulkPayDistributor('${dist.distributorId}', '${dist.distributorName}', ${dist.unpaidCount})">
+                                                        <i class="fas fa-wallet"></i>
+                                                        دفع
+                                                    </button>
+                                                    <button class="btn btn-whatsapp" onclick="sendWhatsAppToDistributor('${dist.distributorId}', '${dist.distributorName}', '${dist.distributorWhatsapp || ''}')">
+                                                        <i class="fas fa-comment"></i>
+                                                        واتساب
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
                             </table>
                         </div>
-                    ` : `<div class="text-muted text-center">لا يوجد بيانات دفع جماعي للموزعين</div>`}
+                    ` : `
+                        <div class="empty-state">
+                            <i class="fas fa-user-tie"></i>
+                            <h5>لا توجد مدفوعات مستحقة للموزعين</h5>
+                            <p>جميع الموزعين محدثين في مدفوعاتهم</p>
+                        </div>
+                    `}
                 </div>
             </div>
         </div>
-        <!-- Companies Bulk Payment -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-building text-primary"></i>
-                        دفع جماعي للشركات
+    </div>
+
+    <!-- Companies Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-building text-primary me-2"></i>
+                        مدفوعات الشركات
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     ${stats.bulkPaymentData.companies && stats.bulkPaymentData.companies.length > 0 ? `
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>الشركة</th>
-                                        <th>عدد الفواتير</th>
-                                        <th>المبلغ الإجمالي</th>
-                                        <th>الإجراء</th>
+                                        <th class="text-center fw-bold text-dark py-3">الشركة</th>
+                                        <th class="text-center fw-bold text-dark py-3">عدد الفواتير</th>
+                                        <th class="text-center fw-bold text-dark py-3">إجمالي الضريبة</th>
+                                        <th class="text-center fw-bold text-dark py-3">إجمالي الربح</th>
+                                        <th class="text-center fw-bold text-dark py-3">الإجمالي المستحق</th>
+                                        <th class="text-center fw-bold text-dark py-3">الإجراء</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${stats.bulkPaymentData.companies.map(company => `
-                                        <tr>
-                                            <td><strong>${company.companyName}</strong></td>
-                                            <td><span class="badge bg-warning">${company.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${company.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success" onclick="bulkPayCompany('${company.companyId}', '${company.companyName}', ${company.unpaidCount})">
-                                                    <i class="fas fa-money-bill-wave"></i>
-                                                    تحديد الكل كمدفوع
-                                                </button>
+                                        <tr data-company-id="${company.companyId}">
+                                            <td class="text-center">
+                                                <span class="company-name">${company.companyName}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="invoice-count">${company.unpaidCount}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="amount-value">${(company.totalAmount * 0.14).toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="amount-value">${(company.totalAmount * 0.86).toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="total-due">${company.totalAmount.toLocaleString('ar-SA')} ج.م</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-pay" onclick="console.log('Company button clicked!'); bulkPayCompany('${company.companyId}', '${company.companyName}', ${company.unpaidCount})">
+                                                        <i class="fas fa-wallet"></i>
+                                                        دفع
+                                                    </button>
+                                                    <button class="btn btn-whatsapp" onclick="sendWhatsAppToCompany('${company.companyId}', '${company.companyName}')">
+                                                        <i class="fas fa-comment"></i>
+                                                        واتساب
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
                             </table>
                         </div>
-                    ` : `<div class="text-muted text-center">لا يوجد بيانات دفع جماعي للشركات</div>`}
+                    ` : `
+                        <div class="empty-state">
+                            <i class="fas fa-building"></i>
+                            <h5>لا توجد مدفوعات مستحقة للشركات</h5>
+                            <p>جميع الشركات محدثة في مدفوعاتها</p>
+                        </div>
+                    `}
                 </div>
             </div>
         </div>
@@ -157,79 +226,211 @@ ${user.role === 'admin' ? `
 ` : `
     <!-- Distributor Dashboard -->
     <div class="row">
-        <div class="col-md-6 col-sm-12 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h3 class="mb-0">${stats.totalInvoices}</h3>
-                        <p class="mb-0">فواتيري</p>
+                        <p class="mb-0">عدد الفواتير</p>
                     </div>
                     <i class="fas fa-file-invoice"></i>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-6 col-sm-12 mb-4">
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">%${user.commissionRate || 0}</h3>
-                        <p class="mb-0">نسبة العمولة</p>
+                        <h3 class="mb-0">${stats.totalInvoicesAmount.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">إجمالي الفواتير</p>
+                    </div>
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h3 class="mb-0">${stats.totalTax.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">إجمالي الضريبة</p>
                     </div>
                     <i class="fas fa-percentage"></i>
                 </div>
             </div>
         </div>
+        
+        <div class="col-md-3 col-sm-6 col-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h3 class="mb-0">${stats.managementProfitTax.toLocaleString('ar-SA')} جنيه</h3>
+                        <p class="mb-0">ضريبة الإدارة والأرباح</p>
+                    </div>
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Distributor Bulk Payment Section -->
-    ${stats.bulkPaymentData.clients && stats.bulkPaymentData.clients.length > 0 ? `
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-users text-primary"></i>
-                            دفع جماعي للعملاء
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+    <!-- Customer Debt Section (Distributor View) -->
+    ${currentUser.role === 'distributor' && stats.bulkPaymentData.clients && stats.bulkPaymentData.clients.length > 0 ? `
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="customer-debt-card">
+                <div class="card-header">
+                    <h5 class="mb-0">مديونيه العملاء</h5>
+                    <p class="text-muted mb-0">نظرة مجمعة على الفواتير المستحقة لكل عميل.</p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="customer-debt-table">
+                            <thead>
+                                <tr>
+                                    <th>العميل</th>
+                                    <th>عدد الفواتير</th>
+                                    <th>الموزعين</th>
+                                    <th>إجمالي الضريبة</th>
+                                    <th>إجمالي الربح</th>
+                                    <th>الإجمالي المستحق</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.bulkPaymentData.clients.map(client => `
                                     <tr>
-                                        <th>العميل</th>
-                                        <th>عدد الفواتير غير المدفوعة</th>
-                                        <th>المبلغ الإجمالي</th>
-                                        <th>الإجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${stats.bulkPaymentData.clients.map(client => `
-                                        <tr>
-                                            <td><strong>${client.clientName}</strong></td>
-                                            <td><span class="badge bg-warning">${client.unpaidCount}</span></td>
-                                            <td><span class="badge bg-info">${client.totalAmount.toLocaleString('ar-SA')} جنيه</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success" onclick="bulkPayClient('${client.clientId}', '${client.clientName}', ${client.unpaidCount})">
-                                                    <i class="fas fa-money-bill-wave"></i>
-                                                    تحديد الكل كمدفوع
+                                        <td>${client.clientName}</td>
+                                        <td>${client.unpaidCount}</td>
+                                        <td>${currentUser.username}</td>
+                                        <td>${(client.totalAmount * 0.14).toLocaleString('ar-SA')} ج.م</td>
+                                        <td>${(client.totalAmount * 0.025).toLocaleString('ar-SA')} ج.م</td>
+                                        <td><span class="total-due">${client.totalAmount.toLocaleString('ar-SA')} ج.م</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn-pay" onclick="bulkPayClient('${client.clientId}', '${client.clientName}', ${client.unpaidCount})">
+                                                    <i class="fas fa-wallet"></i>
+                                                    دفع
                                                 </button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                                                <button type="button" class="btn-whatsapp" onclick="sendWhatsAppMessage('${client.clientName}', ${client.totalAmount})">
+                                                    <i class="fas fa-comment-dots"></i>
+                                                    واتساب
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    ` : ''}
+
+    <!-- Distributor Bulk Payment Section (Admin View) -->
+    ${currentUser.role === 'admin' && stats.bulkPaymentData.distributors && stats.bulkPaymentData.distributors.length > 0 ? `
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="bulk-payment-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bars text-primary me-2"></i>
+                        دفع جماعي للموزعين
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="bulk-payment-table">
+                            <thead>
+                                <tr>
+                                    <th>الموزع</th>
+                                    <th>عدد الفواتير</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.bulkPaymentData.distributors.map(distributor => `
+                                    <tr>
+                                        <td class="entity-name">الموزع: ${distributor.distributorName}</td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">${distributor.unpaidCount}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info text-white">${distributor.totalAmount.toLocaleString('ar-SA')} جنيه</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn-mark-paid" onclick="bulkPayDistributor('${distributor.distributorId}', '${distributor.distributorName}', ${distributor.unpaidCount})">
+                                                <i class="fas fa-wallet"></i>
+                                                تحديد الكل كمدفوع
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    ` : ''}
+
+    <!-- Company Bulk Payment Section (Admin View) -->
+    ${currentUser.role === 'admin' && stats.bulkPaymentData.companies && stats.bulkPaymentData.companies.length > 0 ? `
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="bulk-payment-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building text-primary me-2"></i>
+                        دفع جماعي للشركات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="bulk-payment-table">
+                            <thead>
+                                <tr>
+                                    <th>الشركة</th>
+                                    <th>عدد الفواتير</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.bulkPaymentData.companies.map(company => `
+                                    <tr>
+                                        <td class="entity-name">الشركة: ${company.companyName}</td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">${company.unpaidCount}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info text-white">${company.totalAmount.toLocaleString('ar-SA')} جنيه</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn-mark-paid" onclick="bulkPayCompany('${company.companyId}', '${company.companyName}', ${company.unpaidCount})">
+                                                <i class="fas fa-wallet"></i>
+                                                تحديد الكل كمدفوع
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     ` : ''}
 `}
 
 <!-- Admin Invoices Management Section (Admin Only) -->
-${user.role === 'admin' ? `
+${currentUser.role === 'admin' ? `
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -333,7 +534,7 @@ ${user.role === 'admin' ? `
                                     <th>رقم الفاتورة</th>
                                     <th>العميل</th>
                                     <th>الملف</th>
-                                    ${user.role === 'admin' ? '<th>الموزع</th>' : ''}
+                                                                         ${currentUser.role === 'admin' ? '<th>الموزع</th>' : ''}
                                     <th>المبلغ</th>
                                     <th>التاريخ</th>
                                     <th>الحالة</th>
@@ -345,7 +546,7 @@ ${user.role === 'admin' ? `
                                         <td><strong>${invoice.invoiceCode}</strong></td>
                                         <td>${invoice.client.fullName}</td>
                                         <td>${invoice.file.fileName}</td>
-                                        ${user.role === 'admin' ? `<td>${invoice.assignedDistributor.username}</td>` : ''}
+                                                                                 ${currentUser.role === 'admin' ? '<td>' + invoice.assignedDistributor.username + '</td>' : ''}
                                         <td><span class="badge bg-primary">${invoice.amount.toLocaleString('ar-SA')} جنيه</span></td>
                                         <td>${new Date(invoice.invoiceDate).toLocaleDateString('ar-EG')}</td>
                                         <td>
@@ -381,7 +582,7 @@ ${user.role === 'admin' ? `
             </div>
             <div class="card-body">
                 <div class="row">
-                    ${user.role === 'admin' || user.permissions.canCreateInvoices ? `
+                                         ${currentUser.role === 'admin' || currentUser.permissions.canCreateInvoices || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'invoices' && p.action === 'create')) ? `
                         <div class="col-md-3 col-sm-6 mb-3">
                             <a href="/invoices/new" class="quick-action-card">
                                 <div class="quick-action-icon">
@@ -394,7 +595,7 @@ ${user.role === 'admin' ? `
                         </div>
                     ` : ''}
                     
-                    ${user.role === 'admin' || user.permissions.canManageClients ? `
+                                         ${currentUser.role === 'admin' || currentUser.permissions.canManageClients || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'clients' && p.action === 'create')) ? `
                         <div class="col-md-3 col-sm-6 mb-3">
                             <a href="/clients/new" class="quick-action-card">
                                 <div class="quick-action-icon">
@@ -407,7 +608,7 @@ ${user.role === 'admin' ? `
                         </div>
                     ` : ''}
                     
-                    ${user.role === 'admin' || user.permissions.canCreateCompanies ? `
+                                         ${currentUser.role === 'admin' || currentUser.permissions.canCreateCompanies || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'companies' && p.action === 'create')) ? `
                         <div class="col-md-3 col-sm-6 mb-3">
                             <a href="/companies/new" class="quick-action-card">
                                 <div class="quick-action-icon">
@@ -420,7 +621,7 @@ ${user.role === 'admin' ? `
                         </div>
                     ` : ''}
                     
-                    ${user.role === 'admin' || user.permissions.canViewReports ? `
+                    ${currentUser.role === 'admin' || currentUser.permissions.canViewReports || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'reports' && (p.action === 'view_own' || p.action === 'view_all'))) ? `
                         <div class="col-md-3 col-sm-6 mb-3">
                             <a href="/reports" class="quick-action-card">
                                 <div class="quick-action-icon">
@@ -433,16 +634,18 @@ ${user.role === 'admin' ? `
                         </div>
                     ` : ''}
                     
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/files/new" class="quick-action-card">
-                            <div class="quick-action-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <div class="quick-action-text">
-                                إضافة ملف جديد
-                            </div>
-                        </a>
-                    </div>
+                                         ${currentUser.role === 'admin' || currentUser.permissions.canCreateFiles || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'files' && p.action === 'create')) ? `
+                         <div class="col-md-3 col-sm-6 mb-3">
+                             <a href="/files/new" class="quick-action-card">
+                                 <div class="quick-action-icon">
+                                     <i class="fas fa-cloud-upload-alt"></i>
+                                 </div>
+                                 <div class="quick-action-text">
+                                     إضافة ملف جديد
+                                 </div>
+                             </a>
+                         </div>
+                     ` : ''}
                 </div>
             </div>
         </div>
@@ -519,16 +722,1013 @@ ${user.role === 'admin' ? `
 [data-theme="dark"] .quick-action-card:hover .quick-action-icon i {
     color: #0077FF;
 }
+
+/* Mobile-specific styles for stats cards */
+@media (max-width: 576px) {
+    .stats-card {
+        padding: 15px;
+        min-height: 100px;
+    }
+    
+    .stats-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+    }
+    
+    .stats-card p {
+        font-size: 0.8rem;
+        margin-bottom: 0;
+    }
+    
+    .stats-card i {
+        font-size: 1.5rem;
+    }
+    
+    .stats-card .d-flex {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-card .flex-grow-1 {
+        margin-bottom: 8px;
+    }
+}
+
+/* Customer Debt Card Design - Exact Copy of Image */
+.customer-debt-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.customer-debt-card .card-header {
+    background: #ffffff;
+    padding: 24px 24px 20px 24px;
+    border-bottom: none;
+    text-align: center;
+}
+
+.customer-debt-card .card-header h5 {
+    color: #1e3a8a;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.customer-debt-card .card-header p {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.customer-debt-card .card-body {
+    padding: 0 24px 24px 24px;
+}
+
+/* Customer Debt Table Design - Exact Copy */
+.customer-debt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    table-layout: fixed;
+}
+
+.customer-debt-table th {
+    background: transparent;
+    color: #374151;
+    font-weight: 600;
+    padding: 20px 12px 18px 12px;
+    text-align: right;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    word-spacing: 2px;
+    letter-spacing: 0.5px;
+}
+
+.customer-debt-table td {
+    padding: 20px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: right;
+    vertical-align: middle;
+    line-height: 1.4;
+    color: #374151;
+}
+
+.customer-debt-table tbody tr:hover {
+    background-color: transparent;
+}
+
+.customer-debt-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Customer Debt Table Column Widths */
+.customer-debt-table th:nth-child(1),
+.customer-debt-table td:nth-child(1) {
+    width: 140px; /* Customer name */
+    max-width: 140px;
+}
+
+.customer-debt-table th:nth-child(2),
+.customer-debt-table td:nth-child(2) {
+    width: 100px; /* Invoice count */
+    max-width: 100px;
+}
+
+.customer-debt-table th:nth-child(3),
+.customer-debt-table td:nth-child(3) {
+    width: 120px; /* Distributor */
+    max-width: 120px;
+}
+
+.customer-debt-table th:nth-child(4),
+.customer-debt-table td:nth-child(4) {
+    width: 120px; /* Tax */
+    max-width: 120px;
+}
+
+.customer-debt-table th:nth-child(5),
+.customer-debt-table td:nth-child(5) {
+    width: 120px; /* Profit */
+    max-width: 120px;
+}
+
+.customer-debt-table th:nth-child(6),
+.customer-debt-table td:nth-child(6) {
+    width: 130px; /* Total due */
+    max-width: 130px;
+}
+
+.customer-debt-table th:nth-child(7),
+.customer-debt-table td:nth-child(7) {
+    width: 160px; /* Actions */
+    max-width: 160px;
+}
+
+/* Total Due Amount Styling - Exact Blue Color */
+.total-due {
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Action Buttons Design - Exact Copy */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-pay {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 65px;
+    justify-content: center;
+}
+
+.btn-pay:hover {
+    background: #1d4ed8;
+    color: white;
+}
+
+.btn-whatsapp {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 75px;
+    justify-content: center;
+}
+
+.btn-whatsapp:hover {
+    background: #4b5563;
+    color: white;
+}
+
+.btn-pay i,
+.btn-whatsapp i {
+    font-size: 0.8rem;
+}
+
+/* Bulk Payment Card Design - Improved Mobile-Friendly */
+.bulk-payment-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.bulk-payment-card .card-header {
+    background: #ffffff;
+    padding: 20px 24px 16px 24px;
+    border-bottom: none;
+}
+
+.bulk-payment-card .card-header h5 {
+    color: #374151;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+}
+
+.bulk-payment-card .card-header h5 i {
+    font-size: 1rem;
+    margin-left: 8px;
+}
+
+.bulk-payment-card .card-body {
+    padding: 0 24px 24px 24px;
+}
+
+/* Bulk Payment Table Design - Mobile Optimized */
+.bulk-payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bulk-payment-table th {
+    background: transparent;
+    color: #374151;
+    font-weight: 600;
+    padding: 18px 16px 16px 16px;
+    text-align: right;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.bulk-payment-table td {
+    padding: 20px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: right;
+    vertical-align: middle;
+    line-height: 1.4;
+    color: #374151;
+}
+
+.bulk-payment-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.bulk-payment-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Entity Name Styling */
+.entity-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 12px;
+}
+
+.badge.bg-warning {
+    background-color: #fbbf24 !important;
+    color: #92400e !important;
+}
+
+.badge.bg-info {
+    background-color: #60a5fa !important;
+    color: #1e40af !important;
+}
+
+/* Mark as Paid Button */
+.btn-mark-paid {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.btn-mark-paid:hover {
+    background: #059669;
+    color: white;
+}
+
+.btn-mark-paid i {
+    font-size: 0.8rem;
+}
+
+/* Mobile Responsiveness for Bulk Payment Tables */
+@media (max-width: 768px) {
+    .bulk-payment-table {
+        font-size: 0.8rem;
+        min-width: 600px; /* Ensure minimum width for table structure */
+    }
+    
+    .bulk-payment-table th,
+    .bulk-payment-table td {
+        padding: 16px 12px;
+        white-space: nowrap; /* Prevent text wrapping */
+    }
+    
+    /* Customer debt table mobile improvements */
+    .customer-debt-table {
+        font-size: 0.8rem;
+        min-width: 700px;
+    }
+    
+    .customer-debt-table th,
+    .customer-debt-table td {
+        padding: 14px 8px;
+        white-space: nowrap;
+    }
+    
+    /* Recent invoices table mobile improvements */
+    .table {
+        font-size: 0.8rem;
+        min-width: 800px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 12px 8px;
+        white-space: nowrap;
+    }
+}
+    
+    .btn-mark-paid {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-width: 120px;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .entity-name {
+        font-size: 0.85rem;
+    }
+    
+    /* Ensure table container allows horizontal scrolling */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 576px) {
+    .bulk-payment-card .card-header h5 {
+        font-size: 1.1rem;
+    }
+    
+    .bulk-payment-table {
+        font-size: 0.75rem;
+        min-width: 500px; /* Smaller minimum width for very small screens */
+    }
+    
+    .bulk-payment-table th {
+        font-size: 0.75rem;
+        padding: 14px 10px 12px 10px;
+        white-space: nowrap;
+    }
+    
+    .bulk-payment-table td {
+        padding: 14px 10px;
+        white-space: nowrap;
+    }
+    
+    .btn-mark-paid {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        min-width: 100px;
+    }
+    
+    .entity-name {
+        font-size: 0.75rem;
+    }
+    
+    /* Enhanced horizontal scrolling for mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: none;
+    }
+    
+    /* Ensure table maintains structure */
+    .bulk-payment-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    
+    /* Column widths for mobile */
+    .bulk-payment-table th:nth-child(1),
+    .bulk-payment-table td:nth-child(1) {
+        min-width: 140px; /* Entity name column */
+    }
+    
+    .bulk-payment-table th:nth-child(2),
+    .bulk-payment-table td:nth-child(2) {
+        min-width: 100px; /* Invoice count column */
+    }
+    
+    .bulk-payment-table th:nth-child(3),
+    .bulk-payment-table td:nth-child(3) {
+        min-width: 120px; /* Total amount column */
+    }
+    
+    .bulk-payment-table th:nth-child(4),
+    .bulk-payment-table td:nth-child(4) {
+        min-width: 160px; /* Action column */
+    }
+}
+
+/* Mobile-specific styles for mass payment tables */
+@media (max-width: 768px) {
+    /* Override global table-responsive styles for bulk payment tables */
+    .card .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0 0 6px 6px;
+    }
+    
+    .card .table-responsive .table {
+        display: table !important;
+        min-width: 900px;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+    
+    .card .table-responsive .table thead {
+        display: table-header-group !important;
+    }
+    
+    .card .table-responsive .table tbody {
+        display: table-row-group !important;
+    }
+    
+    .card .table-responsive .table tr {
+        display: table-row !important;
+        margin-bottom: 0;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
+    }
+    
+    .card .table-responsive .table td {
+        display: table-cell !important;
+        border: 1px solid #dee2e6;
+        padding: 16px 14px;
+        text-align: center;
+        position: static;
+        white-space: nowrap;
+    }
+    
+    .card .table-responsive .table td::before {
+        content: none;
+    }
+    
+    .card .table-responsive .table th {
+        display: table-cell !important;
+        white-space: nowrap;
+        padding: 16px 14px;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        gap: 6px;
+    }
+    
+    .btn-pay,
+    .btn-whatsapp {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+    
+    .customer-debt-card .card-header h5 {
+        font-size: 1.1rem;
+    }
+    
+    /* Customer debt table mobile styles */
+    .customer-debt-card .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .customer-debt-card .table-responsive .table {
+        display: table !important;
+        min-width: 800px;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+    
+    .customer-debt-card .table-responsive .table thead {
+        display: table-header-group !important;
+    }
+    
+    .customer-debt-card .table-responsive .table tbody {
+        display: table-row-group !important;
+    }
+    
+    .customer-debt-card .table-responsive .table tr {
+        display: table-row !important;
+        margin-bottom: 0;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
+    }
+    
+    .customer-debt-card .table-responsive .table td {
+        display: table-cell !important;
+        border: 1px solid #dee2e6;
+        padding: 16px 14px;
+        text-align: center;
+        position: static;
+        white-space: nowrap;
+    }
+    
+    .customer-debt-card .table-responsive .table td::before {
+        content: none;
+    }
+    
+    .customer-debt-card .table-responsive .table th {
+        display: table-cell !important;
+        white-space: nowrap;
+        padding: 16px 14px;
+    }
+    
+    .customer-debt-card .card-header p {
+        font-size: 0.8rem;
+    }
+    
+    .total-due {
+        font-size: 0.9rem;
+    }
+    
+    .customer-debt-card {
+        margin: 16px 0;
+    }
+    
+    .customer-debt-card .card-header {
+        padding: 16px 20px 12px 20px;
+    }
+    
+    .customer-debt-card .card-body {
+        padding: 0 20px 20px 20px;
+    }
+    
+    /* Ensure table maintains structure */
+    .customer-debt-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    
+    /* Column widths for customer debt table on mobile */
+    .customer-debt-table th:nth-child(1),
+    .customer-debt-table td:nth-child(1) {
+        min-width: 120px; /* Customer name column */
+    }
+    
+    .customer-debt-table th:nth-child(2),
+    .customer-debt-table td:nth-child(2) {
+        min-width: 100px; /* Invoice count column */
+    }
+    
+    .customer-debt-table th:nth-child(3),
+    .customer-debt-table td:nth-child(3) {
+        min-width: 100px; /* Distributor column */
+    }
+    
+    .customer-debt-table th:nth-child(4),
+    .customer-debt-table td:nth-child(4) {
+        min-width: 120px; /* Tax column */
+    }
+    
+    .customer-debt-table th:nth-child(5),
+    .customer-debt-table td:nth-child(5) {
+        min-width: 120px; /* Profit column */
+    }
+    
+    .customer-debt-table th:nth-child(6),
+    .customer-debt-table td:nth-child(6) {
+        min-width: 120px; /* Total due column */
+    }
+    
+    .customer-debt-table th:nth-child(7),
+    .customer-debt-table td:nth-child(7) {
+        min-width: 140px; /* Action column */
+    }
+}
+/* Modern Card Design for Bulk Payment */
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Table Styling */
+.table {
+    margin-bottom: 0;
+    table-layout: fixed;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1.25rem 1rem;
+    word-spacing: 1px;
+}
+
+.table td {
+    border-top: 1px solid #f3f4f6;
+    vertical-align: middle;
+    padding: 1.25rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Specific column widths for Recent Invoices table */
+.table th:first-child,
+.table td:first-child {
+    width: 120px; /* Invoice number column */
+    max-width: 120px;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    width: 150px; /* Customer name column */
+    max-width: 150px;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+    width: 120px; /* File column */
+    max-width: 120px;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    width: 100px; /* Distributor column (admin only) */
+    max-width: 100px;
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+    width: 120px; /* Amount column */
+    max-width: 120px;
+}
+
+.table th:nth-child(6),
+.table td:nth-child(6) {
+    width: 100px; /* Date column */
+    max-width: 100px;
+}
+
+.table th:nth-child(7),
+.table td:nth-child(7) {
+    width: 120px; /* Status column */
+    max-width: 120px;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Name Styling */
+.distributor-name, .company-name {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Amount Styling */
+.total-due {
+    font-weight: 700;
+    color: #3b82f6;
+    font-size: 1rem;
+}
+
+.amount-value {
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Badge Styling */
+.invoice-count {
+    background-color: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.btn-pay {
+    background-color: #3b82f6;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-pay:hover {
+    background-color: #2563eb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.btn-whatsapp {
+    background-color: #f3f4f6;
+    border: none;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-whatsapp:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    transform: translateY(-1px);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.75rem;
+    }
+    
+    .table th, .table td {
+        padding: 1rem 0.75rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-pay, .btn-whatsapp {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        min-width: 100px;
+    }
+    
+    .total-due {
+        font-size: 0.875rem;
+    }
+    
+    /* Improve table spacing on mobile */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table-responsive .table {
+        margin-bottom: 0;
+    }
+}
 </style>
 
 <script>
-// Invoice management functions
+// Test function to verify JavaScript is working
+console.log('Dashboard JavaScript loaded successfully');
+console.log('SweetAlert available:', typeof Swal !== 'undefined');
+
+// Bulk payment functions
+function bulkPayDistributor(distributorId, distributorName, count) {
+    console.log('bulkPayDistributor called with:', { distributorId, distributorName, count });
+    
+    Swal.fire({
+        title: 'تأكيد الدفع الجماعي',
+        text: 'هل أنت متأكد من تحديد جميع الفواتير (' + count + ') للموزع "' + distributorName + '" كمدفوعة؟',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، تأكيد',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            console.log('Payment confirmed for distributor:', distributorId);
+            
+            // Show loading
+            Swal.fire({
+                title: 'جاري المعالجة...',
+                text: 'يرجى الانتظار بينما يتم معالجة الدفع',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('/invoices/bulk-pay/distributor/' + distributorId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم الدفع بنجاح!',
+                        text: 'تم تحديث جميع الفواتير للموزع "' + distributorName + '" كمدفوعة',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#10b981'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'فشل في الدفع',
+                        text: 'يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'حدث خطأ',
+                    text: 'حدث خطأ أثناء معالجة الدفع: ' + error.message,
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#ef4444'
+                });
+            });
+        }
+    });
+}
+
+function bulkPayCompany(companyId, companyName, count) {
+    console.log('bulkPayCompany called with:', { companyId, companyName, count });
+    
+    Swal.fire({
+        title: 'تأكيد الدفع الجماعي',
+        text: 'هل أنت متأكد من تحديد جميع الفواتير (' + count + ') للشركة "' + companyName + '" كمدفوعة؟',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، تأكيد',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            console.log('Payment confirmed for company:', companyId);
+            
+            // Show loading
+            Swal.fire({
+                title: 'جاري المعالجة...',
+                text: 'يرجى الانتظار بينما يتم معالجة الدفع',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('/invoices/bulk-pay/company/' + companyId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم الدفع بنجاح!',
+                        text: 'تم تحديث جميع الفواتير للشركة "' + companyName + '" كمدفوعة',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#10b981'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'فشل في الدفع',
+                        text: 'يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'حدث خطأ',
+                    text: 'حدث خطأ أثناء معالجة الدفع: ' + error.message,
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#ef4444'
+                });
+            });
+        }
+    });
+}
+
+// Other functions
 function viewInvoice(invoiceId) {
-    window.open(\`/invoices/\${invoiceId}\`, '_blank');
+    window.open('/invoices/' + invoiceId, '_blank');
 }
 
 function editInvoice(invoiceId) {
-    window.location.href = \`/invoices/\${invoiceId}/edit\`;
+    window.location.href = '/invoices/' + invoiceId + '/edit';
 }
 
 function markAsPaid(invoiceId) {
@@ -539,89 +1739,77 @@ function markAsPaid(invoiceId) {
         showCancelButton: true,
         confirmButtonText: 'نعم، تأكيد',
         cancelButtonText: 'إلغاء',
-        customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-secondary'
-        }
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Mark as distributor to admin paid
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = \`/invoices/\${invoiceId}/payment/distributorToAdmin\`;
+            form.action = '/invoices/' + invoiceId + '/payment/distributorToAdmin';
             document.body.appendChild(form);
             form.submit();
         }
     });
 }
 
-// Bulk payment functions
 function bulkPayClient(clientId, clientName, count) {
     Swal.fire({
         title: 'تأكيد الدفع الجماعي',
-        text: \`هل أنت متأكد من تحديد جميع الفواتير (\${count}) للعميل "\${clientName}" كمدفوعة؟\`,
+        text: 'هل أنت متأكد من تحديد جميع الفواتير (' + count + ') للعميل "' + clientName + '" كمدفوعة؟',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'نعم، تأكيد',
         cancelButtonText: 'إلغاء',
-        customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-secondary'
-        }
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280'
     }).then((result) => {
         if (result.isConfirmed) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = \`/invoices/bulk-pay/client/\${clientId}\`;
+            form.action = '/invoices/bulk-pay/client/' + clientId;
             document.body.appendChild(form);
             form.submit();
         }
     });
 }
 
-function bulkPayDistributor(distributorId, distributorName, count) {
-    Swal.fire({
-        title: 'تأكيد الدفع الجماعي',
-        text: \`هل أنت متأكد من تحديد جميع الفواتير (\${count}) للموزع "\${distributorName}" كمدفوعة؟\`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'نعم، تأكيد',
-        cancelButtonText: 'إلغاء',
-        customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-secondary'
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = \`/invoices/bulk-pay/distributor/\${distributorId}\`;
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+function sendWhatsAppMessage(recipientName, amount) {
+    const message = 'مرحبا ' + recipientName + '، هذا تذكير بالدفع المستحق لكم. المبلغ: ' + amount.toLocaleString('ar-SA') + ' ج.م. شكرا لكم.';
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = 'https://wa.me/?text=' + encodedMessage;
+    window.open(whatsappUrl, '_blank');
 }
 
-function bulkPayCompany(companyId, companyName, count) {
+function applyDateFilter() {
+    const filterValue = document.getElementById('dateFilter').value;
+    window.location.href = '/dashboard?filter=' + filterValue;
+}
+
+function sendWhatsAppToDistributor(distributorId, distributorName, whatsappNumber) {
+    if (!whatsappNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'رقم الواتساب غير متوفر',
+            text: 'لم يتم إضافة رقم واتساب لهذا الموزع بعد',
+            confirmButtonText: 'حسناً',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
+    }
+    
+    const message = 'مرحبا ' + distributorName + '،\n\nنود تذكيركم بالمبلغ المستحق لديكم.\n\nيرجى التواصل معنا لتسوية المدفوعات.\n\nشكراً لكم';
+
+    const whatsappUrl = 'https://wa.me/' + whatsappNumber.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(message);
+    window.open(whatsappUrl, '_blank');
+}
+
+function sendWhatsAppToCompany(companyId, companyName) {
     Swal.fire({
-        title: 'تأكيد الدفع الجماعي',
-        text: \`هل أنت متأكد من تحديد جميع الفواتير (\${count}) للشركة "\${companyName}" كمدفوعة؟\`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'نعم، تأكيد',
-        cancelButtonText: 'إلغاء',
-        customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-secondary'
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = \`/invoices/bulk-pay/company/\${companyId}\`;
-            document.body.appendChild(form);
-            form.submit();
-        }
+        icon: 'info',
+        title: 'ميزة واتساب',
+        text: 'هذه الميزة تحتاج إلى أرقام هواتف الشركات لتكون متاحة',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#3b82f6'
     });
 }
 </script>

@@ -579,9 +579,11 @@
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="fileSearch" placeholder="ابحث عن الملف بالاسم أو المعرف..." autocomplete="off">
                                                 <input type="hidden" id="file" name="file" required>
+                                                <% if (currentUser.role === 'admin' || currentUser.permissions.canCreateFiles || (currentUser.detailedPermissions && currentUser.detailedPermissions.some(p => p.module === 'files' && p.action === 'create'))) { %>
                                                 <button type="button" class="btn btn-outline-primary" id="addFileBtn" title="إضافة ملف جديد">
                                                     <i class="fas fa-plus"></i>
                                                 </button>
+                                                <% } %>
                                             </div>
                                             <div id="fileDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;"></div>
                         </div>
@@ -948,7 +950,7 @@
             if (!clientSearch.contains(e.target) && !clientDropdown.contains(e.target) && !addClientBtn.contains(e.target)) {
                 clientDropdown.classList.remove('show');
             }
-            if (!fileSearch.contains(e.target) && !fileDropdown.contains(e.target) && !addFileBtn.contains(e.target)) {
+            if (!fileSearch.contains(e.target) && !fileDropdown.contains(e.target) && (!addFileBtn || !addFileBtn.contains(e.target))) {
                 fileDropdown.classList.remove('show');
             }
         });
@@ -1131,10 +1133,12 @@
         });
         
         // Add file button
-        addFileBtn.addEventListener('click', function() {
-            loadCompanies();
-            addFileModal.show();
-        });
+        if (addFileBtn) {
+            addFileBtn.addEventListener('click', function() {
+                loadCompanies();
+                addFileModal.show();
+            });
+        }
         
         // Load companies for file modal
         async function loadCompanies() {

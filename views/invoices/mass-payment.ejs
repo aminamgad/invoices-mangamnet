@@ -1,0 +1,530 @@
+<%- include('../layout', { title: 'الدفع الجماعي' }) %>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="mb-4">
+                <h2 class="fw-bold text-dark mb-2">مديونيه العملاء</h2>
+                <p class="text-muted mb-0">نظرة مجمعة على الفواتير المستحقة لكل عميل.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <!-- Main Card Container -->
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-0">
+                    <!-- Customer Debts Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center fw-bold text-dark py-3">العميل</th>
+                                    <th class="text-center fw-bold text-dark py-3">عدد الفواتير</th>
+                                    <th class="text-center fw-bold text-dark py-3">الموزعين</th>
+                                    <th class="text-center fw-bold text-dark py-3">إجمالي الضريبة</th>
+                                    <th class="text-center fw-bold text-dark py-3">إجمالي الربح</th>
+                                    <th class="text-center fw-bold text-dark py-3">الإجمالي المستحق</th>
+                                    <th class="text-center fw-bold text-dark py-3">الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerDebtsTable">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-credit-card text-primary me-2"></i>
+                    معالجة الدفع
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="confirmPaymentBtn">
+                    <i class="fas fa-check me-2"></i>
+                    تأكيد الدفع
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Card Design */
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Table Styling */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table td {
+    border-top: 1px solid #f3f4f6;
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Customer Name Styling */
+.customer-name {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Amount Styling */
+.total-due {
+    font-weight: 700;
+    color: #3b82f6;
+    font-size: 1rem;
+}
+
+.amount-value {
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Badge Styling */
+.invoice-count {
+    background-color: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.btn-pay {
+    background-color: #3b82f6;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-pay:hover {
+    background-color: #2563eb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.btn-whatsapp {
+    background-color: #f3f4f6;
+    border: none;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-whatsapp:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.75rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .btn-pay, .btn-whatsapp {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .total-due {
+        font-size: 0.875rem;
+    }
+}
+
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+</style>
+
+<script>
+let customerDebtsData = [];
+const currentUserRole = '<%= currentUser.role %>';
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadCustomerDebts();
+    
+    // Setup payment confirmation
+    document.getElementById('confirmPaymentBtn').addEventListener('click', confirmPayment);
+});
+
+async function loadCustomerDebts() {
+    try {
+        showLoading();
+        
+        const response = await fetch('/api/invoices/customer-debts');
+        const data = await response.json();
+        
+        if (data.success) {
+            customerDebtsData = data.data;
+            renderCustomerDebtsTable();
+        } else {
+            showError('حدث خطأ أثناء تحميل بيانات مديونية العملاء');
+        }
+    } catch (error) {
+        console.error('Error loading customer debts:', error);
+        showError('حدث خطأ في الاتصال بالخادم');
+    }
+}
+
+function renderCustomerDebtsTable() {
+    const tableBody = document.getElementById('customerDebtsTable');
+    
+    if (customerDebtsData.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h5>لا توجد مديونيات للعملاء</h5>
+                    <p>جميع العملاء محدثين في مدفوعاتهم</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tableBody.innerHTML = customerDebtsData.map(customer => `
+        <tr>
+            <td class="text-center">
+                <span class="customer-name">${customer.customerName}</span>
+            </td>
+            <td class="text-center">
+                <span class="invoice-count">${customer.invoiceCount}</span>
+            </td>
+            <td class="text-center">
+                <span class="amount-value">${customer.distributorName}</span>
+            </td>
+            <td class="text-center">
+                <span class="amount-value">${formatCurrency(customer.totalTax)}</span>
+            </td>
+            <td class="text-center">
+                <span class="amount-value">${formatCurrency(customer.totalProfit)}</span>
+            </td>
+            <td class="text-center">
+                <span class="total-due">${formatCurrency(customer.totalDue)}</span>
+            </td>
+            <td class="text-center">
+                <div class="action-buttons">
+                    <button class="btn btn-pay" onclick="processPayment('${customer.customerId}')">
+                        <i class="fas fa-wallet"></i>
+                        دفع
+                    </button>
+                    <button class="btn btn-whatsapp" onclick="sendWhatsApp('${customer.customerId}')">
+                        <i class="fas fa-comment"></i>
+                        واتساب
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ar-SA', {
+        style: 'currency',
+        currency: 'EGP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+function showLoading() {
+    const tableBody = document.getElementById('customerDebtsTable');
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <div class="loading-spinner"></div>
+                <p class="mt-2 text-muted">جاري تحميل البيانات...</p>
+            </td>
+        </tr>
+    `;
+}
+
+function showError(message) {
+    const tableBody = document.getElementById('customerDebtsTable');
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                <p class="mt-2 text-danger">${message}</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="loadCustomerDebts()">
+                    <i class="fas fa-redo me-1"></i>
+                    إعادة المحاولة
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+function processPayment(customerId) {
+    const customer = customerDebtsData.find(c => c.customerId === customerId);
+    if (!customer) return;
+    
+    const paymentDetails = `
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>تفاصيل الدفع</h6>
+                    <p><strong>العميل:</strong> ${customer.customerName}</p>
+                    <p><strong>عدد الفواتير:</strong> ${customer.invoiceCount}</p>
+                    <p><strong>المبلغ المستحق:</strong> <span class="text-primary fw-bold">${formatCurrency(customer.totalDue)}</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">طريقة الدفع</label>
+                <select class="form-select" id="paymentMethod">
+                    <option value="cash">نقداً</option>
+                    <option value="bank_transfer">تحويل بنكي</option>
+                    <option value="check">شيك</option>
+                    <option value="electronic">إلكتروني</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">تاريخ الدفع</label>
+                <input type="date" class="form-control" id="paymentDate" value="${new Date().toISOString().split('T')[0]}">
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <label class="form-label">ملاحظات الدفع</label>
+                <textarea class="form-control" id="paymentNotes" rows="3" placeholder="أضف أي ملاحظات متعلقة بالدفع..."></textarea>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('paymentDetails').innerHTML = paymentDetails;
+    
+    // Store customer data for confirmation
+    window.currentPaymentCustomer = customer;
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+}
+
+function sendWhatsApp(customerId) {
+    const customer = customerDebtsData.find(c => c.customerId === customerId);
+    if (!customer) return;
+    
+    let phoneNumber, recipientName, message;
+    
+    if (currentUserRole === 'admin') {
+        // Admin should contact the distributor
+        phoneNumber = customer.distributorWhatsapp;
+        recipientName = customer.distributorName;
+        
+        if (!phoneNumber) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'رقم الواتساب غير متوفر',
+                text: 'لم يتم إضافة رقم واتساب للموزع بعد',
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#f59e0b'
+            });
+            return;
+        }
+        
+        message = 'مرحباً ' + recipientName + '،\n\nنود تذكيركم بالمبلغ المستحق لديكم:\n- عدد الفواتير: ' + customer.invoiceCount + '\n- المبلغ المستحق: ' + formatCurrency(customer.totalDue) + '\n\nيرجى التواصل معنا لتسوية المدفوعات.\n\nشكراً لكم';
+    } else {
+        // Distributor should contact the client
+        phoneNumber = customer.phoneNumber;
+        recipientName = customer.customerName;
+        
+        if (!phoneNumber) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'رقم الواتساب غير متوفر',
+                text: 'لم يتم إضافة رقم واتساب للعميل بعد',
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#f59e0b'
+            });
+            return;
+        }
+        
+        message = 'مرحباً ' + recipientName + '،\n\nنود تذكيركم بالمبلغ المستحق لديكم:\n- عدد الفواتير: ' + customer.invoiceCount + '\n- المبلغ المستحق: ' + formatCurrency(customer.totalDue) + '\n\nيرجى التواصل معنا لتسوية المدفوعات.\n\nشكراً لكم';
+    }
+
+    const whatsappUrl = 'https://wa.me/' + phoneNumber.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(message);
+    window.open(whatsappUrl, '_blank');
+}
+
+function confirmPayment() {
+    const customer = window.currentPaymentCustomer;
+    if (!customer) return;
+    
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const paymentDate = document.getElementById('paymentDate').value;
+    const paymentNotes = document.getElementById('paymentNotes').value;
+    
+    if (!paymentMethod || !paymentDate) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'تحذير',
+            text: 'يرجى ملء جميع الحقول المطلوبة'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'تأكيد الدفع',
+        text: 'هل أنت متأكد من معالجة دفع ' + formatCurrency(customer.totalDue) + ' للعميل ' + customer.customerName + '؟',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، تأكيد',
+        cancelButtonText: 'إلغاء',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            submitPayment(customer.customerId, {
+                paymentMethod,
+                paymentDate,
+                paymentNotes
+            });
+        }
+    });
+}
+
+async function submitPayment(customerId, paymentData) {
+    try {
+        const response = await fetch('/api/invoices/process-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                customerId,
+                ...paymentData
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'تم الدفع بنجاح',
+                text: 'تم معالجة الدفع بنجاح'
+            }).then(() => {
+                // Close modal and reload data
+                const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                modal.hide();
+                loadCustomerDebts();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: data.message || 'حدث خطأ أثناء معالجة الدفع'
+            });
+        }
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ',
+            text: 'حدث خطأ في الاتصال بالخادم'
+        });
+    }
+}
+</script>
