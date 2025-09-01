@@ -695,9 +695,7 @@
                         </div>
                     </div>
                     
-                    <!-- Hidden fields for custom commission rates -->
-                    <input type="hidden" id="customClientCommissionRateHidden" name="customClientCommissionRate" value="">
-                    <input type="hidden" id="customDistributorCommissionRateHidden" name="customDistributorCommissionRate" value="">
+
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-primary">
@@ -712,36 +710,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">معلومات العمولة</h5>
-            </div>
-            <div class="card-body">
-                <div id="commissionInfo">
-                    <p class="text-muted">أدخل جميع البيانات والمبلغ لعرض معلومات العمولة</p>
-                </div>
-                
-                <!-- Custom Commission Rates -->
-                <div class="mt-3" id="customCommissionSection" style="display: none;">
-                    <h6 class="text-primary">تخصيص نسب العمولة</h6>
-                    <div class="mb-2">
-                        <label for="customClientCommissionRate" class="form-label small">نسبة عمولة العميل (%)</label>
-                        <input type="number" class="form-control form-control-sm" id="customClientCommissionRate" min="0" max="100" step="0.01">
-                        <div class="form-text small">اترك فارغاً لاستخدام النسبة الافتراضية</div>
-                    </div>
-                    <div class="mb-2">
-                        <label for="customDistributorCommissionRate" class="form-label small">نسبة عمولة الموزع (%)</label>
-                        <input type="number" class="form-control form-control-sm" id="customDistributorCommissionRate" min="0" max="100" step="0.01">
-                        <div class="form-text small">اترك فارغاً لاستخدام النسبة الافتراضية</div>
-                    </div>
-                </div>
-                
-                <button type="button" class="btn btn-outline-info btn-sm w-100" id="calculateBtn" disabled>
-                    <i class="fas fa-calculator"></i>
-                    حساب العمولة
-                </button>
-            </div>
-        </div>
+
         
         <div class="card mt-3">
             <div class="card-header">
@@ -755,11 +724,11 @@
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-percentage text-warning"></i>
-                        نسب العمولة تحسب تلقائياً حسب المبلغ
+                        الضرائب والأرباح تحسب تلقائياً حسب المبلغ
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-edit text-primary"></i>
-                        يمكن تخصيص نسب العمولة قبل الموافقة
+                        يمكن تخصيص نسب الضرائب والأرباح قبل الموافقة
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-tag text-success"></i>
@@ -767,7 +736,7 @@
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-lock text-danger"></i>
-                        لا يمكن تعديل العمولة والخصم بعد الموافقة
+                        لا يمكن تعديل الضرائب والأرباح والخصم بعد الموافقة
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-calculator text-success"></i>
@@ -820,7 +789,7 @@
                             <textarea class="form-control" id="clientNotes" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="clientCommissionRate" class="form-label">نسبة العمولة (%)</label>
+                            <label for="clientCommissionRate" class="form-label">نسبة الضريبة (%)</label>
                             <input type="number" class="form-control" id="clientCommissionRate" min="0" max="100" step="0.01" value="0">
                         </div>
                     </form>
@@ -1353,101 +1322,14 @@
         document.getElementById('finalAmount').value = finalAmount.toFixed(2);
     }
     
-    // Show custom commission section when form is complete
-    function showCustomCommissionSection() {
-        const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && 
-                          document.getElementById('total').value && parseFloat(document.getElementById('total').value) > 0;
-        const customSection = document.getElementById('customCommissionSection');
-        if (isComplete) {
-            customSection.style.display = 'block';
-        } else {
-            customSection.style.display = 'none';
-        }
-    }
+
     
     function checkFormCompletion() {
         const isComplete = clientHidden.value && distributorSelect.value && fileHidden.value && 
                           document.getElementById('total').value && parseFloat(document.getElementById('total').value) > 0;
-        calculateBtn.disabled = !isComplete;
-        showCustomCommissionSection();
     }
     
-    function calculateCommission() {
-        if (!clientHidden.value || !distributorSelect.value || !fileHidden.value || !amountInput.value) {
-            return;
-        }
-        
-        const amount = parseFloat(amountInput.value);
-        if (amount <= 0) {
-            return;
-        }
-        
-        // Get custom commission rates if provided
-        const customClientRate = document.getElementById('customClientCommissionRate').value;
-        const customDistributorRate = document.getElementById('customDistributorCommissionRate').value;
-        
-        calculateBtn.disabled = true;
-        calculateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحساب...';
-        
-        fetch('/invoices/calculate-commission', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                clientId: clientHidden.value,
-                distributorId: distributorSelect.value,
-                fileId: fileHidden.value,
-                amount: amount,
-                customClientRate: customClientRate || null,
-                customDistributorRate: customDistributorRate || null
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                    commissionInfo.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
-            } else {
-                let clientRateDisplay = data.clientRate;
-                let distributorRateDisplay = data.distributorRate;
-                
-                // Show if custom rates are being used
-                if (data.isCustomClientRate) {
-                    clientRateDisplay += ' <span class="badge bg-warning text-dark">مخصص</span>';
-                }
-                if (data.isCustomDistributorRate) {
-                    distributorRateDisplay += ' <span class="badge bg-warning text-dark">مخصص</span>';
-                }
-                
-                commissionInfo.innerHTML = 
-                    '<div class="row">' +
-                        '<div class="col-12 mb-2">' +
-                            '<strong>عمولة العميل:</strong> %' + clientRateDisplay +
-                            '<br><small class="text-muted">' + data.clientCommission + ' جنيه</small>' +
-                        '</div>' +
-                        '<div class="col-12 mb-2">' +
-                            '<strong>عمولة الموزع:</strong> %' + distributorRateDisplay +
-                            '<br><small class="text-muted">' + data.distributorCommission + ' جنيه</small>' +
-                        '</div>' +
-                        '<div class="col-12 mb-2">' +
-                            '<strong>عمولة الشركة:</strong> %' + data.companyRate +
-                            '<br><small class="text-muted">' + data.companyCommission + ' جنيه</small>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="alert alert-info mt-2">' +
-                        '<small>ستحفظ هذه النسب مع الفاتورة</small>' +
-                    '</div>';
-            }
-        })
-        .catch(error => {
-            commissionInfo.innerHTML = '<div class="alert alert-danger">حدث خطأ أثناء حساب العمولة</div>';
-        })
-        .finally(() => {
-            calculateBtn.disabled = false;
-            calculateBtn.innerHTML = '<i class="fas fa-calculator"></i> حساب العمولة';
-            checkFormCompletion();
-        });
-    }
+
     
     // Add event listeners for new fields
     const totalInput = document.getElementById('total');
@@ -1456,9 +1338,6 @@
     const corporateTaxPercentageInput = document.getElementById('corporateTaxPercentage');
     const profitPercentageInput = document.getElementById('profitPercentage');
     const discountAmountInput = document.getElementById('discountAmount');
-    const customClientCommissionRateInput = document.getElementById('customClientCommissionRate');
-    const customDistributorCommissionRateInput = document.getElementById('customDistributorCommissionRate');
-    
     // Calculate tax and profit when any input changes
     totalInput.addEventListener('input', calculateTaxAndProfit);
     taxPercentageInput.addEventListener('input', calculateTaxAndProfit);
@@ -1467,43 +1346,8 @@
     profitPercentageInput.addEventListener('input', calculateTaxAndProfit);
     discountAmountInput.addEventListener('input', calculateTaxAndProfit);
     
-    // Recalculate commission when custom rates change
-    customClientCommissionRateInput.addEventListener('input', function() {
-        // Update hidden field
-        document.getElementById('customClientCommissionRateHidden').value = this.value;
-        
-        if (calculateBtn.disabled === false) {
-            calculateCommission();
-        }
-    });
-    
-    customDistributorCommissionRateInput.addEventListener('input', function() {
-        // Update hidden field
-        document.getElementById('customDistributorCommissionRateHidden').value = this.value;
-        
-        if (calculateBtn.disabled === false) {
-            calculateCommission();
-        }
-    });
-    
-    // Form submit handler to ensure custom rates are included
-    document.getElementById('invoiceForm').addEventListener('submit', function(e) {
-        // Update hidden fields with current custom rates
-        const customClientRate = document.getElementById('customClientCommissionRate').value;
-        const customDistributorRate = document.getElementById('customDistributorCommissionRate').value;
-        
-        document.getElementById('customClientCommissionRateHidden').value = customClientRate;
-        document.getElementById('customDistributorCommissionRateHidden').value = customDistributorRate;
-        
-        console.log('Form submitted with custom rates:', {
-            customClientRate,
-            customDistributorRate
-        });
-    });
-    
     distributorSelect.addEventListener('change', checkFormCompletion);
     amountInput.addEventListener('input', checkFormCompletion);
-    calculateBtn.addEventListener('click', calculateCommission);
 });
 </script>
 </body>
